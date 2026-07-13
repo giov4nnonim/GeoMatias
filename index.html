@@ -1,0 +1,3565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GeoMatias — WebGIS</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shp/3.1.0/shp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+
+<style>
+:root{
+  --ink:#141a20; --panel:#1d252d; --panel2:#242f39; --line:#31404d;
+  --text:#e8eef3; --muted:#8fa3b3; --accent:#37c2a0; --accent2:#2ba187;
+  --danger:#e5673f; --radius:12px;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)}
+#map{position:absolute; inset:0; background:#0d1216}
+
+/* ---------- Top bar ---------- */
+#topbar{
+  position:absolute; top:0; left:0; right:0; height:52px; z-index:1200;
+  display:flex; align-items:center; gap:8px; padding:0 12px;
+  background:linear-gradient(180deg, rgba(20,26,32,.96), rgba(20,26,32,.88));
+  border-bottom:1px solid var(--line); backdrop-filter:blur(6px);
+}
+#brand{display:flex; align-items:center; gap:8px; margin-right:6px; user-select:none}
+#brand svg{flex:none}
+#brand b{font-size:15px; letter-spacing:.4px}
+#brand small{color:var(--muted); font-size:10px; display:block; margin-top:-2px; letter-spacing:1.5px}
+.tb-btn{
+  display:flex; align-items:center; gap:6px; height:34px; padding:0 12px;
+  background:var(--panel2); color:var(--text); border:1px solid var(--line);
+  border-radius:8px; cursor:pointer; font-size:13px; white-space:nowrap;
+}
+.tb-btn:hover{border-color:var(--accent); color:var(--accent)}
+.tb-btn.primary{background:var(--accent); border-color:var(--accent); color:#07231c; font-weight:600}
+.tb-btn.primary:hover{background:var(--accent2)}
+#topbar .spacer{flex:1}
+
+/* ---------- Side panel ---------- */
+#panel{
+  position:absolute; top:60px; left:10px; bottom:64px; width:300px; z-index:1100;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  display:flex; flex-direction:column; overflow:hidden;
+  transition:transform .25s ease, opacity .25s ease;
+  box-shadow:0 8px 30px rgba(0,0,0,.45);
+}
+#panel.hidden{transform:translateX(-115%); opacity:0; pointer-events:none}
+#panel header{padding:12px 14px 8px; font-size:12px; letter-spacing:1.5px; color:var(--muted)}
+#panel .scroll{flex:1; overflow-y:auto; padding:0 10px 12px}
+.group-title{font-size:11px; letter-spacing:1.2px; color:var(--muted); margin:14px 4px 6px; text-transform:uppercase}
+
+/* Abas do painel */
+#panelTabs{display:flex; gap:4px; padding:0 10px 8px; border-bottom:1px solid var(--line)}
+.ptab{
+  flex:1; padding:7px 4px; font-size:12px; background:var(--panel2); color:var(--muted);
+  border:1px solid var(--line); border-radius:8px; cursor:pointer;
+}
+.ptab.active{background:var(--accent); border-color:var(--accent); color:#07231c; font-weight:600}
+.tabpane{padding-top:8px}
+
+/* Camada vetorial ativa */
+.layer-row.active-layer{border-color:var(--accent); background:rgba(55,194,160,.1)}
+.layer-row .badge{
+  font-size:9.5px; letter-spacing:.5px; color:var(--muted); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; text-transform:uppercase; flex:none;
+}
+.layer-row.active-layer .badge{color:var(--accent); border-color:var(--accent)}
+.layer-row .name{cursor:pointer}
+
+/* Grupos (pastas de camadas) */
+.grp-head{
+  display:flex; align-items:center; gap:8px; margin:12px 0 6px; padding:6px 8px 6px 10px;
+  border-top:2px solid var(--line); cursor:pointer; user-select:none;
+}
+.grp-head .arrow{font-size:10px; color:var(--muted); transition:transform .15s}
+.grp-head.closed .arrow{transform:rotate(-90deg)}
+.grp-head .gname{flex:1; font-size:12px; letter-spacing:.8px; text-transform:uppercase; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.grp-head .gcount{font-size:11px; color:var(--muted)}
+.grp-body{margin-left:6px}
+
+/* Detalhes / metadados / legenda da camada */
+.layer-detail{
+  margin:-2px 0 6px; padding:10px 12px; background:rgba(13,18,22,.5);
+  border:1px solid var(--line); border-radius:0 0 10px 10px; font-size:12px; line-height:1.55;
+}
+.layer-detail .d-abs{color:var(--text)}
+.layer-detail .d-abs.clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+.layer-detail .d-more{color:var(--accent); cursor:pointer; font-size:11.5px; display:inline-block; margin-top:2px}
+.layer-detail table{border-collapse:collapse; margin-top:8px; width:100%}
+.layer-detail td{padding:2.5px 6px 2.5px 0; vertical-align:top; border:none}
+.layer-detail td:first-child{color:var(--muted); white-space:nowrap; font-size:11px; text-transform:uppercase; letter-spacing:.5px; width:88px}
+.layer-detail td:last-child{word-break:break-all}
+.layer-detail .d-legend{margin-top:8px}
+.layer-detail .d-legend img{max-width:100%; background:#fff; border-radius:6px; padding:6px; display:block}
+.layer-detail .d-title{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin:8px 0 3px}
+.layer-row.dragging{opacity:.4}
+.grp-head.dropover, .grp-body.dropover{outline:2px dashed var(--accent); outline-offset:-2px; border-radius:8px}
+#vectorList.dropover, #rasterList.dropover{outline:2px dashed var(--muted); outline-offset:-2px; border-radius:8px}
+.grp-head .gname-input{
+  flex:1; background:var(--ink); border:1px solid var(--accent); color:var(--text);
+  border-radius:6px; padding:4px 8px; font-size:12.5px; font-family:inherit; min-width:60px;
+}
+.grp-head .gcolor{width:16px; height:16px; border:none; padding:0; background:none; cursor:pointer; flex:none}
+.grp-head .gcolor::-webkit-color-swatch-wrapper{padding:0}
+.grp-head .gcolor::-webkit-color-swatch{border:1px solid rgba(255,255,255,.3); border-radius:4px}
+
+/* Busca inteligente em catálogos */
+.cat-row{display:flex; align-items:center; gap:8px; padding:7px 9px; margin-bottom:4px; background:var(--panel2); border-radius:8px; font-size:12.5px}
+.cat-row input{accent-color:var(--accent)}
+.cat-row .cname{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cat-row .cstat{font-size:11px; color:var(--muted); white-space:nowrap}
+.cat-row .cstat.ok{color:var(--accent)}
+.cat-row .cstat.err{color:var(--danger)}
+#catResults{max-height:38vh; overflow-y:auto; margin-top:10px}
+.res-row{padding:9px 10px; margin-bottom:5px; background:var(--panel2); border:1px solid var(--line); border-radius:9px}
+.res-row .rt{font-size:13px; margin-bottom:2px}
+.res-row .rm{font-size:11px; color:var(--muted); line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
+.res-row .ra{display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:8px}
+.res-row .rsrc{font-size:10.5px; color:var(--accent); letter-spacing:.5px}
+.res-add{background:var(--accent); color:#07231c; border:none; border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600}
+.res-add:disabled{opacity:.5; cursor:default}
+#bboxInfo{font-size:12px; color:var(--muted); padding:6px 2px}
+#bboxInfo b{color:var(--accent)}
+.spin{display:inline-block; width:12px; height:12px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:sp 0.8s linear infinite; vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Barra de finalização do desenho */
+#drawBar{
+  position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:1300;
+  display:none; align-items:center; gap:8px; padding:8px 10px;
+  background:var(--panel); border:1px solid var(--accent); border-radius:999px;
+  box-shadow:0 8px 30px rgba(0,0,0,.55);
+}
+#drawBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
+#drawBar button{height:32px; border-radius:999px}
+@media (max-width:760px){ #drawBar{bottom:104px; width:calc(100vw - 24px); justify-content:center} #drawBar .db-msg{display:none} }
+.layer-row{
+  display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:4px;
+  background:var(--panel2); border:1px solid transparent; border-radius:8px; font-size:13px;
+}
+.layer-row:hover{border-color:var(--line)}
+.layer-row .name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.layer-row input[type=checkbox], .layer-row input[type=radio]{accent-color:var(--accent); width:15px; height:15px; cursor:pointer}
+.swatch{width:14px; height:14px; border-radius:4px; border:1px solid rgba(255,255,255,.35); flex:none; cursor:pointer; padding:0; background:none; -webkit-appearance:none; appearance:none}
+.swatch::-webkit-color-swatch-wrapper{padding:0}
+.swatch::-webkit-color-swatch{border:none; border-radius:3px}
+.icon-btn{background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px}
+.icon-btn:hover{color:var(--danger)}
+.icon-btn.zoom:hover{color:var(--accent)}
+.empty-hint{color:var(--muted); font-size:12px; padding:6px 8px; line-height:1.5}
+.add-raster{width:100%; margin-top:6px}
+
+/* ---------- Toolbar (drawing) ---------- */
+#toolbar{
+  position:absolute; right:10px; top:60px; z-index:1100;
+  display:flex; flex-direction:column; gap:4px; padding:6px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:0 8px 30px rgba(0,0,0,.45);
+}
+.tool{
+  width:42px; height:42px; display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; border-radius:9px; cursor:pointer; color:var(--text);
+  position:relative;
+}
+.tool svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.tool:hover{background:var(--panel2)}
+.tool.active{background:var(--accent); color:#07231c}
+.tool .tip{
+  position:absolute; right:52px; top:50%; transform:translateY(-50%);
+  background:#0c1116; color:var(--text); font-size:12px; padding:5px 9px; border-radius:6px;
+  white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; border:1px solid var(--line);
+}
+.tool:hover .tip{opacity:1}
+.tool-sep{height:1px; background:var(--line); margin:3px 4px}
+
+/* ---------- Status bar ---------- */
+#statusbar{
+  position:absolute; left:0; right:0; bottom:0; height:30px; z-index:1200;
+  display:flex; align-items:center; gap:18px; padding:0 12px;
+  background:rgba(20,26,32,.92); border-top:1px solid var(--line);
+  font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;
+}
+#statusbar b{color:var(--text); font-weight:500}
+
+/* ---------- North arrow ---------- */
+#north{
+  position:absolute; right:12px; bottom:44px; z-index:1100; width:52px; height:64px;
+  display:flex; flex-direction:column; align-items:center; pointer-events:none;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
+}
+#north span{font-size:13px; font-weight:700; color:#fff; letter-spacing:1px}
+
+/* ---------- Hint banner ---------- */
+#hint{
+  position:absolute; top:60px; left:50%; transform:translateX(-50%); z-index:1150;
+  background:#0c1116; border:1px solid var(--accent); color:var(--text);
+  padding:8px 16px; border-radius:999px; font-size:13px; display:none; max-width:92vw; text-align:center;
+}
+
+/* ---------- Modals ---------- */
+.modal-back{
+  position:fixed; inset:0; background:rgba(5,9,12,.65); z-index:2000;
+  display:none; align-items:center; justify-content:center; padding:16px;
+}
+.modal-back.open{display:flex}
+.modal{
+  width:420px; max-width:100%; max-height:90vh; overflow-y:auto;
+  background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px;
+}
+.modal h3{font-size:16px; margin-bottom:4px}
+.modal p.sub{color:var(--muted); font-size:12.5px; margin-bottom:14px; line-height:1.45}
+.field{margin-bottom:12px}
+.field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px}
+.field input[type=text], .field input[type=number], .field textarea, .field select{
+  width:100%; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit;
+}
+.field textarea{resize:vertical; min-height:70px}
+.field input:focus, .field textarea:focus, .field select:focus{outline:none; border-color:var(--accent)}
+.modal .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px}
+.drop{
+  border:1.5px dashed var(--line); border-radius:10px; padding:22px 12px; text-align:center;
+  color:var(--muted); font-size:13px; cursor:pointer; line-height:1.5;
+}
+.drop:hover, .drop.over{border-color:var(--accent); color:var(--text)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.radio-line{display:flex; gap:14px; font-size:13px; margin-bottom:10px}
+.radio-line label{display:flex; gap:6px; align-items:center; cursor:pointer}
+.radio-line input{accent-color:var(--accent)}
+
+/* ---------- Coordinate popup ---------- */
+.coord-pop{font-size:12.5px; line-height:1.6}
+.coord-pop b{font-size:11px; color:#556; text-transform:uppercase; letter-spacing:.8px}
+.coord-pop button{
+  margin-top:6px; background:var(--accent); color:#07231c; border:none; border-radius:6px;
+  padding:5px 10px; font-size:12px; cursor:pointer; font-weight:600;
+}
+
+/* ---------- Leaflet tweaks ---------- */
+.leaflet-container{font:inherit}
+.leaflet-control-zoom{border:1px solid var(--line)!important; border-radius:10px!important; overflow:hidden; margin-top:64px!important}
+.leaflet-control-zoom a{background:var(--panel)!important; color:var(--text)!important; border-color:var(--line)!important}
+.leaflet-control-zoom a:hover{background:var(--panel2)!important; color:var(--accent)!important}
+.leaflet-control-scale-line{background:rgba(20,26,32,.8); color:var(--text); border-color:var(--muted)}
+.leaflet-popup-content-wrapper{border-radius:10px}
+.measure-label{
+  background:linear-gradient(135deg, #37c2a0 0%, #2ba187 100%); 
+  color:#07231c; border:2px solid #fff;
+  border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; white-space:nowrap;
+  box-shadow:0 6px 16px rgba(55, 194, 160, 0.5), 0 0 12px rgba(55, 194, 160, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+  text-shadow:0 1px 2px rgba(0,0,0,0.2);
+  letter-spacing:0.5px;
+}
+.measure-label::before{display:none}
+
+/* Vértices de desenho/edição: circunferência vazada, discreta */
+.leaflet-editing-icon, .leaflet-div-icon{
+  width:13px!important; height:13px!important;
+  margin-left:-7px!important; margin-top:-7px!important;
+  background:rgba(13,18,22,.55)!important;
+  border:2px solid #37c2a0!important;
+  border-radius:50%!important;
+  box-shadow:0 0 0 1.5px rgba(0,0,0,.45);
+}
+.leaflet-editing-icon:hover{background:#37c2a0!important}
+.leaflet-touch .leaflet-editing-icon{width:17px!important; height:17px!important; margin-left:-9px!important; margin-top:-9px!important}
+.leaflet-draw-tooltip{
+  background:rgba(13, 18, 22, 0.95); border:2px solid var(--accent); color:var(--accent);
+  border-radius:8px; font-family:inherit; font-size:13px; padding:8px 12px;
+  box-shadow:0 4px 12px rgba(55, 194, 160, 0.3);
+  font-weight:600;
+}
+.leaflet-draw-tooltip:before{border-right-color:#0c1116}
+.leaflet-draw-tooltip-subtext{color:var(--accent)!important}
+
+/* Melhoria para linhas e polígonos de medição */
+.leaflet-pane .leaflet-path-measure{
+  stroke:#37c2a0 !important; stroke-width:3 !important; opacity:1 !important;
+  filter:drop-shadow(0 2px 4px rgba(55, 194, 160, 0.5));
+}
+
+/* Retângulo de demarcação de área (busca inteligente) */
+.leaflet-pane .bbox-rect{
+  stroke:#e8c34a !important; stroke-width:3 !important; 
+  stroke-dasharray:8,4 !important; opacity:0.9 !important;
+  filter:drop-shadow(0 2px 6px rgba(232, 195, 74, 0.6));
+}
+
+/* Vértices de medição */
+.leaflet-pane .measure-vertex{
+  fill:#37c2a0 !important; stroke:#fff !important; stroke-width:2 !important;
+  filter:drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Histórico (desfazer/refazer) */
+.tool[disabled]{opacity:.35; cursor:default}
+.tool[disabled]:hover{background:transparent}
+
+/* Editor de atributos */
+.fld-row{
+  display:grid; grid-template-columns:1fr 110px 28px; gap:6px; align-items:center;
+  padding:8px; margin-bottom:6px; background:var(--panel2); border-radius:8px;
+}
+.fld-row .fname{font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fld-row .ftype{font-size:11px; color:var(--muted); text-align:right}
+.fld-opts{grid-column:1/-1; font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.attr-check{display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 0}
+.attr-check input{accent-color:var(--accent); width:16px; height:16px}
+
+/* Tabela de atributos */
+.modal.wide{width:860px; max-width:96vw}
+#atWrap{overflow:auto; max-height:60vh; border:1px solid var(--line); border-radius:10px}
+#atTable{border-collapse:collapse; width:100%; font-size:12.5px; min-width:520px}
+#atTable th{
+  position:sticky; top:0; background:var(--panel2); color:var(--muted); text-align:left;
+  padding:8px 10px; font-size:11px; letter-spacing:.8px; text-transform:uppercase;
+  border-bottom:1px solid var(--line); white-space:nowrap; z-index:2;
+}
+#atTable td{padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:middle; white-space:nowrap}
+#atTable tr:last-child td{border-bottom:none}
+#atTable tr:hover td{background:rgba(55,194,160,.06)}
+#atTable td input[type=text], #atTable td input[type=number], #atTable td select{
+  width:100%; min-width:90px; background:transparent; border:1px solid transparent; color:var(--text);
+  border-radius:6px; padding:6px 7px; font-size:12.5px; font-family:inherit;
+}
+#atTable td input:hover, #atTable td select:hover{border-color:var(--line)}
+#atTable td input:focus, #atTable td select:focus{outline:none; border-color:var(--accent); background:var(--ink)}
+#atTable td input[type=checkbox]{accent-color:var(--accent); width:15px; height:15px}
+#atTable td.num{color:var(--muted); font-variant-numeric:tabular-nums}
+#atTable td.geo{color:var(--muted); font-size:11.5px}
+#atStats{font-size:12px; color:var(--muted); margin:10px 2px 0}
+
+/* ---------- Mobile ---------- */
+#panelToggle{display:flex}
+@media (max-width:760px){
+  #brand small{display:none}
+  .tb-btn .lbl{display:none}
+  .tb-btn{padding:0 10px}
+  #panel{left:8px; right:8px; width:auto; top:58px; bottom:auto; max-height:52vh}
+  #toolbar{top:auto; bottom:44px; right:8px; flex-direction:row; flex-wrap:wrap; max-width:calc(100vw - 90px); justify-content:flex-end}
+  .tool .tip{display:none}
+  .tool-sep{width:1px; height:auto; margin:4px 2px}
+  #north{bottom:auto; top:60px; right:12px; transform:scale(.8)}
+  #statusbar{gap:10px; font-size:11px}
+  #stScale{display:none}
+}
+
+/* ---------- Print layout ---------- */
+#printSheet{display:none}
+/* Linhas e polígonos de medição com maior contraste */
+.leaflet-pane svg path[stroke="#37c2a0"],
+.leaflet-pane svg path[stroke="#e8c34a"] {
+  stroke-width: 3 !important;
+  opacity: 0.95 !important;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 4px currentColor);
+}
+
+/* Melhoria para retângulo de busca inteligente */
+.leaflet-pane svg path[stroke="#e8c34a"][stroke-dasharray] {
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 2px 6px rgba(232, 195, 74, 0.6)) drop-shadow(0 0 8px rgba(232, 195, 74, 0.4));
+}
+
+/* Vértices de desenho mais visíveis */
+.leaflet-editing-icon {
+  background: #37c2a0 !important;
+  border: 3px solid #fff !important;
+  box-shadow: 0 0 0 2px #37c2a0, 0 2px 6px rgba(55, 194, 160, 0.5) !important;
+}
+
+.leaflet-editing-icon:hover {
+  background: #2ba187 !important;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(55, 194, 160, 0.7) !important;
+}
+
+@media print{
+  @page{size:A4 landscape; margin:10mm}
+  body > *:not(#printSheet){display:none!important}
+  html,body{overflow:visible; background:#fff; color:#000; height:auto}
+  #printSheet{display:block!important; width:100%; color:#000; font-family:Georgia, "Times New Roman", serif}
+  #printSheet .p-head{border-bottom:3px double #000; padding-bottom:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-end}
+  #printSheet h1{font-size:24pt; margin:0}
+  #printSheet .p-meta{font-size:9pt; text-align:right; color:#333}
+  #printSheet .p-map{width:100%; height:150mm; border:1px solid #000; page-break-inside:avoid}
+  #printSheet .p-map img{width:100%; height:100%; object-fit:cover; display:block}
+  #printSheet .p-bottom{display:flex; gap:8mm; margin-top:5mm; font-family:Arial, sans-serif}
+  #printSheet .p-desc{flex:1.4; font-size:10pt; line-height:1.5}
+  #printSheet .p-legend{flex:1; border:1px solid #000; padding:4mm; font-size:9pt}
+  #printSheet .p-legend h4{font-size:10pt; margin:0 0 3mm; border-bottom:1px solid #000; padding-bottom:1.5mm; letter-spacing:1px}
+  #printSheet .p-legend .li{display:flex; align-items:center; gap:3mm; margin-bottom:1.8mm}
+  #printSheet .p-legend .sw{width:6mm; height:4mm; border:1px solid #000; flex:none}
+  #printSheet .p-legend .sw.pt{width:4mm; height:4mm; border-radius:50%}
+  #printSheet .p-legend .sw.ln{height:1mm; border:none}
+  #printSheet .p-foot{margin-top:3mm; font-size:8pt; color:#333; display:flex; justify-content:space-between; font-family:Arial, sans-serif}
+}
+/* ---------- Módulo de inventário arbóreo ---------- */
+.tree-photo-box{border:2px dashed var(--line); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:.15s; background:var(--panel2)}
+.tree-photo-box:hover{border-color:var(--accent)}
+.tree-photo-box img{max-width:100%; max-height:180px; border-radius:8px; display:block; margin:0 auto}
+.tree-photo-actions{display:flex; gap:8px; margin:8px 0; flex-wrap:wrap}
+.tree-organs{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0}
+.tree-organs button{font-size:11px; padding:4px 9px; border-radius:14px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); cursor:pointer}
+.tree-organs button.on{background:var(--accent); color:#07231c; border-color:var(--accent); font-weight:600}
+.id-result{display:flex; align-items:center; gap:10px; padding:8px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; cursor:pointer; background:var(--panel2)}
+.id-result:hover{border-color:var(--accent)}
+.id-result.sel{border-color:var(--accent); background:rgba(55,194,160,.1)}
+.id-result .id-main{flex:1; min-width:0}
+.id-result .id-sci{font-style:italic; font-size:13px; color:var(--text)}
+.id-result .id-com{font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.id-bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:4px}
+.id-bar>i{display:block; height:100%; background:var(--accent)}
+.id-score{font-size:12px; font-variant-numeric:tabular-nums; color:var(--accent); font-weight:700; min-width:42px; text-align:right}
+.gbif-gal{display:flex; gap:6px; overflow-x:auto; padding:4px 0}
+.gbif-gal figure{margin:0; flex:none; width:96px}
+.gbif-gal img{width:96px; height:96px; object-fit:cover; border-radius:6px; display:block}
+.gbif-gal figcaption{font-size:9px; color:var(--muted); margin-top:2px; line-height:1.2; overflow:hidden; max-height:24px}
+.tree-sec-title{font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:14px 0 6px; border-top:1px solid var(--line); padding-top:10px}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- ===== Top bar ===== -->
+<div id="topbar">
+  <button class="tb-btn" id="panelToggle" title="Camadas">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    <span class="lbl">Camadas</span>
+  </button>
+  <div id="brand">
+    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#37c2a0" stroke-width="2"/><path d="M13 2v22M2 13h22" stroke="#37c2a0" stroke-width="1" opacity=".5"/><circle cx="13" cy="13" r="3.5" fill="#37c2a0"/></svg>
+    <div><b>GeoMatias</b><small>WEBGIS</small></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="btnProject">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="lbl">Projeto</span>
+  </button>
+  <button class="tb-btn" id="btnFields">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
+    <span class="lbl">Atributos</span>
+  </button>
+  <button class="tb-btn" id="btnImport">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span class="lbl">Importar</span>
+  </button>
+  <button class="tb-btn" id="btnExport">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span class="lbl">Exportar</span>
+  </button>
+  <button class="tb-btn primary" id="btnPrint">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    <span class="lbl">Imprimir</span>
+  </button>
+</div>
+
+<!-- ===== Layers panel ===== -->
+<aside id="panel">
+  <header>GERENCIADOR DE CAMADAS</header>
+  <nav id="panelTabs">
+    <button class="ptab active" data-tab="tabBase">Mapa base</button>
+    <button class="ptab" data-tab="tabRaster">Rasters</button>
+    <button class="ptab" data-tab="tabVector">Vetores</button>
+  </nav>
+  <div class="scroll">
+    <div class="tabpane" id="tabBase">
+      <div class="empty-hint" style="padding-bottom:2px">Apenas um mapa base fica ativo por vez.</div>
+      <div id="baseList"></div>
+    </div>
+    <div class="tabpane" id="tabRaster" style="display:none">
+      <button class="tb-btn add-raster" id="btnCatalogR">Busca inteligente em catálogos (WMS)</button>
+      <button class="tb-btn add-raster" id="btnNewGroupR">Novo grupo</button>
+      <div id="rasterList"><div class="empty-hint">Nenhum raster adicionado.</div></div>
+      <button class="tb-btn add-raster" id="btnAddRaster">+ Adicionar raster (XYZ / WMS / imagem)</button>
+    </div>
+    <div class="tabpane" id="tabVector" style="display:none">
+      <button class="tb-btn add-raster" id="btnCatalogV">Busca inteligente em catálogos (WFS)</button>
+      <button class="tb-btn add-raster" id="btnNewGroupV">Novo grupo</button>
+      <div id="vectorList"><div class="empty-hint">Crie uma camada e desenhe, ou importe SHP / KML / KMZ.</div></div>
+      <button class="tb-btn add-raster" id="btnNewLayer">+ Nova camada vetorial</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ===== Drawing toolbar ===== -->
+<div id="toolbar">
+  <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
+  <button class="tool" data-tool="tree"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><path d="M9 10.5l3 3 3-3"/></svg><span class="tip">Árvore (inventário arbóreo com foto)</span></button>
+  <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
+  <button class="tool" data-tool="curve"><svg viewBox="0 0 24 24"><path d="M3 20c6 0 4-14 10-14 4 0 5 5 8 5"/><circle cx="3" cy="20" r="1.6"/><circle cx="21" cy="11" r="1.6"/></svg><span class="tip">Curva suavizada</span></button>
+  <button class="tool" data-tool="polygon"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/><circle cx="21" cy="9" r="1.4" fill="currentColor"/><circle cx="3" cy="9" r="1.4" fill="currentColor"/></svg><span class="tip">Polígono (ponto a ponto)</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><path d="M3 17 21 7"/><path d="M5 14v4M9 12v4M13 10v4M17 8v4"/></svg><span class="tip">Medir distância</span></button>
+  <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/><path d="M8 6v3M12 6v3M16 6v3"/></svg><span class="tip">Medir área</span></button>
+  <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
+  <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
+  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
+  <button class="tool" data-tool="erase"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span class="tip">Apagar / limpar medições</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" id="btnUndo" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v1"/></svg><span class="tip">Desfazer (Ctrl+Z)</span></button>
+  <button class="tool" id="btnRedo" disabled><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0-6 6v1"/></svg><span class="tip">Refazer (Ctrl+Y)</span></button>
+</div>
+
+<div id="hint"></div>
+
+<!-- ===== Barra de finalização do desenho ===== -->
+<div id="drawBar">
+  <span class="db-msg" id="dbMsg">Desenhando…</span>
+  <button class="tb-btn" id="dbVertex">↩ Vértice</button>
+  <button class="tb-btn" id="dbCancel">Cancelar</button>
+  <button class="tb-btn primary" id="dbFinish">✓ Concluir geometria</button>
+</div>
+
+<!-- ===== Modal: nova camada vetorial ===== -->
+<div class="modal-back" id="mNewLayer">
+  <div class="modal">
+    <h3 id="nlTitle">Nova camada vetorial</h3>
+    <p class="sub" id="nlSub">Toda geometria pertence a uma camada. Todas as geometrias de uma mesma camada compartilham o mesmo tipo e os mesmos atributos.</p>
+    <div class="field"><label>Nome da camada</label><input type="text" id="nlName" placeholder="Ex.: Nascentes, Estradas, Talhões…"></div>
+    <div class="grid2">
+      <div class="field">
+        <label>Tipo de geometria</label>
+        <select id="nlType">
+          <option value="point">Ponto</option>
+          <option value="line">Linha / curva</option>
+          <option value="polygon">Polígono</option>
+        </select>
+      </div>
+      <div class="field"><label>Cor</label><input type="color" id="nlColor" value="#37c2a0" style="width:100%; height:37px; background:var(--ink); border:1px solid var(--line); border-radius:8px; padding:4px; cursor:pointer"></div>
+    </div>
+
+    <div class="group-title" style="margin-left:0">Atributos da camada</div>
+    <div id="nlFldList"><div class="empty-hint">Nenhum atributo. Adicione abaixo (opcional).</div></div>
+    <div class="grid2" style="margin-top:8px">
+      <div class="field" style="margin-bottom:8px"><label>Nome do atributo</label><input type="text" id="nlFldName" placeholder="Ex.: nome" maxlength="40"></div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Tipo</label>
+        <select id="nlFldType">
+          <option value="text">Texto</option>
+          <option value="number">Número</option>
+          <option value="select">Lista de seleção</option>
+          <option value="checkbox">Sim/não</option>
+          <option value="timestamp">Data/hora (auto)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="nlFldOptsWrap" style="display:none; margin-bottom:8px">
+      <label>Opções da lista (separadas por vírgula)</label>
+      <input type="text" id="nlFldOpts" placeholder="Ex.: Pastagem, Lavoura, Mata">
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px">
+      <div class="attr-check" style="padding:0"><input type="checkbox" id="nlFldReq"><label for="nlFldReq" style="cursor:pointer">Obrigatório</label></div>
+      <button class="tb-btn" id="nlFldAdd">+ Adicionar atributo</button>
+    </div>
+
+    <div id="nlValuesWrap" style="display:none">
+      <div class="group-title" style="margin-left:0">Valores para a geometria desenhada</div>
+      <div id="nlValues"></div>
+    </div>
+
+    <div class="actions">
+      <button class="tb-btn" id="nlCancel">Cancelar</button>
+      <button class="tb-btn primary" id="nlSave">Salvar camada</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== North arrow ===== -->
+<div id="north">
+  <svg width="40" height="46" viewBox="0 0 40 46">
+    <polygon points="20,2 28,34 20,28" fill="#e5673f"/>
+    <polygon points="20,2 12,34 20,28" fill="#ffffff"/>
+  </svg>
+  <span>N</span>
+</div>
+
+<!-- ===== Status bar ===== -->
+<div id="statusbar">
+  <span>Lat <b id="stLat">—</b></span>
+  <span>Lon <b id="stLon">—</b></span>
+  <span>Zoom <b id="stZoom">—</b></span>
+  <span id="stScale"></span>
+  <span style="margin-left:auto" id="stMsg"></span>
+</div>
+
+<!-- ===== Modal: import ===== -->
+<div class="modal-back" id="mImport">
+  <div class="modal">
+    <h3>Importar geometrias</h3>
+    <p class="sub">Formatos aceitos: <b>Shapefile</b> (.zip contendo .shp/.dbf/.prj), <b>.kml</b>, <b>.kmz</b> e <b>.geojson</b>.</p>
+    <div class="drop" id="dropZone">Arraste o arquivo aqui<br>ou toque para escolher</div>
+    <input type="file" id="fileInput" accept=".zip,.kml,.kmz,.geojson,.json" hidden>
+    <div class="actions"><button class="tb-btn" data-close>Fechar</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: export ===== -->
+<div class="modal-back" id="mExport">
+  <div class="modal">
+    <h3>Exportar geometrias</h3>
+    <p class="sub">Exporta todas as camadas vetoriais visíveis do projeto.</p>
+    <div class="field">
+      <label>Formato</label>
+      <select id="expFormat">
+        <option value="kml">KML</option>
+        <option value="kmz">KMZ</option>
+        <option value="shp">Shapefile (.zip)</option>
+        <option value="geojson">GeoJSON</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Nome do arquivo</label>
+      <input type="text" id="expName" value="meu_projeto">
+    </div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="expGo">Exportar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: add raster ===== -->
+<div class="modal-back" id="mRaster">
+  <div class="modal">
+    <h3>Adicionar raster</h3>
+    <p class="sub">Adicione um serviço de tiles (XYZ), um serviço WMS ou uma imagem georreferenciada por limites.</p>
+    <div class="radio-line">
+      <label><input type="radio" name="rType" value="xyz" checked> XYZ</label>
+      <label><input type="radio" name="rType" value="wms"> WMS</label>
+      <label><input type="radio" name="rType" value="img"> Imagem</label>
+    </div>
+    <div class="field"><label>Nome da camada</label><input type="text" id="rName" placeholder="Ex.: Ortofoto 2024"></div>
+    <div id="rXYZ">
+      <div class="field"><label>URL do template (use {z}/{x}/{y})</label><input type="text" id="rUrl" placeholder="https://servidor/tiles/{z}/{x}/{y}.png"></div>
+    </div>
+    <div id="rWMS" style="display:none">
+      <div class="field"><label>URL do serviço WMS</label><input type="text" id="rWmsUrl" placeholder="https://servidor/geoserver/wms"></div>
+      <div class="field"><label>Camadas (layers)</label><input type="text" id="rWmsLayers" placeholder="workspace:camada"></div>
+    </div>
+    <div id="rIMG" style="display:none">
+      <div class="field"><label>Arquivo de imagem (PNG/JPG)</label><input type="file" id="rImgFile" accept="image/*"></div>
+      <div class="grid2">
+        <div class="field"><label>Lat Sul</label><input type="number" step="any" id="rS"></div>
+        <div class="field"><label>Lat Norte</label><input type="number" step="any" id="rN"></div>
+        <div class="field"><label>Lon Oeste</label><input type="number" step="any" id="rW"></div>
+        <div class="field"><label>Lon Leste</label><input type="number" step="any" id="rE"></div>
+      </div>
+    </div>
+    <div class="field"><label>Opacidade: <span id="rOpV">100%</span></label><input type="range" id="rOp" min="10" max="100" value="100" style="width:100%; accent-color:var(--accent)"></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="rGo">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: print ===== -->
+<div class="modal-back" id="mPrint">
+  <div class="modal">
+    <h3>Layout de impressão</h3>
+    <p class="sub">O mapa atual será capturado com título, descrição, legenda das camadas, norte e escala em folha A4 paisagem.</p>
+    <div class="field"><label>Título do mapa</label><input type="text" id="pTitle" placeholder="Ex.: Mapa de uso do solo — Fazenda Santa Rita"></div>
+    <div class="field"><label>Descrição / observações</label><textarea id="pDesc" placeholder="Texto livre que aparecerá abaixo do mapa."></textarea></div>
+    <div class="field"><label>Autor / responsável (opcional)</label><input type="text" id="pAuthor"></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="pGo">Gerar e imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: esquema de atributos ===== -->
+<div class="modal-back" id="mFields">
+  <div class="modal">
+    <h3>Atributos das geometrias</h3>
+    <p class="sub">Defina os campos que serão preenchidos ao criar pontos, linhas e polígonos. Os valores acompanham cada feição e são incluídos na exportação.</p>
+    <div id="fldList"><div class="empty-hint">Nenhum atributo definido.</div></div>
+    <div style="border-top:1px solid var(--line); margin:14px 0 12px"></div>
+    <div class="field"><label>Nome do atributo</label><input type="text" id="fldName" placeholder="Ex.: uso_do_solo" maxlength="40"></div>
+    <div class="field">
+      <label>Tipo</label>
+      <select id="fldType">
+        <option value="text">Texto (digitação simples)</option>
+        <option value="number">Número</option>
+        <option value="select">Lista de seleção (selectlist)</option>
+        <option value="checkbox">Caixa de seleção (sim/não)</option>
+        <option value="timestamp">Carimbo de data/hora (automático)</option>
+      </select>
+    </div>
+    <div class="field" id="fldOptsWrap" style="display:none">
+      <label>Opções da lista (separadas por vírgula)</label>
+      <input type="text" id="fldOpts" placeholder="Ex.: Pastagem, Lavoura, Mata nativa">
+    </div>
+    <div class="attr-check"><input type="checkbox" id="fldReq"><label for="fldReq" style="cursor:pointer">Obrigatório ao criar geometria</label></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Fechar</button>
+      <button class="tb-btn primary" id="fldAdd">Adicionar atributo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: preencher atributos da feição ===== -->
+<div class="modal-back" id="mAttr">
+  <div class="modal">
+    <h3 id="attrTitle">Atributos da feição</h3>
+    <p class="sub" id="attrSub">Preencha os valores desta geometria.</p>
+    <div id="attrForm"></div>
+    <div class="actions">
+      <button class="tb-btn" id="attrSkip">Pular</button>
+      <button class="tb-btn primary" id="attrSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: inventário arbóreo (ferramenta Árvore) ===== -->
+<div class="modal-back" id="mTree">
+  <button class="tb-btn" style="position:absolute;right:15px;top:15px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;z-index:2001" id="treeCloseX" title="Fechar">✕</button>
+  <div class="modal wide" style="width:560px; max-height:92vh; overflow:auto">
+    <h3>Registro de árvore</h3>
+    <p class="sub">Anexe ou tire uma foto do indivíduo. A identificação por imagem (Pl@ntNet) pré-preenche espécie e família; as fotos de referência (GBIF) ajudam a confirmar visualmente. A identificação é sempre uma <b>sugestão</b> — confirme antes de salvar.</p>
+
+    <input type="file" id="treePhotoInput" accept="image/*" capture="environment" hidden>
+    <div class="tree-photo-box" id="treePhotoBox">
+      <div id="treePhotoHint">📷 Toque para tirar foto ou anexar imagem<br><small style="color:var(--muted)">folha, flor, fruto ou casca — quanto mais nítido, melhor</small></div>
+    </div>
+
+    <div class="tree-organs" id="treeOrgans">
+      <span style="font-size:11px;color:var(--muted);align-self:center;margin-right:2px">Órgão:</span>
+      <button data-organ="auto" class="on">auto</button>
+      <button data-organ="leaf">folha</button>
+      <button data-organ="flower">flor</button>
+      <button data-organ="fruit">fruto</button>
+      <button data-organ="bark">casca</button>
+    </div>
+
+    <div class="tree-photo-actions">
+      <button class="tb-btn primary" id="treeIdentify" disabled>🔎 Identificar espécie</button>
+      <button class="tb-btn" id="treeApiKeyBtn" title="Configurar chave Pl@ntNet">🔑 Chave</button>
+    </div>
+
+    <div id="treeIdStatus" style="font-size:12px;color:var(--muted)"></div>
+    <div id="treeResults"></div>
+    <div id="treeGbif"></div>
+
+    <div class="tree-sec-title">Atributos do indivíduo</div>
+    <div id="treeForm"></div>
+
+    <div class="actions" style="justify-content:space-between; margin-top:12px">
+      <button class="tb-btn" id="treeSkip">Salvar sem atributos</button>
+      <button class="tb-btn primary" id="treeSave">Salvar árvore</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: busca em catálogos ===== -->
+<div class="modal-back" id="mCatalog">
+  <button class="tb-btn" style="position:absolute;right:15px;top:15px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;z-index:2001" data-close title="Fechar">✕</button>
+  <div class="modal wide" style="width:560px">
+    <h3 id="catTitle">Busca inteligente em catálogos</h3>
+    <p class="sub" id="catSub">Pesquise camadas publicadas em serviços OGC de catálogos conhecidos. Demarque um retângulo no mapa para restringir a busca à sua região de interesse.</p>
+    <div class="field"><label>Termos de busca</label><input type="text" id="catTerm" placeholder="Ex.: hidrografia, uso do solo, app, imóveis, carta náutica…"></div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <button class="tb-btn" id="catDrawBBox">▭ Demarcar região no mapa</button>
+      <button class="tb-btn" id="catClearBBox" style="display:none">✕ Limpar região</button>
+      <span id="bboxInfo">Nenhuma região demarcada (busca sem filtro espacial).</span>
+    </div>
+    <div class="group-title" style="margin-left:0">Catálogos</div>
+    <div id="catList"></div>
+    <details style="margin:8px 0">
+      <summary style="font-size:12px; color:var(--muted); cursor:pointer">+ Adicionar catálogo personalizado (URL de GeoServer/OWS)</summary>
+      <div class="grid2" style="margin-top:8px">
+        <div class="field"><label>Nome</label><input type="text" id="catNewName" placeholder="Ex.: GeoServer municipal"></div>
+        <div class="field"><label>URL do serviço OWS</label><input type="text" id="catNewUrl" placeholder="https://…/geoserver/ows"></div>
+      </div>
+      <button class="tb-btn" id="catNewAdd">Adicionar catálogo</button>
+    </details>
+    <div class="actions" style="justify-content:space-between; margin-top:10px">
+      <button class="tb-btn" data-close>Fechar</button>
+      <button class="tb-btn primary" id="catGo">Buscar camadas</button>
+    </div>
+    <div id="catResults"></div>
+  </div>
+</div>
+
+<!-- ===== Modal: mover para grupo ===== -->
+<div class="modal-back" id="mGroupPick">
+  <div class="modal">
+    <h3>Mover para grupo</h3>
+    <p class="sub" id="gpSub"></p>
+    <div id="gpList"></div>
+    <div class="actions"><button class="tb-btn" data-close>Cancelar</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: projeto ===== -->
+<div class="modal-back" id="mProject">
+  <div class="modal">
+    <h3>Projeto</h3>
+    <p class="sub">O projeto (camadas vetoriais com atributos, rasters, mapa base e enquadramento) é <b>salvo automaticamente no navegador</b> e restaurado ao reabrir a página. Use o arquivo .geomatias.json para backup ou para levar o projeto a outro dispositivo.</p>
+    <div class="field"><label>Nome do projeto</label><input type="text" id="prjName" value="meu_projeto"></div>
+    <button class="tb-btn add-raster" id="prjSaveFile">Salvar projeto em arquivo (.geomatias.json)</button>
+    <button class="tb-btn add-raster" id="prjOpenFile">Abrir projeto de arquivo</button>
+    <input type="file" id="prjFileInput" accept=".json,.geoatlas.json,.geomatias.json" hidden>
+    <button class="tb-btn add-raster" id="prjClear" style="border-color:var(--danger); color:var(--danger)">Limpar projeto (apagar tudo)</button>
+    <div class="empty-hint" id="prjInfo" style="margin-top:10px"></div>
+    <div class="actions"><button class="tb-btn primary" data-close>Fechar</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal: tabela de atributos ===== -->
+<div class="modal-back" id="mTable">
+  <div class="modal wide">
+    <h3 id="atTitle">Tabela de atributos</h3>
+    <p class="sub" id="atSub">Edite os valores diretamente nas células — as alterações são salvas automaticamente. Use ⌖ para localizar a feição no mapa e ✕ para removê-la.</p>
+    <div id="atWrap"><table id="atTable"></table></div>
+    <div id="atStats"></div>
+    <div class="actions">
+      <button class="tb-btn" id="atSchema">☰ Editar atributos da camada</button>
+      <button class="tb-btn primary" data-close>Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Print sheet (only visible on print) ===== -->
+<div id="printSheet">
+  <div class="p-head">
+    <h1 id="psTitle">Mapa</h1>
+    <div class="p-meta" id="psMeta"></div>
+  </div>
+  <div class="p-map"><img id="psImg" alt="Mapa"></div>
+  <div class="p-bottom">
+    <div class="p-desc" id="psDesc"></div>
+    <div class="p-legend">
+      <h4>LEGENDA</h4>
+      <div id="psLegend"></div>
+      <div style="margin-top:4mm; display:flex; align-items:center; gap:4mm">
+        <svg width="26" height="34" viewBox="0 0 40 46"><polygon points="20,2 28,34 20,28" fill="#000"/><polygon points="20,2 12,34 20,28" fill="#fff" stroke="#000" stroke-width="1"/></svg>
+        <div style="font-size:8pt" id="psScaleTxt"></div>
+      </div>
+    </div>
+  </div>
+  <div class="p-foot">
+    <span id="psAuthor"></span>
+    <span>Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias WebGIS</span>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   GeoAtlas WebGIS — arquivo único
+   ========================================================= */
+'use strict';
+
+/* ---------- Tradução do Leaflet.draw (pt-BR) ---------- */
+L.drawLocal.draw.handlers.polygon.tooltip = {
+  start:'Clique para iniciar o polígono.',
+  cont:'Clique para adicionar um vértice.',
+  end:'Clique no primeiro vértice para fechar o polígono.'
+};
+L.drawLocal.draw.handlers.polyline.tooltip = {
+  start:'Clique para iniciar a linha.',
+  cont:'Clique para adicionar um vértice.',
+  end:'Clique no último vértice (ou dê duplo clique) para finalizar.'
+};
+L.drawLocal.draw.handlers.polyline.error = '<strong>Erro:</strong> as arestas não podem se cruzar.';
+L.drawLocal.draw.handlers.marker.tooltip.start = 'Clique no mapa para inserir o ponto.';
+L.drawLocal.draw.handlers.simpleshape = { tooltip:{ end:'Solte para finalizar.' } };
+L.drawLocal.edit.handlers.edit.tooltip = { text:'Arraste os vértices ou marcadores para editar.', subtext:'Toque na ferramenta novamente para salvar.' };
+L.drawLocal.edit.handlers.remove.tooltip = { text:'Clique em uma feição para removê-la.' };
+
+/* Customização das linhas de medição */
+const style = document.createElement('style');
+style.textContent = `
+  .leaflet-draw-layer path {
+    stroke: #37c2a0 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 2px 6px rgba(55, 194, 160, 0.5));
+  }
+  
+  .leaflet-measure-line {
+    stroke: #37c2a0 !important;
+    stroke-width: 3 !important;
+    opacity: 0.95 !important;
+  }
+  
+  .leaflet-editing-icon {
+    box-shadow: 0 0 0 3px rgba(55, 194, 160, 0.3), 0 0 0 1.5px #37c2a0 !important;
+  }
+`;
+document.head.appendChild(style);
+
+
+/* ---------- Mapa ---------- */
+const map = L.map('map', { zoomControl:true, attributionControl:true, preferCanvas:false })
+  .setView([-14.2, -51.9], 5);
+L.control.scale({ imperial:false, position:'bottomright' }).addTo(map);
+
+/* ---------- Bases ---------- */
+const bases = {
+  'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom:19, attribution:'© OpenStreetMap contributors' }),
+  'Google Ruas': L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    { maxZoom:21, subdomains:['0','1','2','3'], attribution:'© Google' }),
+  'Google Satélite': L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    { maxZoom:21, subdomains:['0','1','2','3'], attribution:'© Google' }),
+  'Google Híbrido': L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    { maxZoom:21, subdomains:['0','1','2','3'], attribution:'© Google' }),
+  'Google Terreno': L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+    { maxZoom:21, subdomains:['0','1','2','3'], attribution:'© Google' }),
+  'Esri Imagens': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom:19, attribution:'© Esri' }),
+  'Carto Claro': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    { maxZoom:20, attribution:'© CARTO © OSM' }),
+  'Sem base': L.tileLayer('', { attribution:'' })
+};
+let currentBase = bases['OpenStreetMap'].addTo(map);
+let currentBaseName = 'OpenStreetMap';
+
+const baseList = document.getElementById('baseList');
+Object.keys(bases).forEach(name=>{
+  const row = document.createElement('label');
+  row.className = 'layer-row';
+  row.innerHTML = `<input type="radio" name="base" ${name===currentBaseName?'checked':''}><span class="name">${name}</span>`;
+  row.querySelector('input').addEventListener('change', ()=>{
+    map.removeLayer(currentBase);
+    currentBase = bases[name].addTo(map);
+    currentBase.bringToBack();
+    currentBaseName = name;
+    if(typeof scheduleSave==='function') scheduleSave();
+  });
+  baseList.appendChild(row);
+});
+
+/* ---------- Estado de camadas ---------- */
+let layerSeq = 0;
+const vectorLayers = [];   // {id, name, color, group(L.FeatureGroup), visible}
+const rasterLayers = [];   // {id, name, layer, visible}
+const measureGroup = L.featureGroup().addTo(map);
+
+const PALETTE = ['#37c2a0','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c'];
+const GEOM_LABEL = { point:'Ponto', line:'Linha', polygon:'Polígono', mixed:'Misto' };
+
+/* Uma camada = tipo de geometria único + esquema de atributos único, compartilhados por todas as suas feições. */
+function newVectorLayer(name, geomType='mixed', fields=[], color){
+  color = color || PALETTE[vectorLayers.length % PALETTE.length];
+  const lyr = { id:++layerSeq, name, color, geomType, fields, group:L.featureGroup().addTo(map), visible:true };
+  vectorLayers.push(lyr);
+  return lyr;
+}
+let activeLayer = null; // camada vetorial ativa (recebe os desenhos)
+function setActiveLayer(lyr){ activeLayer = lyr; renderVectorList(); }
+
+/* Camada compatível com a ferramenta de desenho corrente */
+function toolGeom(tool){ return (tool==='point'||tool==='tree') ? 'point' : (tool==='polygon' ? 'polygon' : 'line'); }
+function targetLayerFor(tool){
+  const g = toolGeom(tool);
+  if(activeLayer && vectorLayers.includes(activeLayer) && activeLayer.geomType===g) return activeLayer;
+  return null; // sem camada compatível: será criada após o desenho
+}
+
+function styleFor(lyr){
+  return { color:lyr.color, weight:3, fillColor:lyr.color, fillOpacity:.25 };
+}
+function pointMarker(latlng, lyr){
+  return L.circleMarker(latlng, { radius:7, color:'#fff', weight:2, fillColor:lyr.color, fillOpacity:1 });
+}
+
+/* ---------- Grupos (pastas de camadas) ---------- */
+const groups = []; // {id, name, color, collapsed, editing}
+let groupSeq = 0;
+const GRP_PALETTE = ['#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#37c2a0','#e5673f','#f08a3c'];
+function groupById(id){ return groups.find(g=>g.id===id) || null; }
+
+/* cria grupo com edição do nome inline (sem popup) */
+function createGroupInline(assignItem){
+  const g = { id:++groupSeq, name:'', color:GRP_PALETTE[groups.length % GRP_PALETTE.length], collapsed:false, editing:true, _assign:assignItem||null };
+  groups.push(g);
+  renderVectorList(); renderRasterList();
+  const inp = document.querySelector('.gname-input[data-gid="'+g.id+'"]');
+  if(inp){ inp.focus(); inp.select && inp.select(); }
+}
+function commitGroupName(g, value){
+  g.name = (value||'').trim() || ('Grupo '+g.id);
+  g.editing = false;
+  if(g._assign){ g._assign.groupId = g.id; g._assign = null; }
+  renderVectorList(); renderRasterList();
+}
+function deleteGroup(g){
+  if(!confirm('Excluir o grupo "'+g.name+'"? As camadas dele voltam para "Sem grupo".')) return;
+  vectorLayers.forEach(l=>{ if(l.groupId===g.id) l.groupId=null; });
+  rasterLayers.forEach(r=>{ if(r.groupId===g.id) r.groupId=null; });
+  groups.splice(groups.indexOf(g),1);
+  renderVectorList(); renderRasterList();
+}
+
+/* mover para grupo (botão 📁 — alternativa ao arrastar, útil no celular) */
+let gpTarget = null;
+function openGroupPick(item, kind){
+  gpTarget = {item, kind};
+  document.getElementById('gpSub').textContent = 'Escolha o grupo (pasta) da camada "'+item.name+'". Dica: no computador você também pode arrastar a camada até o grupo.';
+  const el = document.getElementById('gpList');
+  el.innerHTML = '';
+  const mk = (label, color, id)=>{
+    const row = document.createElement('div');
+    row.className = 'layer-row';
+    row.style.cursor = 'pointer';
+    row.style.borderLeft = '3px solid ' + (color||'transparent');
+    row.innerHTML = `<span class="name">${label}</span>` + (item.groupId===id?'<span class="badge">atual</span>':'');
+    row.addEventListener('click', ()=>{
+      item.groupId = id;
+      close('mGroupPick');
+      renderVectorList(); renderRasterList();
+    });
+    el.appendChild(row);
+  };
+  mk('— Sem grupo —', null, null);
+  groups.forEach(g=>mk(g.name, g.color, g.id));
+  const nv = document.createElement('div');
+  nv.className = 'layer-row';
+  nv.style.cursor = 'pointer';
+  nv.innerHTML = '<span class="name" style="color:var(--accent)">＋ Novo grupo…</span>';
+  nv.addEventListener('click', ()=>{ close('mGroupPick'); createGroupInline(gpTarget.item); });
+  el.appendChild(nv);
+  open('mGroupPick');
+}
+
+/* ---------- Drag & drop de camadas para grupos ---------- */
+let dragItem = null; // {kind:'vector'|'raster', id}
+function itemByRef(ref){
+  if(!ref) return null;
+  return ref.kind==='vector' ? vectorLayers.find(l=>l.id===ref.id) : rasterLayers.find(r=>r.id===ref.id);
+}
+function makeDraggable(row, kind, id){
+  row.draggable = true;
+  row.addEventListener('dragstart', e=>{
+    dragItem = {kind, id};
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', kind+':'+id);
+  });
+  row.addEventListener('dragend', ()=>{ dragItem=null; row.classList.remove('dragging'); document.querySelectorAll('.dropover').forEach(x=>x.classList.remove('dropover')); });
+}
+function makeDropTarget(el, groupId){
+  el.addEventListener('dragover', e=>{ if(dragItem){ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('dropover'); } });
+  el.addEventListener('dragleave', ()=>el.classList.remove('dropover'));
+  el.addEventListener('drop', e=>{
+    e.preventDefault(); e.stopPropagation();
+    el.classList.remove('dropover');
+    const it = itemByRef(dragItem); dragItem=null;
+    if(!it) return;
+    it.groupId = groupId;
+    renderVectorList(); renderRasterList();
+    status(groupId ? 'Camada movida para "'+groupById(groupId).name+'".' : 'Camada removida do grupo.');
+  });
+}
+
+/* ---------- Detalhes: descrição, metadados e legenda ---------- */
+function fmtBBox(b){ return b ? b.map(x=>(+x).toFixed(3)).join(', ') : '—'; }
+function buildDetail(item, kind){
+  const d = document.createElement('div');
+  d.className = 'layer-detail';
+  const meta = item.meta || item.def || {};
+  const abstract = meta.abstract || '';
+  let html = '';
+  if(abstract){
+    html += `<div class="d-title">Descrição</div>
+      <div class="d-abs clamp">${abstract}</div>
+      <span class="d-more">expandir descrição ▾</span>`;
+  } else {
+    html += `<div class="d-abs" style="color:var(--muted)">Sem descrição disponível.</div>`;
+  }
+  html += '<div class="d-title">Metadados</div><table>';
+  if(kind==='raster'){
+    const def = item.def || {};
+    const tipo = def.type==='wms' ? 'WMS (serviço de mapa)' : def.type==='xyz' ? 'Tiles XYZ' : 'Imagem georreferenciada';
+    html += `<tr><td>Tipo</td><td>${tipo}</td></tr>`;
+    if(def.url) html += `<tr><td>Serviço</td><td>${def.url}</td></tr>`;
+    if(def.layers) html += `<tr><td>Camada</td><td>${def.layers}</td></tr>`;
+    if(meta.source) html += `<tr><td>Fonte</td><td>${meta.source}</td></tr>`;
+    if(meta.bbox) html += `<tr><td>Abrangência</td><td>${fmtBBox(meta.bbox)} (O, S, L, N)</td></tr>`;
+    if(def.bounds) html += `<tr><td>Limites</td><td>${def.bounds.map(p=>p.map(x=>(+x).toFixed(4)).join(', ')).join(' — ')}</td></tr>`;
+    html += `<tr><td>Opacidade</td><td>${Math.round((def.opacity??1)*100)}%</td></tr>`;
+  } else {
+    html += `<tr><td>Tipo</td><td>${GEOM_LABEL[item.geomType]||item.geomType} (vetorial)</td></tr>`;
+    html += `<tr><td>Feições</td><td>${item.group.getLayers().length}</td></tr>`;
+    html += `<tr><td>Atributos</td><td>${item.fields.length ? item.fields.map(f=>f.name).join(', ') : '—'}</td></tr>`;
+    if(meta.source) html += `<tr><td>Fonte</td><td>${meta.source}</td></tr>`;
+    if(meta.typeName) html += `<tr><td>Camada WFS</td><td>${meta.typeName}</td></tr>`;
+    const b = item.group.getBounds();
+    if(b.isValid()) html += `<tr><td>Abrangência</td><td>${[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(x=>x.toFixed(3)).join(', ')} (O, S, L, N)</td></tr>`;
+  }
+  html += '</table>';
+
+  // legenda
+  html += '<div class="d-title">Legenda</div><div class="d-legend">';
+  if(kind==='raster' && item.def && item.def.type==='wms'){
+    const legUrl = item.def.url + (item.def.url.includes('?')?'&':'?') +
+      'service=WMS&request=GetLegendGraphic&format=image%2Fpng&version=1.1.1&layer=' + encodeURIComponent(item.def.layers) +
+      '&legend_options=fontColor:0x000000;fontSize:11;dpi:96';
+    html += `<img src="${legUrl}" alt="Legenda de ${item.name}" loading="lazy"
+      onerror="this.outerHTML='<span style=&quot;color:var(--muted)&quot;>Legenda não disponível no servidor.</span>'">`;
+  } else if(kind==='raster'){
+    html += '<span style="color:var(--muted)">Camadas XYZ/imagem não publicam legenda gráfica.</span>';
+  } else {
+    const cls = item.geomType==='point' ? 'border-radius:50%; width:12px; height:12px' :
+                item.geomType==='line' ? 'width:22px; height:3px' : 'width:16px; height:12px; opacity:.85';
+    html += `<span style="display:inline-flex; align-items:center; gap:8px">
+      <span style="display:inline-block; background:${item.color}; border:1px solid rgba(255,255,255,.4); ${cls}"></span>
+      ${item.name} — ${GEOM_LABEL[item.geomType]?.toLowerCase()||''}</span>`;
+  }
+  html += '</div>';
+  d.innerHTML = html;
+  const more = d.querySelector('.d-more');
+  if(more) more.addEventListener('click', ()=>{
+    const abs = d.querySelector('.d-abs');
+    const clamped = abs.classList.toggle('clamp');
+    more.textContent = clamped ? 'expandir descrição ▾' : 'recolher descrição ▴';
+  });
+  return d;
+}
+
+/* Renderização agrupada genérica */
+function renderGrouped(el, items, buildRow, kind, emptyHtml, preHtml){
+  el.innerHTML = '';
+  makeDropTarget(el, null); // soltar no fundo da lista = sem grupo
+  if(!items.length && !groups.length){ el.innerHTML = emptyHtml; return; }
+  if(preHtml) el.insertAdjacentHTML('beforeend', preHtml);
+  const renderSet = (list, container)=>list.forEach(it=>{
+    const row = buildRow(it);
+    makeDraggable(row, kind, it.id);
+    container.appendChild(row);
+    if(it.expanded) container.appendChild(buildDetail(it, kind));
+  });
+  const loose = items.filter(i=>!i.groupId || !groupById(i.groupId));
+  renderSet(loose, el);
+  groups.forEach(g=>{
+    const inG = items.filter(i=>i.groupId===g.id);
+    const head = document.createElement('div');
+    head.className = 'grp-head' + (g.collapsed?' closed':'');
+    head.style.borderTopColor = g.color;
+    if(g.editing){
+      head.innerHTML = `<span class="arrow">▼</span>
+        <input class="gname-input" data-gid="${g.id}" placeholder="Nome do grupo…" value="${g.name}">
+        <input type="color" class="gcolor" value="${g.color}" title="Cor do grupo">
+        <button class="icon-btn" title="Excluir grupo">✕</button>`;
+      const inp = head.querySelector('.gname-input');
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') commitGroupName(g, inp.value); if(e.key==='Escape') commitGroupName(g, g.name||inp.value); });
+      inp.addEventListener('blur', ()=>commitGroupName(g, inp.value));
+      inp.addEventListener('click', e=>e.stopPropagation());
+    } else {
+      head.innerHTML = `<span class="arrow">▼</span>
+        <span class="gname" style="color:${g.color}" title="Clique para renomear">📁 ${g.name}</span>
+        <input type="color" class="gcolor" value="${g.color}" title="Cor do grupo">
+        <span class="gcount">${inG.length}</span>
+        <button class="icon-btn" title="Excluir grupo">✕</button>`;
+      head.querySelector('.gname').addEventListener('click', e=>{
+        e.stopPropagation();
+        g.editing = true;
+        renderVectorList(); renderRasterList();
+        const inp = document.querySelector('.gname-input[data-gid="'+g.id+'"]');
+        if(inp){ inp.focus(); inp.select(); }
+      });
+    }
+    const colorIn = head.querySelector('.gcolor');
+    colorIn.addEventListener('click', e=>e.stopPropagation());
+    colorIn.addEventListener('input', ()=>{ g.color = colorIn.value; renderVectorList(); renderRasterList(); });
+    head.querySelector('.icon-btn').addEventListener('click', e=>{ e.stopPropagation(); deleteGroup(g); });
+    head.addEventListener('click', e=>{
+      if(e.target.closest('.gname-input')) return;
+      g.collapsed=!g.collapsed; renderVectorList(); renderRasterList();
+    });
+    makeDropTarget(head, g.id);
+    el.appendChild(head);
+    if(!g.collapsed){
+      const body = document.createElement('div');
+      body.className = 'grp-body';
+      body.style.borderLeft = '2px solid ' + g.color;
+      body.style.paddingLeft = '6px';
+      if(!inG.length) body.innerHTML = '<div class="empty-hint">Grupo vazio — arraste camadas para cá.</div>';
+      renderSet(inG, body);
+      makeDropTarget(body, g.id);
+      el.appendChild(body);
+    }
+  });
+}
+
+/* ---------- Painel: listas ---------- */
+function buildVectorRow(lyr){
+  const row = document.createElement('div');
+  row.className = 'layer-row' + (lyr===activeLayer ? ' active-layer' : '');
+  const n = lyr.group.getLayers().length;
+  row.innerHTML =
+    `<input type="checkbox" ${lyr.visible?'checked':''} title="Exibir">
+     <input type="color" class="swatch" value="${lyr.color}" title="Cor da camada">
+     <span class="name" title="Tornar ativa — ${lyr.name}">${lyr.name} <span style="color:var(--muted)">(${n})</span></span>
+     <span class="badge">${GEOM_LABEL[lyr.geomType]||lyr.geomType}</span>
+     <button class="icon-btn zoom info" title="Legenda, descrição e metadados">${lyr.expanded?'▴':'ℹ'}</button>
+     <button class="icon-btn zoom fit" title="Zoom para a camada">⌖</button>
+     <button class="icon-btn zoom table" title="Tabela de atributos">▦</button>
+     <button class="icon-btn zoom schema" title="Atributos da camada">☰</button>
+     <button class="icon-btn zoom folder" title="Mover para grupo">📁</button>
+     <button class="icon-btn" title="Remover">✕</button>`;
+  const [chk, colorIn] = [row.children[0], row.children[1]];
+  row.querySelector('.name').addEventListener('click', ()=>{
+    setActiveLayer(lyr);
+    status('Camada ativa: '+lyr.name);
+  });
+  chk.addEventListener('change', ()=>{
+    lyr.visible = chk.checked;
+    chk.checked ? map.addLayer(lyr.group) : map.removeLayer(lyr.group);
+    scheduleSave();
+  });
+  colorIn.addEventListener('input', ()=>{
+    lyr.color = colorIn.value;
+    lyr.group.eachLayer(l=>{
+      if(l.setStyle) l.setStyle(l instanceof L.CircleMarker ? {fillColor:lyr.color} : styleFor(lyr));
+    });
+    scheduleSave();
+  });
+  row.querySelector('.info').addEventListener('click', ()=>{ lyr.expanded = !lyr.expanded; renderVectorList(); });
+  row.querySelector('.folder').addEventListener('click', ()=>openGroupPick(lyr, 'vector'));
+  row.querySelector('.fit').addEventListener('click', ()=>{
+    const b = lyr.group.getBounds();
+    if(b.isValid()) map.fitBounds(b.pad(.2));
+  });
+  row.querySelector('.schema').addEventListener('click', ()=>openSchemaEditor(lyr));
+  row.querySelector('.table').addEventListener('click', ()=>openAttrTable(lyr));
+  row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
+    if(lyr.group.getLayers().length && !confirm(`Remover a camada "${lyr.name}" e suas ${lyr.group.getLayers().length} geometrias?`)) return;
+    map.removeLayer(lyr.group);
+    vectorLayers.splice(vectorLayers.indexOf(lyr),1);
+    if(activeLayer===lyr) activeLayer=null;
+    renderVectorList();
+  });
+  return row;
+}
+function renderVectorList(){
+  renderGrouped(
+    document.getElementById('vectorList'),
+    vectorLayers,
+    buildVectorRow,
+    'vector',
+    '<div class="empty-hint">Crie uma camada e desenhe, ou importe SHP / KML / KMZ.</div>',
+    vectorLayers.length ? '<div class="empty-hint" style="padding:2px 4px 8px">Toque no nome de uma camada para torná-la <b style="color:var(--accent)">ativa</b>. Arraste camadas para os grupos.</div>' : ''
+  );
+  if(typeof scheduleSave==='function') scheduleSave();
+}
+
+function buildRasterRow(r){
+  const row = document.createElement('div');
+  row.className = 'layer-row';
+  row.innerHTML =
+    `<input type="checkbox" ${r.visible?'checked':''}>
+     <span class="name" title="${r.name}">${r.name}</span>
+     <button class="icon-btn zoom info" title="Legenda, descrição e metadados">${r.expanded?'▴':'ℹ'}</button>
+     <button class="icon-btn zoom folder" title="Mover para grupo">📁</button>
+     <button class="icon-btn" title="Remover">✕</button>`;
+  row.children[0].addEventListener('change', e=>{
+    r.visible = e.target.checked;
+    r.visible ? map.addLayer(r.layer) : map.removeLayer(r.layer);
+    scheduleSave();
+  });
+  row.querySelector('.info').addEventListener('click', ()=>{ r.expanded = !r.expanded; renderRasterList(); });
+  row.querySelector('.folder').addEventListener('click', ()=>openGroupPick(r, 'raster'));
+  row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
+    map.removeLayer(r.layer);
+    rasterLayers.splice(rasterLayers.indexOf(r),1);
+    renderRasterList();
+  });
+  return row;
+}
+function renderRasterList(){
+  renderGrouped(
+    document.getElementById('rasterList'),
+    rasterLayers,
+    buildRasterRow,
+    'raster',
+    '<div class="empty-hint">Nenhum raster adicionado.</div>',
+    ''
+  );
+  if(typeof scheduleSave==='function') scheduleSave();
+}
+
+/* ---------- Barra de status ---------- */
+const fmt = n => n.toFixed(6);
+map.on('mousemove', e=>{
+  document.getElementById('stLat').textContent = fmt(e.latlng.lat);
+  document.getElementById('stLon').textContent = fmt(e.latlng.lng);
+});
+function updZoom(){ document.getElementById('stZoom').textContent = map.getZoom(); }
+map.on('zoomend', updZoom); updZoom();
+function status(msg){ const el=document.getElementById('stMsg'); el.textContent=msg||''; if(msg) setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 5000); }
+
+/* ---------- Utilidades geodésicas ---------- */
+const R = 6371008.8;
+function distM(a,b){
+  const φ1=a.lat*Math.PI/180, φ2=b.lat*Math.PI/180;
+  const dφ=(b.lat-a.lat)*Math.PI/180, dλ=(b.lng-a.lng)*Math.PI/180;
+  const h = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function pathLength(latlngs){
+  let d=0; for(let i=1;i<latlngs.length;i++) d+=distM(latlngs[i-1],latlngs[i]); return d;
+}
+function ringArea(latlngs){ // área esférica (m²)
+  if(latlngs.length<3) return 0;
+  const rad = x=>x*Math.PI/180; let s=0; const n=latlngs.length;
+  for(let i=0;i<n;i++){
+    const p1=latlngs[i], p2=latlngs[(i+1)%n];
+    s += rad(p2.lng-p1.lng) * (2 + Math.sin(rad(p1.lat)) + Math.sin(rad(p2.lat)));
+  }
+  return Math.abs(s * R * R / 2);
+}
+function fmtDist(m){ return m>=1000 ? (m/1000).toFixed(2)+' km' : m.toFixed(1)+' m'; }
+function fmtArea(m2){
+  if(m2>=1e6) return (m2/1e6).toFixed(3)+' km²';
+  if(m2>=1e4) return (m2/1e4).toFixed(3)+' ha';
+  return m2.toFixed(1)+' m²';
+}
+
+/* ---------- Curva Catmull-Rom ---------- */
+function smoothCurve(pts, seg=12){
+  if(pts.length<3) return pts;
+  const P = [pts[0], ...pts, pts[pts.length-1]];
+  const out = [];
+  for(let i=0;i<P.length-3;i++){
+    const [p0,p1,p2,p3] = [P[i],P[i+1],P[i+2],P[i+3]];
+    for(let t=0;t<seg;t++){
+      const u=t/seg, u2=u*u, u3=u2*u;
+      out.push(L.latLng(
+        0.5*((2*p1.lat)+(-p0.lat+p2.lat)*u+(2*p0.lat-5*p1.lat+4*p2.lat-p3.lat)*u2+(-p0.lat+3*p1.lat-3*p2.lat+p3.lat)*u3),
+        0.5*((2*p1.lng)+(-p0.lng+p2.lng)*u+(2*p0.lng-5*p1.lng+4*p2.lng-p3.lng)*u2+(-p0.lng+3*p1.lng-3*p2.lng+p3.lng)*u3)
+      ));
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+
+/* ---------- Atributos por camada ---------- */
+const TYPE_LABEL = { text:'texto', number:'número', select:'lista', checkbox:'sim/não', timestamp:'data/hora' };
+let schemaLayer = null; // camada cujo esquema está sendo editado no mFields
+
+function readFieldInputs(prefix){
+  const name = document.getElementById(prefix+'Name').value.trim();
+  const type = document.getElementById(prefix+'Type').value;
+  if(!name){ alert('Informe o nome do atributo.'); return null; }
+  let options = [];
+  if(type==='select'){
+    options = document.getElementById(prefix+'Opts').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!options.length){ alert('Informe ao menos uma opção para a lista.'); return null; }
+  }
+  const required = document.getElementById(prefix+'Req').checked && type!=='timestamp';
+  return { name, type, options, required };
+}
+function clearFieldInputs(prefix){
+  document.getElementById(prefix+'Name').value='';
+  document.getElementById(prefix+'Opts').value='';
+  document.getElementById(prefix+'Req').checked=false;
+}
+function renderFields(el, fields, onRemove){
+  el.innerHTML = '';
+  if(!fields.length){ el.innerHTML='<div class="empty-hint">Nenhum atributo definido.</div>'; return; }
+  fields.forEach((f,i)=>{
+    const row = document.createElement('div');
+    row.className = 'fld-row';
+    row.innerHTML = `<span class="fname">${f.name}${f.required?' <span style="color:var(--danger)">*</span>':''}</span>
+      <span class="ftype">${TYPE_LABEL[f.type]}</span>
+      <button class="icon-btn" title="Remover atributo">✕</button>
+      ${f.type==='select' ? `<span class="fld-opts">Opções: ${f.options.join(', ')}</span>` : ''}`;
+    row.querySelector('.icon-btn').addEventListener('click', ()=>onRemove(i));
+    el.appendChild(row);
+  });
+}
+
+/* Editor do esquema de uma camada existente (botão ☰ na lista, ou "Atributos" na barra p/ camada ativa) */
+function openSchemaEditor(lyr){
+  schemaLayer = lyr;
+  document.querySelector('#mFields h3').textContent = 'Atributos — camada "'+lyr.name+'"';
+  document.querySelector('#mFields .sub').textContent =
+    'Todas as geometrias desta camada compartilham estes atributos. Alterações valem para feições novas e existentes.';
+  renderSchemaList();
+  open('mFields');
+}
+function renderSchemaList(){
+  renderFields(document.getElementById('fldList'), schemaLayer.fields, i=>{
+    const f = schemaLayer.fields.splice(i,1)[0];
+    schemaLayer.group.eachLayer(l=>{ if(l.feature?.properties) delete l.feature.properties[f.name]; });
+    renderSchemaList();
+  });
+}
+document.getElementById('btnFields').addEventListener('click', ()=>{
+  if(!activeLayer){ alert('Nenhuma camada vetorial ativa. Crie ou selecione uma camada na aba "Vetores".'); return; }
+  openSchemaEditor(activeLayer);
+});
+document.getElementById('fldType').addEventListener('change', e=>{
+  document.getElementById('fldOptsWrap').style.display = e.target.value==='select' ? '' : 'none';
+});
+document.getElementById('fldAdd').addEventListener('click', ()=>{
+  const f = readFieldInputs('fld'); if(!f) return;
+  if(schemaLayer.fields.some(x=>x.name.toLowerCase()===f.name.toLowerCase())){ alert('Já existe um atributo com esse nome.'); return; }
+  schemaLayer.fields.push(f);
+  clearFieldInputs('fld');
+  renderSchemaList();
+});
+
+/* ---------- Nova camada vetorial (manual ou pós-desenho) ---------- */
+let nlFields = [];        // esquema em construção
+let nlPending = null;     // {layer, tool} geometria desenhada aguardando camada
+document.getElementById('btnNewLayer').addEventListener('click', ()=>openNewLayerModal(null));
+document.getElementById('nlFldType').addEventListener('change', e=>{
+  document.getElementById('nlFldOptsWrap').style.display = e.target.value==='select' ? '' : 'none';
+});
+document.getElementById('nlFldAdd').addEventListener('click', ()=>{
+  const f = readFieldInputs('nlFld'); if(!f) return;
+  if(nlFields.some(x=>x.name.toLowerCase()===f.name.toLowerCase())){ alert('Já existe um atributo com esse nome.'); return; }
+  nlFields.push(f);
+  clearFieldInputs('nlFld');
+  renderNlFields();
+});
+function renderNlFields(){
+  renderFields(document.getElementById('nlFldList'), nlFields, i=>{ nlFields.splice(i,1); renderNlFields(); });
+  renderNlValues();
+}
+function renderNlValues(){
+  const wrap = document.getElementById('nlValuesWrap');
+  if(!nlPending){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  const el = document.getElementById('nlValues');
+  el.innerHTML = nlFields.length ? '' : '<div class="empty-hint">Adicione atributos acima para preencher valores desta geometria.</div>';
+  nlFields.forEach((f,i)=>{
+    let inner;
+    if(f.type==='text') inner = `<input type="text" data-vi="${i}">`;
+    else if(f.type==='number') inner = `<input type="number" step="any" data-vi="${i}">`;
+    else if(f.type==='select') inner = `<select data-vi="${i}"><option value="">— selecione —</option>${f.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    else if(f.type==='checkbox'){
+      el.insertAdjacentHTML('beforeend', `<div class="attr-check"><input type="checkbox" id="nlv_${i}" data-vi="${i}"><label for="nlv_${i}" style="cursor:pointer">${f.name}</label></div>`);
+      return;
+    }
+    else if(f.type==='timestamp') inner = `<input type="text" data-vi="${i}" value="${nowStamp()}" readonly style="opacity:.7">`;
+    el.insertAdjacentHTML('beforeend',
+      `<div class="field"><label>${f.name}${f.required?' <span style="color:var(--danger)">*</span>':''}</label>${inner}</div>`);
+  });
+}
+function openNewLayerModal(pending){
+  nlPending = pending;
+  nlFields = [];
+  document.getElementById('nlName').value = '';
+  clearFieldInputs('nlFld');
+  document.getElementById('nlColor').value = PALETTE[vectorLayers.length % PALETTE.length];
+  const typeSel = document.getElementById('nlType');
+  if(pending){
+    typeSel.value = toolGeom(pending.tool);
+    typeSel.disabled = true;
+    document.getElementById('nlTitle').textContent = 'Salvar geometria em nova camada';
+    document.getElementById('nlSub').textContent =
+      'A geometria desenhada não pertence a nenhuma camada compatível. Defina a nova camada, seus atributos e os valores desta geometria. Toda geometria precisa ter uma camada.';
+  } else {
+    typeSel.disabled = false;
+    document.getElementById('nlTitle').textContent = 'Nova camada vetorial';
+    document.getElementById('nlSub').textContent =
+      'Toda geometria pertence a uma camada. Todas as geometrias de uma mesma camada compartilham o mesmo tipo e os mesmos atributos.';
+  }
+  renderNlFields();
+  open('mNewLayer');
+}
+document.getElementById('nlCancel').addEventListener('click', ()=>{
+  if(nlPending){
+    if(!confirm('Descartar a geometria desenhada? Ela precisa de uma camada para ser salva.')) return;
+    map.removeLayer(nlPending.layer);
+    nlPending = null;
+    status('Geometria descartada.');
+  }
+  close('mNewLayer');
+});
+document.getElementById('nlSave').addEventListener('click', ()=>{
+  const name = document.getElementById('nlName').value.trim();
+  if(!name){ alert('Informe o nome da camada.'); return; }
+  const geomType = document.getElementById('nlType').value;
+  const color = document.getElementById('nlColor').value;
+
+  // valida valores obrigatórios da geometria pendente
+  const values = {};
+  if(nlPending){
+    let missing = null;
+    document.querySelectorAll('#nlValues [data-vi]').forEach(el=>{
+      const f = nlFields[+el.dataset.vi];
+      let v;
+      if(f.type==='checkbox') v = el.checked;
+      else if(f.type==='number') v = el.value==='' ? '' : +el.value;
+      else v = el.value;
+      if(f.required && (v==='' || v==null) && !missing) missing = f.name;
+      values[f.name] = v;
+    });
+    if(missing){ alert('Preencha o atributo obrigatório: '+missing); return; }
+  }
+
+  const lyr = newVectorLayer(name, geomType, nlFields, color);
+  setActiveLayer(lyr);
+
+  if(nlPending){
+    const fl = nlPending.layer;
+    map.removeLayer(fl);
+    if(fl.setStyle) fl.setStyle(fl instanceof L.CircleMarker ? {fillColor:lyr.color} : styleFor(lyr));
+    registerFeature(fl, lyr);
+    Object.assign(fl.feature.properties, values);
+    fl.bindPopup(featurePopup(fl, fl._measureInfo||''));
+    lyr.group.addLayer(fl);
+    pushAction({type:'add', layer:fl, target:lyr});
+    status(`Geometria salva na camada "${name}" ✓`);
+    nlPending = null;
+  } else {
+    status(`Camada "${name}" criada e ativa. Use as ferramentas de desenho.`);
+  }
+  renderVectorList();
+  close('mNewLayer');
+});
+
+/* ---------- Registro de feições + formulário de atributos ---------- */
+let featSeq = 0;
+const featReg = new Map(); // id -> {layer, lyr}
+function registerFeature(layer, lyr){
+  const id = ++featSeq;
+  layer._gaid = id;
+  featReg.set(id, {layer, lyr});
+  layer.feature = layer.feature || { type:'Feature', properties:{} };
+  layer.feature.properties = layer.feature.properties || {};
+  return id;
+}
+function nowStamp(){
+  const d = new Date(), p = n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function featurePopup(layer, extra){
+  const p = (layer.feature && layer.feature.properties) || {};
+  const rows = Object.entries(p).filter(([,v])=>v!==null && v!=='')
+    .map(([k,v])=>`<b>${k}</b>: ${v===true?'sim':v===false?'não':v}`).join('<br>');
+  const reg = layer._gaid ? featReg.get(layer._gaid) : null;
+  const edit = reg && reg.lyr.fields.length
+    ? `<br><button class="ga-editattr" data-gaid="${layer._gaid}" style="margin-top:6px;background:var(--accent);color:#07231c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar atributos</button>`
+    : '';
+  return (extra||'') + (rows ? (extra?'<hr style="border:none;border-top:1px solid #ddd;margin:6px 0">':'') + rows : '') + edit || 'Sem atributos';
+}
+map.on('popupopen', e=>{
+  const btn = e.popup.getElement()?.querySelector('.ga-editattr');
+  if(btn) btn.onclick = ()=>{ map.closePopup(); openAttrForm(+btn.dataset.gaid); };
+});
+
+let attrTargetId = null;
+function openAttrForm(gaid){
+  const reg = featReg.get(gaid);
+  if(!reg || !reg.lyr.fields.length) return;
+  const flds = reg.lyr.fields;
+  attrTargetId = gaid;
+  const props = reg.layer.feature.properties;
+  const formEl = document.getElementById('attrForm');
+  formEl.innerHTML = '';
+  flds.forEach((f,i)=>{
+    const cur = props[f.name];
+    let inner;
+    if(f.type==='text')
+      inner = `<input type="text" data-fi="${i}" value="${cur!=null?String(cur).replace(/"/g,'&quot;'):''}">`;
+    else if(f.type==='number')
+      inner = `<input type="number" step="any" data-fi="${i}" value="${cur!=null?cur:''}">`;
+    else if(f.type==='select')
+      inner = `<select data-fi="${i}"><option value="">— selecione —</option>${f.options.map(o=>`<option ${cur===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    else if(f.type==='checkbox'){
+      formEl.insertAdjacentHTML('beforeend',
+        `<div class="attr-check"><input type="checkbox" id="attr_${i}" data-fi="${i}" ${cur===true?'checked':''}><label for="attr_${i}" style="cursor:pointer">${f.name}</label></div>`);
+      return;
+    }
+    else if(f.type==='timestamp')
+      inner = `<input type="text" data-fi="${i}" value="${cur||nowStamp()}" readonly style="opacity:.7">`;
+    formEl.insertAdjacentHTML('beforeend',
+      `<div class="field"><label>${f.name}${f.required?' <span style="color:var(--danger)">*</span>':''}${f.type==='timestamp'?' (automático)':''}</label>${inner}</div>`);
+  });
+  document.getElementById('attrTitle').textContent = 'Atributos — camada "'+reg.lyr.name+'"';
+  document.getElementById('attrSub').textContent =
+    'Preencha os valores desta geometria. Campos com * são obrigatórios.';
+  open('mAttr');
+}
+document.getElementById('attrSkip').addEventListener('click', ()=>{ attrTargetId=null; close('mAttr'); });
+document.getElementById('attrSave').addEventListener('click', ()=>{
+  const reg = featReg.get(attrTargetId);
+  if(!reg){ close('mAttr'); return; }
+  const flds = reg.lyr.fields;
+  const props = reg.layer.feature.properties;
+  let missing = null;
+  document.querySelectorAll('#attrForm [data-fi]').forEach(el=>{
+    const f = flds[+el.dataset.fi];
+    let v;
+    if(f.type==='checkbox') v = el.checked;
+    else if(f.type==='number') v = el.value==='' ? '' : +el.value;
+    else v = el.value;
+    if(f.required && (v==='' || v==null) && !missing) missing = f.name;
+    props[f.name] = v;
+  });
+  if(missing){ alert('Preencha o campo obrigatório: '+missing); return; }
+  const base = reg.layer._measureInfo || '';
+  reg.layer.bindPopup(featurePopup(reg.layer, base));
+  attrTargetId = null;
+  close('mAttr');
+  status('Atributos salvos ✓');
+  scheduleSave();
+});
+
+/* =========================================================
+   Módulo de inventário arbóreo (ferramenta Árvore)
+   Camada de ponto pré-configurada + identificação por foto
+   (Pl@ntNet) + imagens de referência (GBIF).
+   ========================================================= */
+const TREE_FIELDS = [
+  {name:'codigo', type:'text', options:[], required:false},
+  {name:'especie', type:'text', options:[], required:false},
+  {name:'nome_cientifico', type:'text', options:[], required:false},
+  {name:'familia', type:'text', options:[], required:false},
+  {name:'confianca_id', type:'number', options:[], required:false},
+  {name:'dap_cm', type:'number', options:[], required:false},
+  {name:'altura_m', type:'number', options:[], required:false},
+  {name:'cap_cm', type:'number', options:[], required:false},
+  {name:'estado_fito', type:'select', options:['Saudável','Praga/doença','Danificada','Necessita poda','Morta'], required:false},
+  {name:'observacoes', type:'text', options:[], required:false},
+  {name:'data_registro', type:'timestamp', options:[], required:false},
+  {name:'identificacao_confirmada', type:'checkbox', options:[], required:false}
+];
+const TREE_LABELS = {
+  codigo:'Código do indivíduo', especie:'Espécie (nome comum)', nome_cientifico:'Nome científico',
+  familia:'Família', confianca_id:'Confiança da ID (0–1)', dap_cm:'DAP (cm)', altura_m:'Altura (m)',
+  cap_cm:'CAP (cm)', estado_fito:'Estado fitossanitário', observacoes:'Observações',
+  data_registro:'Data do registro', identificacao_confirmada:'Identificação confirmada por mim'
+};
+function treeLabel(n){ return TREE_LABELS[n] || n; }
+
+let inventoryLayer = null;
+function ensureInventoryLayer(){
+  if(inventoryLayer && vectorLayers.includes(inventoryLayer)) return inventoryLayer;
+  const existing = vectorLayers.find(l=>l.inventory);
+  if(existing){ inventoryLayer = existing; return existing; }
+  const lyr = newVectorLayer('Inventário arbóreo', 'point', TREE_FIELDS.map(f=>({...f})), '#6fd35e');
+  lyr.inventory = true;
+  inventoryLayer = lyr;
+  renderVectorList();
+  status('Camada "Inventário arbóreo" criada.');
+  return lyr;
+}
+
+/* --- estado do formulário aberto --- */
+let treeTargetId = null, treePhotoDataUrl = null, treeOrgan = 'auto', treeSelectedSpecies = null;
+
+/* --- chave Pl@ntNet (do usuário) --- */
+const PLANTNET_KEY_STORE = 'geomatias_plantnet_key';
+function getPlantNetKey(){ try{ return localStorage.getItem(PLANTNET_KEY_STORE) || ''; }catch(e){ return ''; } }
+function promptPlantNetKey(){
+  const cur = getPlantNetKey();
+  const k = prompt('Cole sua chave da API Pl@ntNet (gratuita: crie conta em my.plantnet.org e copie em Settings → API key).\n\nPara identificar direto no navegador, marque "expose my API key" e autorize o domínio nas configurações da conta.', cur);
+  if(k===null) return '';
+  const key = k.trim();
+  try{ localStorage.setItem(PLANTNET_KEY_STORE, key); }catch(e){}
+  return key;
+}
+
+/* --- compressão da foto (canvas) para caber no projeto --- */
+function compressImage(file, maxDim=1024, quality=0.8){
+  return new Promise((res,rej)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      if(w>h && w>maxDim){ h = Math.round(h*maxDim/w); w = maxDim; }
+      else if(h>=w && h>maxDim){ w = Math.round(w*maxDim/h); h = maxDim; }
+      const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      res(cv.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error('Falha ao ler a imagem.')); };
+    img.src = url;
+  });
+}
+
+/* --- clientes de API --- */
+async function identifyWithPlantNet(dataUrl, organ, key){
+  const blob = await (await fetch(dataUrl)).blob();
+  const form = new FormData();
+  form.append('organs', organ || 'auto');
+  form.append('images', blob, 'foto.jpg');
+  const url = 'https://my-api.plantnet.org/v2/identify/all?api-key='+encodeURIComponent(key)+'&lang=pt&nb-results=5';
+  const resp = await fetch(url, { method:'POST', body:form });
+  if(resp.status===401) throw new Error('Chave inválida (401). Verifique a chave Pl@ntNet.');
+  if(resp.status===404) throw new Error('Espécie não reconhecida nesta foto.');
+  if(resp.status===429) throw new Error('Cota diária esgotada (429). Tente novamente amanhã.');
+  if(!resp.ok) throw new Error('HTTP '+resp.status+' na identificação.');
+  return await resp.json();
+}
+async function fetchTreeReferenceImages(gbifId, sci){
+  let taxonKey = gbifId;
+  if(!taxonKey && sci){
+    try{
+      const m = await (await fetch('https://api.gbif.org/v1/species/match?name='+encodeURIComponent(sci))).json();
+      taxonKey = m.usageKey;
+    }catch(e){ /* ignora */ }
+  }
+  if(!taxonKey) return [];
+  const r = await (await fetch('https://api.gbif.org/v1/occurrence/search?taxonKey='+taxonKey+'&mediaType=StillImage&limit=8')).json();
+  const imgs = [];
+  (r.results||[]).forEach(occ=>{
+    (occ.media||[]).forEach(m=>{
+      if(m.type==='StillImage' && m.identifier)
+        imgs.push({ url:m.identifier, by:(m.rightsHolder||occ.rightsHolder||''), lic:(m.license||occ.license||'') });
+    });
+  });
+  return imgs.slice(0,8);
+}
+
+/* --- formulário --- */
+function renderTreeForm(props){
+  const el = document.getElementById('treeForm');
+  el.innerHTML = '';
+  TREE_FIELDS.forEach((f,i)=>{
+    const cur = props[f.name];
+    let inner;
+    if(f.type==='number')
+      inner = `<input type="number" step="any" data-tf="${i}" value="${(cur!=null&&cur!=='')?cur:''}">`;
+    else if(f.type==='select')
+      inner = `<select data-tf="${i}"><option value="">— selecione —</option>${f.options.map(o=>`<option ${cur===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    else if(f.type==='checkbox'){
+      el.insertAdjacentHTML('beforeend',
+        `<div class="attr-check"><input type="checkbox" id="tf_${i}" data-tf="${i}" ${cur===true?'checked':''}><label for="tf_${i}" style="cursor:pointer">${treeLabel(f.name)}</label></div>`);
+      return;
+    }
+    else if(f.type==='timestamp')
+      inner = `<input type="text" data-tf="${i}" value="${cur||nowStamp()}" readonly style="opacity:.7">`;
+    else
+      inner = `<input type="text" data-tf="${i}" value="${cur!=null?String(cur).replace(/"/g,'&quot;'):''}">`;
+    el.insertAdjacentHTML('beforeend', `<div class="field"><label>${treeLabel(f.name)}</label>${inner}</div>`);
+  });
+}
+function setTreeField(name, val){
+  const i = TREE_FIELDS.findIndex(f=>f.name===name);
+  const el = document.querySelector('#treeForm [data-tf="'+i+'"]');
+  if(el){ if(el.type==='checkbox') el.checked=!!val; else el.value=val; }
+}
+function renderTreePhoto(){
+  const box = document.getElementById('treePhotoBox');
+  const idBtn = document.getElementById('treeIdentify');
+  if(treePhotoDataUrl){
+    box.innerHTML = `<img src="${treePhotoDataUrl}" alt="foto da árvore">`;
+    idBtn.disabled = false;
+  } else {
+    box.innerHTML = `<div id="treePhotoHint">📷 Toque para tirar foto ou anexar imagem<br><small style="color:var(--muted)">folha, flor, fruto ou casca — quanto mais nítido, melhor</small></div>`;
+    idBtn.disabled = true;
+  }
+}
+
+function openTreeForm(gaid){
+  const reg = featReg.get(gaid);
+  if(!reg) return;
+  treeTargetId = gaid;
+  treeSelectedSpecies = null;
+  const props = reg.layer.feature.properties;
+  treePhotoDataUrl = props.foto || null;
+  treeOrgan = 'auto';
+  document.querySelectorAll('#treeOrgans button').forEach(b=>b.classList.toggle('on', b.dataset.organ==='auto'));
+  renderTreeForm(props);
+  renderTreePhoto();
+  document.getElementById('treeResults').innerHTML = '';
+  document.getElementById('treeGbif').innerHTML = '';
+  document.getElementById('treeIdStatus').textContent = getPlantNetKey()
+    ? '' : 'Dica: configure sua chave Pl@ntNet (gratuita) em 🔑 para habilitar a identificação por foto.';
+  open('mTree');
+}
+
+function renderTreeResults(data){
+  const el = document.getElementById('treeResults');
+  el.innerHTML = '';
+  const results = (data.results||[]).slice(0,5);
+  if(!results.length) return;
+  el.insertAdjacentHTML('beforeend', '<div class="tree-sec-title">Espécies prováveis — toque para selecionar</div>');
+  results.forEach(r=>{
+    const sp = r.species||{};
+    const sci = sp.scientificNameWithoutAuthor || sp.scientificName || '—';
+    const fam = (sp.family && (sp.family.scientificNameWithoutAuthor||sp.family.scientificName)) || '';
+    const com = (sp.commonNames && sp.commonNames[0]) || '';
+    const gid = sp.gbif && sp.gbif.id;
+    const pct = Math.round((r.score||0)*100);
+    const row = document.createElement('div');
+    row.className = 'id-result';
+    row.innerHTML = `<div class="id-main"><div class="id-sci">${sci}</div>
+      <div class="id-com">${[com,fam].filter(Boolean).join(' · ')||'&nbsp;'}</div>
+      <div class="id-bar"><i style="width:${pct}%"></i></div></div>
+      <div class="id-score">${pct}%</div>`;
+    row.addEventListener('click', ()=>{
+      document.querySelectorAll('#treeResults .id-result').forEach(x=>x.classList.remove('sel'));
+      row.classList.add('sel');
+      treeSelectedSpecies = {sci, fam, com, gid, score:r.score};
+      setTreeField('especie', com||sci);
+      setTreeField('nome_cientifico', sci);
+      setTreeField('familia', fam);
+      setTreeField('confianca_id', +(r.score||0).toFixed(3));
+      loadTreeGbif(gid, sci);
+    });
+    el.appendChild(row);
+  });
+}
+async function loadTreeGbif(gid, sci){
+  const el = document.getElementById('treeGbif');
+  el.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-top:8px"><span class="spin"></span> Buscando imagens de referência (GBIF)…</div>';
+  try{
+    const imgs = await fetchTreeReferenceImages(gid, sci);
+    if(!imgs.length){ el.innerHTML = '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Sem imagens de referência no GBIF para este táxon.</div>'; return; }
+    const lic = s => (s||'').replace(/https?:\/\/creativecommons\.org\/licenses\//,'CC ').replace(/https?:\/\/creativecommons\.org\/publicdomain\//,'CC0 ');
+    el.innerHTML = '<div class="tree-sec-title" style="margin-top:10px">Referências GBIF — compare com sua foto</div><div class="gbif-gal">'+
+      imgs.map(m=>`<figure><a href="${m.url}" target="_blank" rel="noopener"><img src="${m.url}" loading="lazy" alt="referência"></a><figcaption>${(m.by||'').slice(0,36)}${m.lic?'<br>'+lic(m.lic):''}</figcaption></figure>`).join('')+
+      '</div>';
+  }catch(err){
+    el.innerHTML = '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Não foi possível carregar referências GBIF.</div>';
+  }
+}
+
+function saveTree(){
+  const reg = featReg.get(treeTargetId);
+  if(!reg){ close('mTree'); return; }
+  const props = reg.layer.feature.properties;
+  document.querySelectorAll('#treeForm [data-tf]').forEach(el=>{
+    const f = TREE_FIELDS[+el.dataset.tf];
+    let v;
+    if(f.type==='checkbox') v = el.checked;
+    else if(f.type==='number') v = el.value==='' ? '' : +el.value;
+    else v = el.value;
+    props[f.name] = v;
+  });
+  if(treePhotoDataUrl) props.foto = treePhotoDataUrl;
+  reg.layer.bindPopup(treePopup(reg.layer), {maxWidth:280});
+  treeTargetId = null; treePhotoDataUrl = null; treeSelectedSpecies = null;
+  close('mTree');
+  status('Árvore registrada ✓');
+  renderVectorList();
+  scheduleSave();
+}
+function treePopup(layer){
+  const p = (layer.feature && layer.feature.properties) || {};
+  const thumb = p.foto ? `<img src="${p.foto}" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px" alt="árvore">` : '';
+  const line = (k,lab)=> (p[k]!=null && p[k]!=='') ? `<b>${lab}</b>: ${p[k]===true?'sim':p[k]}<br>` : '';
+  let body = line('especie','Espécie') + line('nome_cientifico','N. científico') + line('familia','Família') +
+             line('dap_cm','DAP (cm)') + line('altura_m','Altura (m)') + line('estado_fito','Estado');
+  if(p.confianca_id!=null && p.confianca_id!=='') body += `<b>Confiança ID</b>: ${Math.round(p.confianca_id*100)}%<br>`;
+  const edit = `<button class="tree-edit" data-gaid="${layer._gaid}" style="margin-top:4px;background:var(--accent);color:#07231c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar árvore</button>`;
+  return thumb + (body || 'Árvore sem atributos<br>') + edit;
+}
+map.on('popupopen', e=>{
+  const b = e.popup.getElement()?.querySelector('.tree-edit');
+  if(b) b.onclick = ()=>{ map.closePopup(); openTreeForm(+b.dataset.gaid); };
+});
+
+/* --- wiring (uma vez) --- */
+document.getElementById('treePhotoBox').addEventListener('click', ()=>document.getElementById('treePhotoInput').click());
+document.getElementById('treePhotoInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const st = document.getElementById('treeIdStatus');
+  st.textContent = 'Processando imagem…';
+  try{
+    treePhotoDataUrl = await compressImage(f);
+    renderTreePhoto();
+    st.textContent = getPlantNetKey() ? 'Foto pronta. Toque em "Identificar espécie".' : 'Foto pronta. Configure a chave 🔑 para identificar.';
+  }catch(err){ st.textContent = '⚠ '+err.message; }
+  e.target.value = '';
+});
+document.querySelectorAll('#treeOrgans button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    treeOrgan = b.dataset.organ;
+    document.querySelectorAll('#treeOrgans button').forEach(x=>x.classList.toggle('on', x===b));
+  });
+});
+document.getElementById('treeApiKeyBtn').addEventListener('click', ()=>{
+  promptPlantNetKey();
+  document.getElementById('treeIdStatus').textContent = getPlantNetKey() ? 'Chave Pl@ntNet configurada ✓' : '';
+});
+document.getElementById('treeIdentify').addEventListener('click', async ()=>{
+  if(!treePhotoDataUrl) return;
+  let key = getPlantNetKey();
+  if(!key){ key = promptPlantNetKey(); if(!key) return; }
+  const st = document.getElementById('treeIdStatus'), btn = document.getElementById('treeIdentify');
+  btn.disabled = true; st.textContent = 'Identificando espécie…';
+  document.getElementById('treeResults').innerHTML = '';
+  document.getElementById('treeGbif').innerHTML = '';
+  try{
+    const data = await identifyWithPlantNet(treePhotoDataUrl, treeOrgan, key);
+    renderTreeResults(data);
+    const rem = data.remainingIdentificationRequests;
+    const has = data.results && data.results.length;
+    st.textContent = (has ? 'Selecione a espécie correta abaixo e confirme.' : 'Nenhuma espécie provável encontrada.') +
+                     (rem!=null ? ' · '+rem+' identificações restantes hoje.' : '');
+  }catch(err){
+    st.textContent = '⚠ '+err.message;
+  }finally{ btn.disabled = false; }
+});
+document.getElementById('treeSave').addEventListener('click', saveTree);
+document.getElementById('treeSkip').addEventListener('click', saveTree);
+document.getElementById('treeCloseX').addEventListener('click', ()=>{ treeTargetId=null; close('mTree'); });
+
+/* ---------- Tabela de atributos (visão em planilha) ---------- */
+let tableLayer = null;
+document.getElementById('atSchema').addEventListener('click', ()=>{
+  close('mTable');
+  if(tableLayer) openSchemaEditor(tableLayer);
+});
+function geomSummary(l){
+  if(l instanceof L.Polygon){
+    return fmtArea(ringArea(l.getLatLngs()[0]));
+  } else if(l instanceof L.Polyline){
+    return fmtDist(pathLength(l.getLatLngs()));
+  } else if(l.getLatLng){
+    const p=l.getLatLng(); return p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  }
+  return '—';
+}
+function openAttrTable(lyr){
+  tableLayer = lyr;
+  document.getElementById('atTitle').textContent = 'Tabela de atributos — "'+lyr.name+'"';
+  renderAttrTable();
+  open('mTable');
+}
+function renderAttrTable(){
+  const lyr = tableLayer;
+  const feats = lyr.group.getLayers();
+  const tbl = document.getElementById('atTable');
+  const geoHead = lyr.geomType==='polygon' ? 'Área' : lyr.geomType==='line' ? 'Compr.' : 'Coordenadas';
+
+  if(!feats.length){
+    tbl.innerHTML = '<tr><td style="padding:16px; color:var(--muted)">Nenhuma geometria nesta camada ainda.</td></tr>';
+    document.getElementById('atStats').textContent = '';
+    return;
+  }
+
+  let html = '<thead><tr><th>#</th>';
+  lyr.fields.forEach(f=>{ html += `<th>${f.name}${f.required?' *':''}</th>`; });
+  html += `<th>${geoHead}</th><th></th></tr></thead><tbody>`;
+
+  feats.forEach((l, ri)=>{
+    if(!l._gaid) registerFeature(l, lyr);
+    const props = l.feature.properties;
+    html += `<tr data-gaid="${l._gaid}"><td class="num">${ri+1}</td>`;
+    lyr.fields.forEach((f, fi)=>{
+      const cur = props[f.name];
+      let cell;
+      if(f.type==='text')
+        cell = `<input type="text" data-fi="${fi}" value="${cur!=null?String(cur).replace(/"/g,'&quot;'):''}">`;
+      else if(f.type==='number')
+        cell = `<input type="number" step="any" data-fi="${fi}" value="${cur!=null&&cur!==''?cur:''}">`;
+      else if(f.type==='select')
+        cell = `<select data-fi="${fi}"><option value="">—</option>${f.options.map(o=>`<option ${cur===o?'selected':''}>${o}</option>`).join('')}</select>`;
+      else if(f.type==='checkbox')
+        cell = `<input type="checkbox" data-fi="${fi}" ${cur===true?'checked':''}>`;
+      else if(f.type==='timestamp')
+        cell = `<span style="color:var(--muted)">${cur||'—'}</span>`;
+      html += `<td>${cell}</td>`;
+    });
+    html += `<td class="geo">${geomSummary(l)}</td>
+      <td style="text-align:right">
+        <button class="icon-btn zoom at-zoom" title="Localizar no mapa">⌖</button>
+        <button class="icon-btn at-del" title="Remover feição">✕</button>
+      </td></tr>`;
+  });
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  // edição inline com salvamento automático
+  tbl.querySelectorAll('[data-fi]').forEach(el=>{
+    el.addEventListener('change', ()=>{
+      const gaid = +el.closest('tr').dataset.gaid;
+      const reg = featReg.get(gaid); if(!reg) return;
+      const f = lyr.fields[+el.dataset.fi];
+      let v;
+      if(f.type==='checkbox') v = el.checked;
+      else if(f.type==='number') v = el.value==='' ? '' : +el.value;
+      else v = el.value;
+      if(f.required && (v==='' || v==null)){ alert('O atributo "'+f.name+'" é obrigatório.'); return; }
+      reg.layer.feature.properties[f.name] = v;
+      reg.layer.bindPopup(featurePopup(reg.layer, reg.layer._measureInfo||''));
+      status('Alteração salva ✓');
+      scheduleSave();
+    });
+  });
+  tbl.querySelectorAll('.at-zoom').forEach(b=>b.addEventListener('click', ()=>{
+    const reg = featReg.get(+b.closest('tr').dataset.gaid); if(!reg) return;
+    close('mTable');
+    if(!lyr.visible){ lyr.visible=true; map.addLayer(lyr.group); renderVectorList(); }
+    const l = reg.layer;
+    if(l.getBounds) map.fitBounds(l.getBounds().pad(.4)); else map.setView(l.getLatLng(), Math.max(map.getZoom(), 16));
+    l.openPopup && l.openPopup();
+  }));
+  tbl.querySelectorAll('.at-del').forEach(b=>b.addEventListener('click', ()=>{
+    const reg = featReg.get(+b.closest('tr').dataset.gaid); if(!reg) return;
+    if(!confirm('Remover esta feição da camada?')) return;
+    lyr.group.removeLayer(reg.layer);
+    pushAction({type:'del', layer:reg.layer, target:lyr});
+    renderAttrTable();
+    renderVectorList();
+  }));
+
+  // estatísticas do rodapé
+  let stats = feats.length + (feats.length===1?' feição':' feições');
+  if(lyr.geomType==='polygon'){
+    const tot = feats.reduce((s,l)=> s + (l instanceof L.Polygon ? ringArea(l.getLatLngs()[0]) : 0), 0);
+    stats += ' · área total: '+fmtArea(tot);
+  } else if(lyr.geomType==='line'){
+    const tot = feats.reduce((s,l)=> s + (l.getLatLngs && !(l instanceof L.Polygon) ? pathLength(l.getLatLngs()) : 0), 0);
+    stats += ' · comprimento total: '+fmtDist(tot);
+  }
+  document.getElementById('atStats').textContent = stats;
+}
+
+/* ---------- Histórico: desfazer / refazer ---------- */
+const undoStack = [], redoStack = [];
+const btnUndo = document.getElementById('btnUndo'), btnRedo = document.getElementById('btnRedo');
+function updHistory(){
+  const drawing = !!(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers && activeDrawer._markers.length);
+  btnUndo.disabled = !undoStack.length && !drawing;
+  btnRedo.disabled = !redoStack.length;
+}
+function pushAction(a){ undoStack.push(a); redoStack.length = 0; updHistory(); }
+function doUndo(){
+  // durante um desenho ativo, desfaz o último vértice
+  if(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers && activeDrawer._markers.length){
+    activeDrawer.deleteLastVertex(); updHistory(); return;
+  }
+  const a = undoStack.pop(); if(!a){ updHistory(); return; }
+  if(a.type==='add') a.target.group.removeLayer(a.layer);
+  else a.target.group.addLayer(a.layer);
+  redoStack.push(a); renderVectorList(); updHistory();
+  status(a.type==='add' ? 'Desfeito: geometria removida.' : 'Desfeito: geometria restaurada.');
+}
+function doRedo(){
+  const a = redoStack.pop(); if(!a){ updHistory(); return; }
+  if(a.type==='add') a.target.group.addLayer(a.layer);
+  else a.target.group.removeLayer(a.layer);
+  undoStack.push(a); renderVectorList(); updHistory();
+}
+btnUndo.addEventListener('click', doUndo);
+btnRedo.addEventListener('click', doRedo);
+map.on('draw:drawvertex', updHistory);
+
+/* ---------- Ferramentas de desenho ---------- */
+const hint = document.getElementById('hint');
+function showHint(t){ hint.textContent=t; hint.style.display=t?'block':'none'; }
+
+let activeTool = null, activeDrawer = null, editHandler = null, curveMode=false, measureMode=null;
+
+function deactivate(){
+  if(activeDrawer){ activeDrawer.disable(); activeDrawer=null; }
+  if(editHandler){ editHandler.disable(); editHandler=null; }
+  map.off('click', coordClick);
+  if(typeof queryClick==='function') map.off('click', queryClick);
+  if(typeof captureClick==='function') map.off('click', captureClick);
+  curveMode=false; measureMode=null; activeTool=null;
+  if(typeof catalogRegionMode!=='undefined') catalogRegionMode=false;
+  document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.remove('active'));
+  showHint('');
+  if(typeof updHistory==='function') updHistory();
+  const db = document.getElementById('drawBar'); if(db) db.style.display='none';
+}
+
+/* estilo do desenho em curso: cor da camada compatível ou neutro */
+function drawStyle(tool, dashed){
+  const t = targetLayerFor(tool);
+  const base = t ? styleFor(t) : { color:'#37c2a0', weight:3, fillColor:'#37c2a0', fillOpacity:.25 };
+  return dashed ? {...base, dashArray:'4 6'} : base;
+}
+const measureStyle = { color:'#f2d24b', weight:3, dashArray:'6 6', fillColor:'#f2d24b', fillOpacity:.12 };
+
+/* Barra "Concluir geometria" */
+const drawBar = document.getElementById('drawBar');
+function updDrawBar(){
+  const isDrawing = activeTool && ['line','curve','polygon','mline','marea'].includes(activeTool) && activeDrawer;
+  drawBar.style.display = isDrawing ? 'flex' : 'none';
+  if(isDrawing){
+    const t = targetLayerFor(activeTool);
+    const msgs = {
+      line: t?`Reta na camada "${t.name}"`:'Reta — a camada será definida ao concluir',
+      curve: t?`Curva na camada "${t.name}"`:'Curva — a camada será definida ao concluir',
+      polygon: t?`Polígono na camada "${t.name}"`:'Polígono — a camada será definida ao concluir',
+      mline:'Medindo distância', marea:'Medindo área'
+    };
+    document.getElementById('dbMsg').textContent = msgs[activeTool]||'Desenhando…';
+  }
+}
+document.getElementById('dbFinish').addEventListener('click', ()=>{
+  if(!activeDrawer) return;
+  const n = activeDrawer._markers ? activeDrawer._markers.length : 0;
+  const min = activeTool==='polygon'||activeTool==='marea' ? 3 : 2;
+  if(n < min){ status(`Adicione pelo menos ${min} vértices para concluir.`); return; }
+  if(typeof activeDrawer.completeShape==='function') activeDrawer.completeShape();
+  else if(typeof activeDrawer._finishShape==='function') activeDrawer._finishShape();
+});
+document.getElementById('dbVertex').addEventListener('click', ()=>{
+  if(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers?.length) activeDrawer.deleteLastVertex();
+  updHistory();
+});
+document.getElementById('dbCancel').addEventListener('click', ()=>{ deactivate(); status('Desenho cancelado.'); });
+
+document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tool = btn.dataset.tool;
+    if(activeTool===tool){ deactivate(); return; }
+    deactivate();
+    activeTool = tool; btn.classList.add('active');
+
+    const t = ['point','line','curve','polygon'].includes(tool) ? targetLayerFor(tool) : null;
+    const dest = t ? ` Destino: camada "${t.name}".` : ' Sem camada compatível ativa: você definirá a camada ao concluir.';
+
+    switch(tool){
+      case 'point':
+        activeDrawer = new L.Draw.Marker(map, {});
+        showHint('Toque no mapa para inserir um ponto.'+dest);
+        break;
+      case 'tree': {
+        const inv = ensureInventoryLayer();
+        setActiveLayer(inv);
+        activeDrawer = new L.Draw.Marker(map, {});
+        showHint('Toque no mapa para registrar uma árvore na camada "'+inv.name+'". O painel de foto e identificação abrirá em seguida.');
+        break;
+      }
+      case 'line':
+        activeDrawer = new L.Draw.Polyline(map, { shapeOptions: drawStyle(tool) });
+        showHint('Clique ponto a ponto e use "✓ Concluir geometria" (ou duplo clique) para finalizar.'+dest);
+        break;
+      case 'curve':
+        curveMode = true;
+        activeDrawer = new L.Draw.Polyline(map, { shapeOptions: drawStyle(tool, true) });
+        showHint('Clique os pontos de controle e use "✓ Concluir geometria". A linha será suavizada.'+dest);
+        break;
+      case 'polygon':
+        activeDrawer = new L.Draw.Polygon(map, { shapeOptions: drawStyle(tool), allowIntersection:true });
+        showHint('Clique os vértices e use "✓ Concluir geometria" (ou clique no primeiro vértice).'+dest);
+        break;
+      case 'mline':
+        measureMode='line';
+        activeDrawer = new L.Draw.Polyline(map, { shapeOptions: measureStyle });
+        showHint('Medição de distância: clique os pontos e use "✓ Concluir geometria".');
+        break;
+      case 'marea':
+        measureMode='area';
+        activeDrawer = new L.Draw.Polygon(map, { shapeOptions: measureStyle, allowIntersection:true });
+        showHint('Medição de área: clique os vértices e use "✓ Concluir geometria".');
+        break;
+      case 'coord':
+        map.on('click', coordClick);
+        showHint('Toque em qualquer ponto do mapa para extrair as coordenadas.');
+        break;
+      case 'query':
+        if(!wmsCatalogLayers().length){ status('Nenhuma camada WMS de catálogo visível para consultar.'); deactivate(); return; }
+        map.on('click', queryClick);
+        showHint('Toque sobre uma feição da camada de catálogo para consultar suas informações.');
+        break;
+      case 'capture':
+        if(!wmsCatalogLayers().length){ status('Nenhuma camada WMS de catálogo visível para capturar.'); deactivate(); return; }
+        map.on('click', captureClick);
+        showHint('Toque sobre uma feição da camada de catálogo para copiá-la (geometria + atributos) para uma camada local.');
+        break;
+      case 'edit': {
+        const groups = vectorLayers.filter(l=>l.visible);
+        if(!groups.length){ status('Nada para editar.'); deactivate(); return; }
+        // agrega todas as camadas visíveis num FeatureGroup temporário
+        const fg = L.featureGroup();
+        groups.forEach(l=>l.group.eachLayer(x=>fg.addLayer(x)));
+        editHandler = new L.EditToolbar.Edit(map, { featureGroup:fg, selectedPathOptions:{maintainColor:true} });
+        editHandler.enable();
+        showHint('Arraste os vértices/pontos para editar. Toque na ferramenta de novo para salvar e sair.');
+        break;
+      }
+      case 'erase':
+        if(measureGroup.getLayers().length){ measureGroup.clearLayers(); status('Medições limpas.'); }
+        map.once('click', ()=>{});
+        showHint('Toque em uma geometria para apagá-la. Toque na ferramenta de novo para sair.');
+        enableEraseClicks();
+        break;
+    }
+    if(activeDrawer) activeDrawer.enable();
+    updDrawBar();
+  });
+});
+
+function enableEraseClicks(){
+  vectorLayers.forEach(l=>l.group.eachLayer(x=>{
+    x.once('click', ()=>{ if(activeTool==='erase'){ l.group.removeLayer(x); pushAction({type:'del', layer:x, target:l}); status('Geometria removida.'); } });
+  }));
+}
+
+/* clique de coordenada */
+function coordClick(e){
+  const {lat,lng}=e.latlng;
+  const dms = v=>{
+    const d=Math.floor(Math.abs(v)), mF=(Math.abs(v)-d)*60, m=Math.floor(mF), s=((mF-m)*60).toFixed(2);
+    return `${d}° ${m}' ${s}"`;
+  };
+  const txt = `${fmt(lat)}, ${fmt(lng)}`;
+  const html = `<div class="coord-pop">
+    <b>Decimal</b><br>${fmt(lat)}, ${fmt(lng)}<br>
+    <b>GMS</b><br>${dms(lat)} ${lat>=0?'N':'S'} · ${dms(lng)} ${lng>=0?'L':'O'}<br>
+    <button id="cpCopy">Copiar decimal</button></div>`;
+  L.popup().setLatLng(e.latlng).setContent(html).openOn(map);
+  setTimeout(()=>{
+    const b=document.getElementById('cpCopy');
+    if(b) b.onclick=()=>{ navigator.clipboard?.writeText(txt); b.textContent='Copiado ✓'; };
+  },50);
+}
+
+/* criação de geometrias */
+map.on(L.Draw.Event.CREATED, e=>{
+  const lyr = e.layer;
+
+  /* --- retângulo de região da busca em catálogos --- */
+  if(catalogRegionMode){
+    catalogRegionMode = false;
+    setSearchBBox(lyr.getBounds());
+    deactivate();
+    open('mCatalog');
+    return;
+  }
+
+  /* --- medições --- */
+  if(measureMode){
+    lyr.setStyle && lyr.setStyle(measureStyle);
+    let label, pos;
+    if(measureMode==='line'){
+      const ll = lyr.getLatLngs();
+      label = fmtDist(pathLength(ll)); pos = ll[ll.length-1];
+    } else {
+      const ring = lyr.getLatLngs()[0];
+      label = fmtArea(ringArea(ring)) + '  ·  perím. ' + fmtDist(pathLength([...ring, ring[0]]));
+      pos = lyr.getBounds().getCenter();
+    }
+    lyr.bindTooltip(label, {permanent:true, className:'measure-label', direction:'top'});
+    measureGroup.addLayer(lyr);
+    L.marker(pos,{opacity:0}); // noop
+    // reinicia a mesma ferramenta para medições em sequência
+    activeDrawer = measureMode==='line'
+      ? new L.Draw.Polyline(map,{shapeOptions:measureStyle})
+      : new L.Draw.Polygon(map,{shapeOptions:measureStyle, allowIntersection:true});
+    activeDrawer.enable();
+    return;
+  }
+
+  /* --- desenho normal: toda geometria precisa de uma camada --- */
+  const target = targetLayerFor(activeTool);
+  let finalLayer = lyr;
+
+  if(lyr instanceof L.Marker){
+    finalLayer = pointMarker(lyr.getLatLng(), target || {color:'#37c2a0'});
+  } else if(curveMode && lyr instanceof L.Polyline && !(lyr instanceof L.Polygon)){
+    finalLayer = L.polyline(smoothCurve(lyr.getLatLngs()), target ? styleFor(target) : {color:'#37c2a0', weight:3});
+  } else if(target && lyr.setStyle){
+    lyr.setStyle(styleFor(target));
+  }
+
+  // medidas informativas do popup
+  let info = '';
+  if(finalLayer instanceof L.Polygon){
+    const ring = finalLayer.getLatLngs()[0];
+    info = `Área: <b>${fmtArea(ringArea(ring))}</b><br>Perímetro: <b>${fmtDist(pathLength([...ring,ring[0]]))}</b>`;
+  } else if(finalLayer instanceof L.Polyline){
+    info = `Comprimento: <b>${fmtDist(pathLength(finalLayer.getLatLngs()))}</b>`;
+  } else if(finalLayer instanceof L.CircleMarker){
+    const p=finalLayer.getLatLng();
+    info = `Ponto<br>${fmt(p.lat)}, ${fmt(p.lng)}`;
+  }
+  finalLayer._measureInfo = info;
+
+  if(!target){
+    // sem camada compatível: mostra a geometria e abre a tela de criação de camada
+    const toolUsed = activeTool;
+    finalLayer.addTo(map);
+    deactivate();
+    openNewLayerModal({ layer:finalLayer, tool:toolUsed });
+    return;
+  }
+
+  const gaid = registerFeature(finalLayer, target);
+  finalLayer.bindPopup(featurePopup(finalLayer, info));
+  target.group.addLayer(finalLayer);
+  pushAction({type:'add', layer:finalLayer, target});
+  renderVectorList();
+  status(`Geometria salva na camada "${target.name}" ✓`);
+
+  // abre o formulário de atributos da camada
+  if(activeTool==='tree'){ openTreeForm(gaid); }
+  else if(target.fields.length) openAttrForm(gaid);
+
+  // mantém a ferramenta ativa para desenho contínuo
+  if(activeTool && ['point','tree','line','curve','polygon'].includes(activeTool)){
+    activeDrawer =
+      (activeTool==='point'||activeTool==='tree') ? new L.Draw.Marker(map,{}) :
+      activeTool==='polygon' ? new L.Draw.Polygon(map,{shapeOptions:drawStyle(activeTool), allowIntersection:true}) :
+      activeTool==='curve'   ? new L.Draw.Polyline(map,{shapeOptions:drawStyle(activeTool, true)}) :
+                               new L.Draw.Polyline(map,{shapeOptions:drawStyle(activeTool)});
+    activeDrawer.enable();
+    updDrawBar();
+  }
+});
+
+/* ---------- Modais genéricos ---------- */
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', e=>e.target.closest('.modal-back').classList.remove('open')));
+document.querySelectorAll('.modal-back').forEach(m=>m.addEventListener('click', e=>{
+  if(e.target===m && m.id!=='mNewLayer' && m.id!=='mAttr' && m.id!=='mTree') m.classList.remove('open');
+}));
+const open = id=>document.getElementById(id).classList.add('open');
+const close = id=>document.getElementById(id).classList.remove('open');
+
+document.getElementById('panelToggle').addEventListener('click', ()=>document.getElementById('panel').classList.toggle('hidden'));
+if(window.innerWidth<760) document.getElementById('panel').classList.add('hidden');
+
+/* Abas do painel: Base | Rasters | Vetores */
+document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click', ()=>{
+  document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.tabpane').forEach(p=>p.style.display = p.id===t.dataset.tab ? '' : 'none');
+}));
+function showVectorTab(){
+  document.querySelector('.ptab[data-tab="tabVector"]').click();
+  document.getElementById('panel').classList.remove('hidden');
+}
+
+/* ---------- IMPORTAÇÃO ---------- */
+document.getElementById('btnImport').addEventListener('click', ()=>open('mImport'));
+const dz = document.getElementById('dropZone'), fi = document.getElementById('fileInput');
+dz.addEventListener('click', ()=>fi.click());
+dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('over');});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
+fi.addEventListener('change', ()=>{ if(fi.files[0]) handleFile(fi.files[0]); fi.value=''; });
+
+function geomClass(t){
+  if(t==='Point'||t==='MultiPoint') return 'point';
+  if(t==='LineString'||t==='MultiLineString') return 'line';
+  if(t==='Polygon'||t==='MultiPolygon') return 'polygon';
+  return null;
+}
+/* Importa coleções GeoJSON criando camadas por tipo, com esquema inferido */
+function importCollections(collections, fallbackName, groupId){
+  let count = 0, bounds = null; const made = [];
+  collections.forEach((col,i)=>{
+    const baseName = col.fileName || fallbackName + (collections.length>1?` (${i+1})`:'');
+    const feats = (col.features||[]).filter(f=>f && f.geometry);
+    const byType = { point:[], line:[], polygon:[] };
+    feats.forEach(f=>{ const c = geomClass(f.geometry.type); if(c) byType[c].push(f); });
+    Object.entries(byType).forEach(([gt, fs])=>{
+      if(!fs.length) return;
+      const keys = new Set();
+      fs.forEach(f=>Object.keys(f.properties||{}).forEach(k=>keys.add(k)));
+      const fields = [...keys].slice(0,30).map(k=>{
+        const sample = fs.find(f=>f.properties && f.properties[k]!=null)?.properties[k];
+        return { name:k, type: typeof sample==='number' ? 'number' : typeof sample==='boolean' ? 'checkbox' : 'text', options:[], required:false };
+      });
+      const suffix = Object.values(byType).filter(a=>a.length).length>1 ? ' — '+GEOM_LABEL[gt].toLowerCase()+'s' : '';
+      const lyr = newVectorLayer(baseName+suffix, gt, fields);
+      made.push(lyr);
+      if(groupId) lyr.groupId = groupId;
+      const gl = L.geoJSON({type:'FeatureCollection', features:fs}, {
+        style: ()=>styleFor(lyr),
+        pointToLayer: (f, latlng)=>pointMarker(latlng, lyr)
+      });
+      gl.eachLayer(l=>{
+        l.feature = l.feature || {type:'Feature', properties:{}};
+        registerFeature(l, lyr);
+        l.bindPopup(featurePopup(l, ''));
+        lyr.group.addLayer(l);
+        count++;
+      });
+      const b = lyr.group.getBounds();
+      if(b.isValid()) bounds = bounds ? bounds.extend(b) : b;
+    });
+  });
+  return {count, bounds, layers:made};
+}
+
+async function handleFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  status('Lendo '+file.name+'…');
+  try{
+    let gj;
+    if(ext==='zip'){
+      gj = await shp(await file.arrayBuffer());
+    } else if(ext==='kml'){
+      gj = toGeoJSON.kml(new DOMParser().parseFromString(await file.text(), 'text/xml'));
+    } else if(ext==='kmz'){
+      const zip = await JSZip.loadAsync(await file.arrayBuffer());
+      const kmlName = Object.keys(zip.files).find(n=>n.toLowerCase().endsWith('.kml'));
+      if(!kmlName) throw new Error('KMZ sem arquivo .kml interno');
+      gj = toGeoJSON.kml(new DOMParser().parseFromString(await zip.files[kmlName].async('text'), 'text/xml'));
+    } else if(ext==='geojson' || ext==='json'){
+      gj = JSON.parse(await file.text());
+    } else throw new Error('Formato não suportado: .'+ext);
+
+    const collections = Array.isArray(gj) ? gj : [gj];
+    const {count, bounds} = importCollections(collections, file.name.replace(/\.[^.]+$/,''));
+    renderVectorList();
+    showVectorTab();
+    if(bounds) map.fitBounds(bounds.pad(.15));
+    status(`Importado: ${count} feições.`);
+    close('mImport');
+  }catch(err){
+    console.error(err);
+    alert('Falha ao importar: '+err.message);
+    status('');
+  }
+}
+
+/* ---------- EXPORTAÇÃO ---------- */
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  if(!vectorLayers.some(l=>l.visible && l.group.getLayers().length)){ alert('Não há camadas vetoriais visíveis para exportar.'); return; }
+  open('mExport');
+});
+
+function collectGeoJSON(){
+  const feats = [];
+  vectorLayers.filter(l=>l.visible).forEach(l=>{
+    l.group.eachLayer(x=>{
+      let g = x.toGeoJSON();
+      const push = f=>{ f.properties = {...(f.properties||{}), camada:l.name, cor:l.color}; feats.push(f); };
+      g.type==='FeatureCollection' ? g.features.forEach(push) : push(g);
+    });
+  });
+  return { type:'FeatureCollection', features:feats };
+}
+function download(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+function coordsToKml(c, depth){ // recursivo
+  if(typeof c[0]==='number') return `${c[0]},${c[1]},0`;
+  return c.map(x=>coordsToKml(x)).join(' ');
+}
+function featureToKml(f){
+  const name = (f.properties && (f.properties.name||f.properties.camada)) || 'Feição';
+  const color = ((f.properties&&f.properties.cor)||'#37c2a0').replace('#','');
+  const abgr = 'cc' + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
+  const style = `<Style><LineStyle><color>${abgr}</color><width>3</width></LineStyle><PolyStyle><color>${'66'+abgr.slice(2)}</color></PolyStyle><IconStyle><color>${abgr}</color></IconStyle></Style>`;
+  const g = f.geometry; let geo='';
+  const ring = r=>`<LinearRing><coordinates>${r.map(p=>p[0]+','+p[1]+',0').join(' ')}</coordinates></LinearRing>`;
+  if(g.type==='Point') geo=`<Point><coordinates>${g.coordinates[0]},${g.coordinates[1]},0</coordinates></Point>`;
+  else if(g.type==='LineString') geo=`<LineString><coordinates>${g.coordinates.map(p=>p[0]+','+p[1]+',0').join(' ')}</coordinates></LineString>`;
+  else if(g.type==='Polygon') geo=`<Polygon><outerBoundaryIs>${ring(g.coordinates[0])}</outerBoundaryIs>${g.coordinates.slice(1).map(r=>'<innerBoundaryIs>'+ring(r)+'</innerBoundaryIs>').join('')}</Polygon>`;
+  else if(g.type==='MultiPolygon') geo=`<MultiGeometry>${g.coordinates.map(poly=>`<Polygon><outerBoundaryIs>${ring(poly[0])}</outerBoundaryIs></Polygon>`).join('')}</MultiGeometry>`;
+  else if(g.type==='MultiLineString') geo=`<MultiGeometry>${g.coordinates.map(l=>`<LineString><coordinates>${l.map(p=>p[0]+','+p[1]+',0').join(' ')}</coordinates></LineString>`).join('')}</MultiGeometry>`;
+  else if(g.type==='MultiPoint') geo=`<MultiGeometry>${g.coordinates.map(p=>`<Point><coordinates>${p[0]},${p[1]},0</coordinates></Point>`).join('')}</MultiGeometry>`;
+  const desc = f.properties ? Object.entries(f.properties).map(([k,v])=>`${k}: ${v}`).join('\n') : '';
+  return `<Placemark><name>${name}</name><description><![CDATA[${desc}]]></description>${style}${geo}</Placemark>`;
+}
+function buildKml(gj, docName){
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${docName}</name>
+${gj.features.map(featureToKml).join('\n')}
+</Document></kml>`;
+}
+
+document.getElementById('expGo').addEventListener('click', async ()=>{
+  const format = document.getElementById('expFormat').value;
+  const name = (document.getElementById('expName').value||'projeto').replace(/[^\w\-]+/g,'_');
+  const gj = collectGeoJSON();
+  try{
+    if(format==='geojson'){
+      download(new Blob([JSON.stringify(gj,null,2)],{type:'application/geo+json'}), name+'.geojson');
+    } else if(format==='kml'){
+      download(new Blob([buildKml(gj,name)],{type:'application/vnd.google-earth.kml+xml'}), name+'.kml');
+    } else if(format==='kmz'){
+      const zip = new JSZip();
+      zip.file('doc.kml', buildKml(gj,name));
+      download(await zip.generateAsync({type:'blob', compression:'DEFLATE'}), name+'.kmz');
+    } else if(format==='shp'){
+      const zip = new JSZip();
+      const groups = { point:[], line:[], polygon:[] };
+      gj.features.forEach(f=>{
+        const g = f.geometry; if(!g) return;
+        const cls = geomClass(g.type); if(!cls) return;
+        if(g.type.startsWith('Multi'))
+          g.coordinates.forEach(c=>groups[cls].push({properties:f.properties, geometry:{type:g.type.replace('Multi',''), coordinates:c}}));
+        else groups[cls].push(f);
+      });
+      const suffix = { point:'_pontos', line:'_linhas', polygon:'_poligonos' };
+      let wrote = false;
+      Object.entries(groups).forEach(([cls, fs])=>{
+        if(!fs.length) return;
+        const files = writeShapefile(fs, cls);
+        const base = name + suffix[cls];
+        zip.file(base+'.shp', files.shp);
+        zip.file(base+'.shx', files.shx);
+        zip.file(base+'.dbf', files.dbf);
+        zip.file(base+'.prj', files.prj);
+        zip.file(base+'.cpg', files.cpg);
+        wrote = true;
+      });
+      if(!wrote) throw new Error('Nenhuma geometria compatível para exportar.');
+      download(await zip.generateAsync({type:'blob'}), name+'_shp.zip');
+    }
+    status('Exportação concluída.');
+    close('mExport');
+  }catch(err){ console.error(err); alert('Falha na exportação: '+err.message); }
+});
+
+/* ---------- RASTERS DO USUÁRIO ---------- */
+document.getElementById('btnAddRaster').addEventListener('click', ()=>open('mRaster'));
+document.querySelectorAll('input[name=rType]').forEach(r=>r.addEventListener('change', ()=>{
+  const v = document.querySelector('input[name=rType]:checked').value;
+  document.getElementById('rXYZ').style.display = v==='xyz'?'':'none';
+  document.getElementById('rWMS').style.display = v==='wms'?'':'none';
+  document.getElementById('rIMG').style.display = v==='img'?'':'none';
+}));
+document.getElementById('rOp').addEventListener('input', e=>document.getElementById('rOpV').textContent=e.target.value+'%');
+
+/* Cria camada raster a partir de uma definição serializável */
+function addRasterFromDef(def, silent){
+  let layer;
+  if(def.type==='xyz') layer = L.tileLayer(def.url, {maxZoom:22, opacity:def.opacity});
+  else if(def.type==='wms') layer = L.tileLayer.wms(def.url, {layers:def.layers, format:'image/png', transparent:true, opacity:def.opacity});
+  else layer = L.imageOverlay(def.dataUrl, def.bounds, {opacity:def.opacity});
+  layer.addTo(map);
+  rasterLayers.push({id:++layerSeq, name:def.name, layer, visible:true, def});
+  renderRasterList();
+  if(!silent) status('Raster "'+def.name+'" adicionado.');
+  scheduleSave();
+  return layer;
+}
+
+document.getElementById('rGo').addEventListener('click', async ()=>{
+  const type = document.querySelector('input[name=rType]:checked').value;
+  const name = document.getElementById('rName').value.trim() || 'Raster '+(rasterLayers.length+1);
+  const opacity = (+document.getElementById('rOp').value)/100;
+  try{
+    let def;
+    if(type==='xyz'){
+      const url = document.getElementById('rUrl').value.trim();
+      if(!url.includes('{z}')) throw new Error('URL deve conter {z}/{x}/{y}.');
+      def = {type, name, url, opacity};
+    } else if(type==='wms'){
+      const url = document.getElementById('rWmsUrl').value.trim();
+      const layers = document.getElementById('rWmsLayers').value.trim();
+      if(!url || !layers) throw new Error('Informe URL e camadas do WMS.');
+      def = {type, name, url, layers, opacity};
+    } else {
+      const f = document.getElementById('rImgFile').files[0];
+      const s=+document.getElementById('rS').value, n=+document.getElementById('rN').value,
+            w=+document.getElementById('rW').value, e=+document.getElementById('rE').value;
+      if(!f) throw new Error('Escolha um arquivo de imagem.');
+      if([s,n,w,e].some(x=>Number.isNaN(x))) throw new Error('Informe os quatro limites (S, N, O, L).');
+      // dataURL para poder persistir no projeto
+      const dataUrl = await new Promise((res,rej)=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result); r.onerror = ()=>rej(new Error('Falha ao ler a imagem.'));
+        r.readAsDataURL(f);
+      });
+      def = {type:'img', name, dataUrl, bounds:[[s,w],[n,e]], opacity};
+      map.fitBounds(def.bounds);
+    }
+    addRasterFromDef(def);
+    close('mRaster');
+  }catch(err){ alert(err.message); }
+});
+
+/* ---------- IMPRESSÃO ---------- */
+document.getElementById('btnPrint').addEventListener('click', ()=>open('mPrint'));
+
+async function captureMap(){
+  // Rasteriza tiles visíveis + vetores num canvas (sem bibliotecas externas)
+  const size = map.getSize();
+  const scaleF = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = size.x*scaleF; canvas.height = size.y*scaleF;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scaleF, scaleF);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size.x,size.y);
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+
+  // 1) tiles e image overlays
+  const imgs = map.getContainer().querySelectorAll('.leaflet-tile-pane img, .leaflet-overlay-pane img');
+  const jobs = [...imgs].map(img=>new Promise(res=>{
+    const r = img.getBoundingClientRect();
+    const draw = el=>{ try{
+      ctx.globalAlpha = parseFloat(getComputedStyle(img).opacity)||1;
+      ctx.drawImage(el, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
+    }catch(e){} ctx.globalAlpha=1; res(); };
+    if(img.complete && img.naturalWidth){
+      // recarrega com CORS para não sujar o canvas
+      const c = new Image(); c.crossOrigin='anonymous';
+      c.onload = ()=>draw(c); c.onerror = ()=>{ draw(img); };
+      c.src = img.src;
+    } else res();
+  }));
+  await Promise.all(jobs);
+
+  // 2) SVG de vetores
+  const svg = map.getContainer().querySelector('.leaflet-overlay-pane svg');
+  if(svg){
+    const r = svg.getBoundingClientRect();
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    const blob = new Blob([new XMLSerializer().serializeToString(clone)], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    await new Promise(res=>{
+      const im = new Image();
+      im.onload = ()=>{ ctx.drawImage(im, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height); URL.revokeObjectURL(url); res(); };
+      im.onerror = ()=>res();
+      im.src = url;
+    });
+  }
+
+  // 3) circleMarkers/labels no pane de markers (tooltips não são capturados)
+  return canvas.toDataURL('image/jpeg', .92);
+}
+
+document.getElementById('pGo').addEventListener('click', async ()=>{
+  close('mPrint');
+  status('Gerando layout…');
+  document.getElementById('psTitle').textContent = document.getElementById('pTitle').value || 'Mapa sem título';
+  document.getElementById('psDesc').textContent = document.getElementById('pDesc').value || '';
+  document.getElementById('psAuthor').textContent = document.getElementById('pAuthor').value ? 'Responsável: '+document.getElementById('pAuthor').value : '';
+  const c = map.getCenter();
+  document.getElementById('psMeta').innerHTML =
+    `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
+  document.getElementById('psScaleTxt').textContent = 'Norte geográfico · Escala aproximada 1:' +
+    Math.round(591657550.5 / Math.pow(2, map.getZoom()-1) / 2).toLocaleString('pt-BR');
+
+  // legenda
+  const leg = document.getElementById('psLegend');
+  leg.innerHTML = '';
+  leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`);
+  rasterLayers.filter(r=>r.visible && !groupById(r.groupId)).forEach(r=>leg.insertAdjacentHTML('beforeend',
+    `<div class="li"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`));
+  groups.forEach(g=>{
+    const has = vectorLayers.some(l=>l.groupId===g.id && l.visible && l.group.getLayers().length) ||
+                rasterLayers.some(r=>r.groupId===g.id && r.visible);
+    if(has) leg.insertAdjacentHTML('beforeend',
+      `<div class="li" style="margin-top:2mm"><b style="border-bottom:2px solid ${g.color}">${g.name}</b></div>`);
+    rasterLayers.filter(r=>r.groupId===g.id && r.visible).forEach(r=>leg.insertAdjacentHTML('beforeend',
+      `<div class="li" style="margin-left:4mm"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`));
+    vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length).forEach(l=>{
+      const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
+      const cls = l.geomType==='point' ? 'pt' : (l.geomType==='polygon' ? '' : 'ln');
+      leg.insertAdjacentHTML('beforeend', `<div class="li" style="margin-left:4mm"><span class="sw ${cls}" style="background:${l.color}"></span> ${l.name} <span style="color:#666">(${t})</span></div>`);
+    });
+  });
+  vectorLayers.filter(l=>!groupById(l.groupId) && l.visible && l.group.getLayers().length).forEach(l=>{
+    const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
+    const cls = l.geomType==='point' ? 'pt' : (l.geomType==='polygon' ? '' : 'ln');
+    leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw ${cls}" style="background:${l.color}"></span> ${l.name} <span style="color:#666">(${t})</span></div>`);
+  });
+  if(measureGroup.getLayers().length)
+    leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw ln" style="background:#f2d24b"></span> Medições</div>`);
+
+  try{ document.getElementById('psImg').src = await captureMap(); }
+  catch(e){ console.error(e); }
+  status('');
+  setTimeout(()=>window.print(), 300);
+});
+
+/* =========================================================
+   Gravador nativo de Shapefile (ESRI .shp/.shx/.dbf/.prj)
+   Sem dependências externas. WGS 84.
+   ========================================================= */
+const WGS84_WKT = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+
+function ringSignedArea(ring){ // >0 anti-horário em coordenadas planas lon/lat
+  let s=0;
+  for(let i=0;i<ring.length-1;i++) s += (ring[i+1][0]-ring[i][0])*(ring[i+1][1]+ring[i][1]);
+  return -s/2;
+}
+function closeRing(r){
+  const a=r[0], b=r[r.length-1];
+  if(a[0]!==b[0] || a[1]!==b[1]) return [...r, a];
+  return r;
+}
+function writeShapefile(features, cls){
+  const SHAPE = { point:1, line:3, polygon:5 }[cls];
+
+  /* --- prepara geometrias como {parts:[[x,y]...], bbox} --- */
+  const recs = features.map(f=>{
+    const g = f.geometry;
+    if(cls==='point'){
+      const [x,y] = g.coordinates;
+      return { pts:[[x,y]], parts:null, bbox:[x,y,x,y] };
+    }
+    let parts;
+    if(cls==='line') parts = [ g.coordinates ];
+    else { // polygon: fecha anéis e orienta (externo horário, furos anti-horário)
+      parts = g.coordinates.map((r,i)=>{
+        let ring = closeRing(r.map(p=>[p[0],p[1]]));
+        const ccw = ringSignedArea(ring) > 0;
+        if((i===0 && ccw) || (i>0 && !ccw)) ring = ring.slice().reverse();
+        return ring;
+      });
+    }
+    let xmin=Infinity,ymin=Infinity,xmax=-Infinity,ymax=-Infinity;
+    parts.forEach(pt=>pt.forEach(([x,y])=>{ xmin=Math.min(xmin,x); ymin=Math.min(ymin,y); xmax=Math.max(xmax,x); ymax=Math.max(ymax,y); }));
+    return { parts, bbox:[xmin,ymin,xmax,ymax] };
+  });
+
+  /* --- tamanhos dos registros (em words de 16 bits) --- */
+  const contentLens = recs.map(r=>{
+    if(SHAPE===1) return (4+16)/2; // type + x,y
+    const nPts = r.parts.reduce((s,p)=>s+p.length,0);
+    return (4 + 32 + 4 + 4 + 4*r.parts.length + 16*nPts)/2;
+  });
+  const shpLenWords = 50 + contentLens.reduce((s,c)=>s+c+4,0);
+  const shxLenWords = 50 + recs.length*4;
+
+  /* --- bbox global --- */
+  let gx1=Infinity,gy1=Infinity,gx2=-Infinity,gy2=-Infinity;
+  recs.forEach(r=>{
+    const b = r.bbox || [r.pts[0][0],r.pts[0][1],r.pts[0][0],r.pts[0][1]];
+    gx1=Math.min(gx1,b[0]); gy1=Math.min(gy1,b[1]); gx2=Math.max(gx2,b[2]); gy2=Math.max(gy2,b[3]);
+  });
+  if(!recs.length){ gx1=gy1=gx2=gy2=0; }
+
+  function header(view, lenWords){
+    view.setInt32(0, 9994, false);
+    view.setInt32(24, lenWords, false);
+    view.setInt32(28, 1000, true);
+    view.setInt32(32, SHAPE, true);
+    view.setFloat64(36, gx1, true); view.setFloat64(44, gy1, true);
+    view.setFloat64(52, gx2, true); view.setFloat64(60, gy2, true);
+    // z/m ranges ficam em 0
+  }
+
+  /* --- .shp --- */
+  const shpBuf = new ArrayBuffer(shpLenWords*2);
+  const shp = new DataView(shpBuf);
+  header(shp, shpLenWords);
+  /* --- .shx --- */
+  const shxBuf = new ArrayBuffer(shxLenWords*2);
+  const shx = new DataView(shxBuf);
+  header(shx, shxLenWords);
+
+  let off = 100; // bytes
+  recs.forEach((r,i)=>{
+    // índice
+    shx.setInt32(100+i*8, off/2, false);
+    shx.setInt32(104+i*8, contentLens[i], false);
+    // cabeçalho do registro
+    shp.setInt32(off, i+1, false);
+    shp.setInt32(off+4, contentLens[i], false);
+    let p = off+8;
+    shp.setInt32(p, SHAPE, true); p+=4;
+    if(SHAPE===1){
+      shp.setFloat64(p, r.pts[0][0], true); p+=8;
+      shp.setFloat64(p, r.pts[0][1], true); p+=8;
+    } else {
+      const nPts = r.parts.reduce((s,x)=>s+x.length,0);
+      shp.setFloat64(p, r.bbox[0], true); shp.setFloat64(p+8, r.bbox[1], true);
+      shp.setFloat64(p+16, r.bbox[2], true); shp.setFloat64(p+24, r.bbox[3], true); p+=32;
+      shp.setInt32(p, r.parts.length, true); p+=4;
+      shp.setInt32(p, nPts, true); p+=4;
+      let idx=0;
+      r.parts.forEach(part=>{ shp.setInt32(p, idx, true); p+=4; idx+=part.length; });
+      r.parts.forEach(part=>part.forEach(([x,y])=>{
+        shp.setFloat64(p, x, true); p+=8;
+        shp.setFloat64(p, y, true); p+=8;
+      }));
+    }
+    off += 8 + contentLens[i]*2;
+  });
+
+  /* --- .dbf --- */
+  // esquema: união das chaves de propriedades; números como 'N', resto como 'C'
+  const keys = [];
+  const keySet = new Set();
+  features.forEach(f=>Object.keys(f.properties||{}).forEach(k=>{
+    if(!keySet.has(k)){ keySet.add(k); keys.push(k); }
+  }));
+  const fields = keys.slice(0,60).map(k=>{
+    const numeric = features.every(f=>{
+      const v = (f.properties||{})[k];
+      return v==null || v==='' || typeof v==='number';
+    });
+    return { name:k, type: numeric?'N':'C', len: numeric?18:100, dec: numeric?6:0 };
+  });
+  if(!fields.length) fields.push({name:'id', type:'N', len:10, dec:0});
+
+  const recSize = 1 + fields.reduce((s,f)=>s+f.len, 0);
+  const hdrSize = 32 + fields.length*32 + 1;
+  const dbfBuf = new ArrayBuffer(hdrSize + recSize*features.length + 1);
+  const dbf = new DataView(dbfBuf);
+  const dbfU8 = new Uint8Array(dbfBuf);
+  const now = new Date();
+  dbf.setUint8(0, 0x03);
+  dbf.setUint8(1, now.getFullYear()-1900); dbf.setUint8(2, now.getMonth()+1); dbf.setUint8(3, now.getDate());
+  dbf.setInt32(4, features.length, true);
+  dbf.setInt16(8, hdrSize, true);
+  dbf.setInt16(10, recSize, true);
+  const enc = s=>{ // latin-1 seguro
+    const out=[]; for(const ch of String(s)){ const c=ch.charCodeAt(0); out.push(c<256?c:63); } return out;
+  };
+  fields.forEach((f,i)=>{
+    const base = 32+i*32;
+    const nm = enc(f.name.slice(0,10));
+    nm.forEach((c,j)=>dbfU8[base+j]=c);
+    dbfU8[base+11] = f.type.charCodeAt(0);
+    dbfU8[base+16] = f.len;
+    dbfU8[base+17] = f.dec;
+  });
+  dbfU8[32+fields.length*32] = 0x0D;
+  features.forEach((f,ri)=>{
+    let pos = hdrSize + ri*recSize;
+    dbfU8[pos] = 0x20; pos++;
+    fields.forEach(fl=>{
+      let v = (f.properties||{})[fl.name];
+      if(fl.name==='id' && v==null && keys.length===0) v = ri+1;
+      let str;
+      if(fl.type==='N'){
+        str = (v==null || v==='') ? '' : Number(v).toFixed(fl.dec);
+        if(str.length>fl.len) str = str.slice(0,fl.len);
+        str = str.padStart(fl.len, ' ');
+      } else {
+        if(v===true) v='sim'; else if(v===false) v='não';
+        str = v==null ? '' : String(v);
+        const bytes = enc(str).slice(0,fl.len);
+        for(let j=0;j<fl.len;j++) dbfU8[pos+j] = j<bytes.length ? bytes[j] : 0x20;
+        pos += fl.len;
+        return;
+      }
+      const bytes = enc(str);
+      for(let j=0;j<fl.len;j++) dbfU8[pos+j] = j<bytes.length ? bytes[j] : 0x20;
+      pos += fl.len;
+    });
+  });
+  dbfU8[dbfBuf.byteLength-1] = 0x1A;
+
+  return { shp:shpBuf, shx:shxBuf, dbf:dbfBuf, prj:WGS84_WKT, cpg:'ISO-8859-1' };
+}
+
+/* =========================================================
+   Persistência do projeto (autosave + arquivo)
+   ========================================================= */
+const STORAGE_KEY = 'geoatlas_project_v1';
+let saveTimer = null, lastSaveInfo = '';
+
+function serializeProject(){
+  return {
+    app:'GeoMatias', version:1, savedAt:new Date().toISOString(),
+    view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() },
+    base: currentBaseName,
+    groups: groups.map(g=>({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed})),
+    customCatalogs: catalogs.filter(c=>c.custom).map(c=>({name:c.name, url:c.url})),
+    rasters: rasterLayers.map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
+    layers: vectorLayers.map(l=>({
+      name:l.name, geomType:l.geomType, color:l.color, visible:l.visible, fields:l.fields, groupId:l.groupId||null, meta:l.meta||null, inventory:!!l.inventory,
+      features:{ type:'FeatureCollection',
+        features: l.group.getLayers().map(x=>{
+          let g = x.toGeoJSON();
+          if(g.type==='FeatureCollection') g = g.features[0];
+          g.properties = (x.feature && x.feature.properties) || {};
+          return g;
+        })
+      }
+    }))
+  };
+}
+function saveLocal(){
+  try{
+    const p = serializeProject();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    lastSaveInfo = 'Salvo automaticamente às '+new Date().toLocaleTimeString('pt-BR');
+  }catch(err){
+    // cota excedida (rasters de imagem grandes ou fotos de árvores): tenta versão enxuta
+    try{
+      const p = serializeProject();
+      p.rasters = p.rasters.filter(r=>r.type!=='img');
+      (p.layers||[]).forEach(l=>{
+        if(l.features && l.features.features)
+          l.features.features.forEach(ft=>{ if(ft.properties && ft.properties.foto) delete ft.properties.foto; });
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      lastSaveInfo = 'Salvo (imagens grandes e fotos de árvores ficam só no arquivo .json)';
+    }catch(e2){ lastSaveInfo = 'Autosave indisponível: projeto grande demais para o navegador. Use "Salvar em arquivo".'; }
+  }
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveLocal, 1200);
+}
+map.on('moveend', scheduleSave);
+map.on('baselayerchange', scheduleSave);
+window.addEventListener('beforeunload', saveLocal);
+
+function clearProjectState(){
+  groups.length = 0;
+  vectorLayers.slice().forEach(l=>map.removeLayer(l.group));
+  vectorLayers.length = 0;
+  rasterLayers.slice().forEach(r=>map.removeLayer(r.layer));
+  rasterLayers.length = 0;
+  measureGroup.clearLayers();
+  activeLayer = null;
+  undoStack.length = 0; redoStack.length = 0;
+  featReg.clear();
+}
+function applyProject(p){
+  clearProjectState();
+  if(p.base && bases[p.base]){
+    map.removeLayer(currentBase);
+    currentBase = bases[p.base].addTo(map);
+    currentBase.bringToBack();
+    currentBaseName = p.base;
+    document.querySelectorAll('#baseList input').forEach((inp,i)=>{
+      inp.checked = Object.keys(bases)[i]===p.base;
+    });
+  }
+  (p.customCatalogs||[]).forEach(cc=>{
+    if(!catalogs.some(c=>c.url===cc.url)) catalogs.push({...cc, enabled:true, custom:true});
+  });
+  (p.groups||[]).forEach(g=>{
+    groups.push({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed});
+    groupSeq = Math.max(groupSeq, g.id);
+  });
+  (p.rasters||[]).forEach(def=>{
+    const layer = addRasterFromDef(def, true);
+    const rec = rasterLayers[rasterLayers.length-1];
+    rec.groupId = def.groupId || null;
+    if(def.visible===false){ rec.visible=false; map.removeLayer(layer); }
+  });
+  (p.layers||[]).forEach(ld=>{
+    const lyr = newVectorLayer(ld.name, ld.geomType, ld.fields||[], ld.color);
+    lyr.visible = ld.visible!==false;
+    lyr.groupId = ld.groupId || null;
+    lyr.meta = ld.meta || null;
+    if(ld.inventory){ lyr.inventory = true; inventoryLayer = lyr; }
+    const gl = L.geoJSON(ld.features, {
+      style: ()=>styleFor(lyr),
+      pointToLayer: (f, latlng)=>pointMarker(latlng, lyr)
+    });
+    gl.eachLayer(x=>{
+      x.feature = x.feature || {type:'Feature', properties:{}};
+      registerFeature(x, lyr);
+      Object.assign(x.feature.properties, x.feature.properties);
+      x.bindPopup(lyr.inventory ? treePopup(x) : featurePopup(x, ''), lyr.inventory?{maxWidth:280}:undefined);
+      lyr.group.addLayer(x);
+    });
+    if(!lyr.visible) map.removeLayer(lyr.group);
+  });
+  if(p.view && p.view.center) map.setView(p.view.center, p.view.zoom||map.getZoom());
+  renderVectorList();
+  renderRasterList();
+}
+
+/* restaura ao abrir */
+(function restore(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const p = JSON.parse(raw);
+    if(p && (p.layers?.length || p.rasters?.length)){
+      applyProject(p);
+      status('Projeto restaurado ('+ (p.layers?.length||0) +' camadas).');
+    }
+  }catch(e){ console.warn('Falha ao restaurar projeto', e); }
+})();
+
+/* modal do projeto */
+document.getElementById('btnProject').addEventListener('click', ()=>{
+  document.getElementById('prjInfo').textContent = lastSaveInfo || 'O projeto ainda não foi alterado nesta sessão.';
+  open('mProject');
+});
+document.getElementById('prjSaveFile').addEventListener('click', ()=>{
+  const name = (document.getElementById('prjName').value||'meu_projeto').replace(/[^\w\-]+/g,'_');
+  saveLocal();
+  download(new Blob([JSON.stringify(serializeProject(), null, 1)], {type:'application/json'}), name+'.geomatias.json');
+  status('Projeto salvo em arquivo.');
+});
+document.getElementById('prjOpenFile').addEventListener('click', ()=>document.getElementById('prjFileInput').click());
+document.getElementById('prjFileInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const p = JSON.parse(await f.text());
+    if(p.app!=='GeoMatias' && p.app!=='GeoAtlas') throw new Error('Este arquivo não é um projeto GeoMatias.');
+    if(vectorLayers.length || rasterLayers.length){
+      if(!confirm('Abrir o projeto substituirá o conteúdo atual. Continuar?')) { e.target.value=''; return; }
+    }
+    applyProject(p);
+    saveLocal();
+    close('mProject');
+    status('Projeto "'+f.name+'" aberto.');
+  }catch(err){ alert('Falha ao abrir projeto: '+err.message); }
+  e.target.value='';
+});
+document.getElementById('prjClear').addEventListener('click', ()=>{
+  if(!confirm('Apagar TODO o projeto (camadas, rasters e autosave)? Esta ação não pode ser desfeita.')) return;
+  clearProjectState();
+  localStorage.removeItem(STORAGE_KEY);
+  renderVectorList(); renderRasterList();
+  close('mProject');
+  status('Projeto limpo.');
+});
+
+
+/* =========================================================
+   Busca inteligente em catálogos OGC (WMS / WFS)
+   ========================================================= */
+let catalogs = [
+  { name:'DataGEO — Sist. Ambiental Paulista (SEMIL-SP)', url:'https://datageo.ambiente.sp.gov.br/geoserver/ows' },
+  { name:'SICAR — Cadastro Ambiental Rural (CAR)', url:'https://geoserver.car.gov.br/geoserver/ows' },
+  { name:'SGB/CPRM — inclui cartas e batimetria da Marinha (CHM)', url:'https://opendata.sgb.gov.br/geoserver/ows' },
+  { name:'IDE-SP (IDESP)', url:'https://www.idesp.sp.gov.br/geoserver/ows' },
+  { name:'IBGE — Geosserviços (malhas, biomas, vegetação)', url:'https://geoservicos.ibge.gov.br/geoserver/ows' },
+  { name:'INDE — GeoServer nacional (federal/estadual)', url:'https://geoservicos.inde.gov.br/geoserver/ows' },
+  { name:'DNIT — Rodovias federais / SNV (via INDE)', url:'https://geoservicos.inde.gov.br/geoserver/DNIT/ows' },
+  { name:'IDE-Sisema MG — meio ambiente e recursos hídricos', url:'https://geoserver.meioambiente.mg.gov.br/geoserver/ows' },
+  { name:'GeoDourados (MS) — base municipal', url:'https://geodourados.dourados.ms.gov.br/geoserver/ows' },
+  { name:'IBAMA — Pamgia (embargos, desmatamento, fiscalização)', url:'https://pamgia.ibama.gov.br/server/rest/services', kind:'arcgis' },
+  { name:'IGC-SP — Cartografia oficial (ArcGIS)', url:'http://geoportal.igc.sp.gov.br:6080/arcgis/rest/services', kind:'arcgis' },
+  { name:'ANM/SIGMINE — processos minerários', url:'https://geo.anm.gov.br/arcgis/rest/services', kind:'arcgis' },
+  { name:'SIMA-SP — Infraestrutura e Meio Ambiente (ArcGIS)', url:'https://mapas.infraestruturameioambiente.sp.gov.br/server/rest/services', kind:'arcgis' }
+].map(c=>({...c, enabled:true, kind:c.kind||'ogc'}));
+
+let catalogMode = 'wms';        // 'wms' (aba rasters) | 'wfs' (aba vetores)
+let catalogRegionMode = false;  // desenhando retângulo de região
+let searchBBox = null;          // L.LatLngBounds
+let searchRectLayer = null;
+const capsCache = {};           // url|service -> parsed layers
+
+document.getElementById('btnCatalogR').addEventListener('click', ()=>openCatalog('wms'));
+document.getElementById('btnCatalogV').addEventListener('click', ()=>openCatalog('wfs'));
+document.getElementById('btnNewGroupR').addEventListener('click', ()=>createGroupInline(null));
+document.getElementById('btnNewGroupV').addEventListener('click', ()=>createGroupInline(null));
+
+function openCatalog(mode){
+  catalogMode = mode;
+  document.getElementById('catTitle').textContent =
+    mode==='wms' ? 'Busca inteligente — camadas raster (WMS)' : 'Busca inteligente — camadas vetoriais (WFS)';
+  document.getElementById('catSub').textContent = mode==='wms'
+    ? 'Pesquisa camadas de imagem (WMS) nos catálogos. As camadas encontradas são adicionadas à aba Rasters.'
+    : 'Pesquisa camadas de feições (WFS) nos catálogos. As geometrias da região demarcada são baixadas e adicionadas como camadas vetoriais editáveis.';
+  renderCatalogList();
+  updateBBoxInfo();
+  open('mCatalog');
+}
+function renderCatalogList(){
+  const el = document.getElementById('catList');
+  el.innerHTML = '';
+  catalogs.forEach((c,i)=>{
+    const row = document.createElement('label');
+    row.className = 'cat-row';
+    row.innerHTML = `<input type="checkbox" ${c.enabled?'checked':''}>
+      <span class="cname" title="${c.url}">${c.name}</span>
+      <span class="cstat" id="cstat_${i}"></span>`;
+    row.querySelector('input').addEventListener('change', e=>{ c.enabled = e.target.checked; });
+    el.appendChild(row);
+  });
+}
+document.getElementById('catNewAdd').addEventListener('click', ()=>{
+  const name = document.getElementById('catNewName').value.trim();
+  const url = document.getElementById('catNewUrl').value.trim();
+  if(!name || !/^https?:\/\//.test(url)){ alert('Informe nome e uma URL http(s) válida do serviço OWS.'); return; }
+  catalogs.push({name, url, enabled:true, custom:true});
+  document.getElementById('catNewName').value=''; document.getElementById('catNewUrl').value='';
+  renderCatalogList();
+});
+
+/* --- região de interesse (retângulo) --- */
+function setSearchBBox(bounds){
+  searchBBox = bounds;
+  if(searchRectLayer) map.removeLayer(searchRectLayer);
+  searchRectLayer = L.rectangle(bounds, {color:'#e8c34a', weight:3, dashArray:'8 4', fill:true, fillColor:'#e8c34a', fillOpacity:0.08, interactive:false, className:'bbox-rect'}).addTo(map);
+  updateBBoxInfo();
+}
+function clearSearchBBox(){
+  searchBBox = null;
+  if(searchRectLayer){ map.removeLayer(searchRectLayer); searchRectLayer=null; }
+  updateBBoxInfo();
+}
+function updateBBoxInfo(){
+  const el = document.getElementById('bboxInfo');
+  const clr = document.getElementById('catClearBBox');
+  if(searchBBox){
+    el.innerHTML = 'Região: <b>'+searchBBox.getSouth().toFixed(3)+', '+searchBBox.getWest().toFixed(3)+
+      '</b> a <b>'+searchBBox.getNorth().toFixed(3)+', '+searchBBox.getEast().toFixed(3)+'</b>';
+    clr.style.display='';
+  } else {
+    el.textContent = 'Nenhuma região demarcada (busca sem filtro espacial).';
+    clr.style.display='none';
+  }
+}
+document.getElementById('catDrawBBox').addEventListener('click', ()=>{
+  close('mCatalog');
+  deactivate();
+  catalogRegionMode = true;
+  activeDrawer = new L.Draw.Rectangle(map, { shapeOptions:{color:'#e8c34a', weight:2, dashArray:'6 6', fillOpacity:.05} });
+  activeDrawer.enable();
+  showHint('Arraste no mapa para demarcar o retângulo da região de busca.');
+});
+document.getElementById('catClearBBox').addEventListener('click', clearSearchBBox);
+
+/* --- GetCapabilities: busca e parse --- */
+function owsUrl(base, params){
+  return base + (base.includes('?')?'&':'?') +
+    Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+}
+function qAll(node, local){ return [...node.getElementsByTagNameNS('*', local)]; }
+function txt(node, local){ const n = qAll(node, local)[0]; return n ? n.textContent.trim() : ''; }
+const deacc = t => (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+async function fetchCaps(cat, service){
+  const key = cat.url+'|'+service;
+  if(capsCache[key]) return capsCache[key];
+  const url = owsUrl(cat.url, service==='WMS'
+    ? {service:'WMS', version:'1.3.0', request:'GetCapabilities'}
+    : {service:'WFS', version:'2.0.0', request:'GetCapabilities'});
+  const resp = await fetch(url, {mode:'cors'});
+  if(!resp.ok) throw new Error('HTTP '+resp.status);
+  const xml = new DOMParser().parseFromString(await resp.text(), 'text/xml');
+  if(xml.querySelector('parsererror')) throw new Error('XML inválido');
+
+  let layers = [];
+  if(service==='WMS'){
+    qAll(xml, 'Layer').forEach(Lel=>{
+      const name = [...Lel.children].find(c=>c.localName==='Name');
+      if(!name) return; // grupos sem Name não são requisitáveis
+      const title = [...Lel.children].find(c=>c.localName==='Title');
+      const abst = [...Lel.children].find(c=>c.localName==='Abstract');
+      let bbox = null;
+      const ex = qAll(Lel, 'EX_GeographicBoundingBox')[0];
+      if(ex){
+        bbox = [ +txt(ex,'westBoundLongitude'), +txt(ex,'southBoundLatitude'),
+                 +txt(ex,'eastBoundLongitude'), +txt(ex,'northBoundLatitude') ];
+      } else {
+        const ll = qAll(Lel, 'LatLonBoundingBox')[0];
+        if(ll) bbox = [ +ll.getAttribute('minx'), +ll.getAttribute('miny'), +ll.getAttribute('maxx'), +ll.getAttribute('maxy') ];
+      }
+      layers.push({ name:name.textContent.trim(), title:(title?title.textContent.trim():name.textContent.trim()),
+                    abstract:abst?abst.textContent.trim():'', bbox });
+    });
+  } else {
+    qAll(xml, 'FeatureType').forEach(ft=>{
+      const name = txt(ft,'Name'); if(!name) return;
+      const title = txt(ft,'Title') || name;
+      const abst = txt(ft,'Abstract');
+      let bbox = null;
+      const wgs = qAll(ft,'WGS84BoundingBox')[0];
+      if(wgs){
+        const lo = txt(wgs,'LowerCorner').split(/\s+/).map(Number);
+        const up = txt(wgs,'UpperCorner').split(/\s+/).map(Number);
+        if(lo.length===2 && up.length===2) bbox = [lo[0],lo[1],up[0],up[1]];
+      }
+      layers.push({name, title, abstract:abst, bbox});
+    });
+  }
+  capsCache[key] = layers;
+  return layers;
+}
+function bboxIntersects(b){ // b = [w,s,e,n]
+  if(!searchBBox || !b || b.some(x=>Number.isNaN(x))) return true;
+  return !(b[2] < searchBBox.getWest() || b[0] > searchBBox.getEast() ||
+           b[3] < searchBBox.getSouth() || b[1] > searchBBox.getNorth());
+}
+
+document.getElementById('catGo').addEventListener('click', async ()=>{
+  const term = document.getElementById('catTerm').value.trim();
+  const words = deacc(term).split(/\s+/).filter(Boolean);
+  const service = catalogMode==='wms' ? 'WMS' : 'WFS';
+  const resEl = document.getElementById('catResults');
+  resEl.innerHTML = '<div class="empty-hint"><span class="spin"></span> Consultando catálogos…</div>';
+  const active = catalogs.filter(c=>c.enabled);
+  if(!active.length){ resEl.innerHTML = '<div class="empty-hint">Selecione ao menos um catálogo.</div>'; return; }
+
+  const results = [];
+  await Promise.all(active.map(async (c)=>{
+    const i = catalogs.indexOf(c);
+    const st = document.getElementById('cstat_'+i);
+    if(st){ st.textContent='consultando…'; st.className='cstat'; }
+    try{
+      const layers = c.kind==='arcgis' ? await arcgisDiscover(c, service, st) : await fetchCaps(c, service);
+      let hits = 0;
+      layers.forEach(l=>{
+        const hay = deacc(l.name+' '+l.title+' '+l.abstract);
+        const termOk = !words.length || words.every(w=>hay.includes(w));
+        if(termOk && bboxIntersects(l.bbox)){ results.push({...l, cat:c}); hits++; }
+      });
+      if(st){ st.textContent = layers.length+' camadas · '+hits+' resultados'; st.className='cstat ok'; }
+    }catch(err){
+      console.warn('Catálogo indisponível:', c.name, err);
+      if(st){ st.textContent = 'sem acesso (CORS/offline)'; st.className='cstat err'; }
+    }
+  }));
+
+  if(!results.length){
+    resEl.innerHTML = '<div class="empty-hint">Nenhuma camada encontrada. Tente outros termos, amplie a região ou verifique se os catálogos estão acessíveis (alguns bloqueiam acesso direto do navegador — CORS).</div>';
+    return;
+  }
+  results.sort((a,b)=>a.title.localeCompare(b.title,'pt'));
+  resEl.innerHTML = '<div class="empty-hint">'+results.length+' camada(s) encontrada(s)'+(results.length>80?' — exibindo 80':'')+':</div>';
+  results.slice(0,80).forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'res-row';
+    row.innerHTML = `<div class="rt">${r.title}</div>
+      <div class="rm">${r.abstract || r.name}</div>
+      <div class="ra"><span class="rsrc">${r.cat.name}</span>
+      <button class="res-add">${catalogMode==='wms'?'＋ Adicionar (WMS)':'⬇ Baixar feições (WFS)'}</button></div>`;
+    row.querySelector('.res-add').addEventListener('click', ev=>addCatalogLayer(r, ev.target));
+    resEl.appendChild(row);
+  });
+});
+
+async function addCatalogLayer(r, btn){
+  btn.disabled = true;
+  if(r.cat.kind==='arcgis'){ return addArcgisLayer(r, btn); }
+  if(catalogMode==='wms'){
+    addRasterFromDef({ type:'wms', name:r.title, url:r.cat.url, layers:r.name, opacity:1,
+      abstract:r.abstract||'', source:r.cat.name, bbox:r.bbox||null });
+    btn.textContent = '✓ Adicionada';
+    if(r.bbox && !searchBBox) map.fitBounds([[r.bbox[1],r.bbox[0]],[r.bbox[3],r.bbox[2]]]);
+    else if(searchBBox) map.fitBounds(searchBBox);
+    return;
+  }
+  // WFS: baixa GeoJSON (limitado à região, se houver)
+  btn.innerHTML = '<span class="spin"></span> baixando…';
+  try{
+    const params = {
+      service:'WFS', version:'2.0.0', request:'GetFeature',
+      typeNames:r.name, outputFormat:'application/json',
+      srsName:'EPSG:4326', count:'3000'
+    };
+    if(searchBBox){
+      params.bbox = [searchBBox.getWest(), searchBBox.getSouth(), searchBBox.getEast(), searchBBox.getNorth(), 'EPSG:4326'].join(',');
+    }
+    const resp = await fetch(owsUrl(r.cat.url, params), {mode:'cors'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const gj = await resp.json();
+    if(!gj.features || !gj.features.length) throw new Error('nenhuma feição na região');
+    const {count, bounds, layers} = importCollections([{...gj, fileName:r.title}], r.title);
+    layers.forEach(l=>l.meta = { source:r.cat.name, abstract:r.abstract||'', typeName:r.name });
+    renderVectorList();
+    if(bounds) map.fitBounds(bounds.pad(.1));
+    btn.textContent = '✓ '+count+' feições';
+    status(count+' feições importadas de "'+r.title+'".');
+  }catch(err){
+    console.warn(err);
+    btn.textContent = '✕ falhou';
+    btn.disabled = false;
+    setTimeout(()=>{ btn.textContent='⬇ Baixar feições (WFS)'; }, 2500);
+    status('Falha ao baixar "'+r.title+'": '+err.message);
+  }
+}
+
+
+/* =========================================================
+   Adaptador ArcGIS REST (IBAMA/Pamgia, IGC-SP, e afins)
+   Traduz serviços ArcGIS Server para o mesmo fluxo do pesquisador:
+   MapServer/FeatureServer -> feições via query?f=geojson
+   MapServer -> raster via ponte WMSServer
+   ========================================================= */
+
+/* fetch com tentativa direta e fallback por proxy CORS (para
+   servidores sem CORS ou em HTTP sob página HTTPS) */
+async function fetchJSONFallback(url){
+  try{
+    const r = await fetch(url, {mode:'cors'});
+    if(r.ok) return await r.json();
+    throw new Error('HTTP '+r.status);
+  }catch(e){
+    const prox = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const r2 = await fetch(prox);
+    if(!r2.ok) throw new Error('HTTP '+r2.status+' (proxy)');
+    return await r2.json();
+  }
+}
+
+/* Web Mercator (102100/3857/900913) -> [lon,lat] */
+function mercToLonLat(x, y){
+  const R = 20037508.342789244;
+  const lon = (x / R) * 180;
+  let lat = (y / R) * 180;
+  lat = 180/Math.PI * (2*Math.atan(Math.exp(lat*Math.PI/180)) - Math.PI/2);
+  return [lon, lat];
+}
+/* extensão ArcGIS -> bbox [w,s,e,n] em WGS84, ou null se não for possível */
+function arcExtentToBbox(ext){
+  if(!ext) return null;
+  const wkid = ext.spatialReference && (ext.spatialReference.latestWkid || ext.spatialReference.wkid);
+  if(wkid===4326){
+    return [ext.xmin, ext.ymin, ext.xmax, ext.ymax];
+  }
+  if(wkid===102100 || wkid===3857 || wkid===900913 || wkid===102113){
+    const lo = mercToLonLat(ext.xmin, ext.ymin);
+    const up = mercToLonLat(ext.xmax, ext.ymax);
+    return [lo[0], lo[1], up[0], up[1]];
+  }
+  return null; // SR desconhecido: sem filtro espacial (mais seguro que filtrar errado)
+}
+
+/* Descobre camadas de um catálogo ArcGIS REST.
+   Retorna itens no mesmo formato de fetchCaps: {name,title,abstract,bbox,_arc}
+   onde _arc = {queryUrl, wmsUrl, layerId} */
+async function arcgisDiscover(cat, service, st){
+  const key = cat.url+'|arcgis|'+service;
+  if(capsCache[key]) return capsCache[key];
+  if(st){ st.textContent='listando serviços…'; st.className='cstat'; }
+
+  const root = cat.url.replace(/\/+$/,'');
+  const rootJson = await fetchJSONFallback(root + '?f=json');
+
+  // coleta serviços da raiz + 1 nível de pastas
+  let services = (rootJson.services||[]).slice();
+  const folders = (rootJson.folders||[]).slice(0, 20);
+  await Promise.all(folders.map(async f=>{
+    try{
+      const fj = await fetchJSONFallback(root + '/' + f + '?f=json');
+      (fj.services||[]).forEach(s=>services.push(s));
+    }catch(e){ /* pasta indisponível: ignora */ }
+  }));
+
+  // apenas serviços com feições/mapa; limita quantidade para não sobrecarregar
+  services = services
+    .filter(s=> s.type==='MapServer' || s.type==='FeatureServer')
+    .slice(0, 30);
+
+  const out = [];
+  await Promise.all(services.map(async s=>{
+    const svcUrl = root + '/' + s.name + '/' + s.type;
+    try{
+      const sj = await fetchJSONFallback(svcUrl + '?f=json');
+      const bboxSvc = arcExtentToBbox(sj.fullExtent);
+      const svcLabel = s.name.split('/').pop();
+      (sj.layers||[]).forEach(ly=>{
+        if(ly.subLayerIds) return; // ignora grupos (não requisitáveis diretamente)
+        out.push({
+          name: String(ly.id),
+          title: ly.name || (svcLabel+' ['+ly.id+']'),
+          abstract: svcLabel + ' · ' + s.type,
+          bbox: bboxSvc,
+          _arc: {
+            queryUrl: svcUrl + '/' + ly.id + '/query',
+            wmsUrl: (s.type==='MapServer') ? (svcUrl + '/WMSServer') : null,
+            layerId: ly.id
+          }
+        });
+      });
+    }catch(e){ /* serviço indisponível: ignora */ }
+  }));
+
+  capsCache[key] = out;
+  return out;
+}
+
+/* Conversor mínimo esriJSON -> GeoJSON (fallback quando f=geojson não é suportado) */
+function esriToGeoJSON(fs){
+  const feats = (fs.features||[]).map(f=>{
+    const a = f.attributes || {}; const g = f.geometry; let geom = null;
+    if(g){
+      if(g.x!=null && g.y!=null) geom = {type:'Point', coordinates:[g.x, g.y]};
+      else if(g.points) geom = {type:'MultiPoint', coordinates:g.points};
+      else if(g.paths) geom = g.paths.length>1 ? {type:'MultiLineString', coordinates:g.paths}
+                                               : {type:'LineString', coordinates:g.paths[0]};
+      else if(g.rings) geom = g.rings.length>1 ? {type:'MultiPolygon', coordinates:g.rings.map(r=>[r])}
+                                               : {type:'Polygon', coordinates:g.rings};
+    }
+    return {type:'Feature', properties:a, geometry:geom};
+  }).filter(f=>f.geometry);
+  return {type:'FeatureCollection', features:feats};
+}
+
+async function addArcgisLayer(r, btn){
+  // ----- modo raster (aba Rasters): ponte WMSServer do MapServer -----
+  if(catalogMode==='wms'){
+    if(!r._arc.wmsUrl){
+      btn.textContent = '✕ sem WMS';
+      btn.disabled = false;
+      setTimeout(()=>{ btn.textContent='＋ Adicionar (WMS)'; }, 2500);
+      status('Este serviço (FeatureServer) não expõe ponte WMS. Use a aba Vetores para baixar as feições.');
+      return;
+    }
+    addRasterFromDef({ type:'wms', name:r.title, url:r._arc.wmsUrl, layers:String(r._arc.layerId),
+      opacity:1, abstract:r.abstract||'', source:r.cat.name, bbox:r.bbox||null });
+    btn.textContent = '✓ Adicionada';
+    if(r.bbox && !searchBBox) map.fitBounds([[r.bbox[1],r.bbox[0]],[r.bbox[3],r.bbox[2]]]);
+    else if(searchBBox) map.fitBounds(searchBBox);
+    return;
+  }
+
+  // ----- modo vetorial (aba Vetores): query REST -> GeoJSON -----
+  btn.innerHTML = '<span class="spin"></span> baixando…';
+  try{
+    const base = {
+      where:'1=1', outFields:'*', outSR:'4326',
+      returnGeometry:'true', f:'geojson', resultRecordCount:'3000'
+    };
+    if(searchBBox){
+      base.geometry = [searchBBox.getWest(), searchBBox.getSouth(), searchBBox.getEast(), searchBBox.getNorth()].join(',');
+      base.geometryType = 'esriGeometryEnvelope';
+      base.inSR = '4326';
+      base.spatialRel = 'esriSpatialRelIntersects';
+    }
+    const qs = p => Object.entries(p).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+
+    // 1ª tentativa: f=geojson
+    let gj = await fetchJSONFallback(r._arc.queryUrl + '?' + qs(base));
+    // fallback: f=json (esriJSON) -> converte
+    if(!gj || !gj.type || !gj.features){
+      const alt = {...base, f:'json'};
+      const ej = await fetchJSONFallback(r._arc.queryUrl + '?' + qs(alt));
+      gj = esriToGeoJSON(ej);
+    }
+    if(!gj.features || !gj.features.length) throw new Error('nenhuma feição na região');
+
+    const {count, bounds, layers} = importCollections([{...gj, fileName:r.title}], r.title);
+    layers.forEach(l=>l.meta = { source:r.cat.name, abstract:r.abstract||'', typeName:r.title });
+    renderVectorList();
+    if(bounds) map.fitBounds(bounds.pad(.1));
+    btn.textContent = '✓ '+count+' feições';
+    status(count+' feições importadas de "'+r.title+'".');
+  }catch(err){
+    console.warn(err);
+    btn.textContent = '✕ falhou';
+    btn.disabled = false;
+    setTimeout(()=>{ btn.textContent='⬇ Baixar feições (WFS)'; }, 2500);
+    status('Falha ao baixar "'+r.title+'": '+err.message);
+  }
+}
+
+
+/* =========================================================
+   Consulta (GetFeatureInfo) e captura (WFS) de camadas de catálogo
+   ========================================================= */
+function wmsCatalogLayers(){
+  return rasterLayers.filter(r=>r.visible && r.def && r.def.type==='wms' && r.def.url && r.def.layers);
+}
+
+/* --- Consultar informações da feição sob o clique (WMS GetFeatureInfo) --- */
+async function queryClick(e){
+  const cands = wmsCatalogLayers();
+  if(!cands.length) return;
+  const size = map.getSize();
+  const b = map.getBounds();
+  const pt = map.latLngToContainerPoint(e.latlng);
+  const pop = L.popup({maxWidth:340, maxHeight:280})
+    .setLatLng(e.latlng)
+    .setContent('<div style="font-size:12.5px"><span class="spin"></span> Consultando '+cands.length+' camada(s)…</div>')
+    .openOn(map);
+
+  const sections = [];
+  await Promise.all(cands.map(async r=>{
+    const base = {
+      service:'WMS', version:'1.1.1', request:'GetFeatureInfo',
+      layers:r.def.layers, query_layers:r.def.layers, styles:'',
+      srs:'EPSG:4326',
+      bbox:[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].join(','),
+      width:size.x, height:size.y, x:Math.round(pt.x), y:Math.round(pt.y),
+      feature_count:5
+    };
+    try{
+      let resp = await fetch(owsUrl(r.def.url, {...base, info_format:'application/json'}), {mode:'cors'});
+      let ok = resp.ok;
+      let body = ok ? await resp.text() : '';
+      let gj = null;
+      try{ gj = JSON.parse(body); }catch(_){}
+      if(gj && gj.features){
+        if(!gj.features.length) return;
+        const rows = gj.features.map(f=>{
+          const p = f.properties||{};
+          const tr = Object.entries(p).filter(([,v])=>v!==null&&v!=='').slice(0,14)
+            .map(([k,v])=>`<tr><td style="color:#667;padding-right:8px;vertical-align:top">${k}</td><td>${v}</td></tr>`).join('');
+          return `<table style="font-size:11.5px;border-collapse:collapse;margin:4px 0">${tr||'<tr><td>Sem atributos</td></tr>'}</table>`;
+        }).join('<hr style="border:none;border-top:1px solid #ddd">');
+        sections.push(`<div><b style="font-size:12px">${r.name}</b> <span style="color:#889;font-size:10.5px">(${gj.features.length} feição/ões)</span>${rows}</div>`);
+      } else {
+        // fallback texto simples
+        resp = await fetch(owsUrl(r.def.url, {...base, info_format:'text/plain'}), {mode:'cors'});
+        if(resp.ok){
+          const t = (await resp.text()).trim();
+          if(t && !/no features/i.test(t) && t.length>5)
+            sections.push(`<div><b style="font-size:12px">${r.name}</b><pre style="font-size:10.5px;white-space:pre-wrap;margin:4px 0">${t.slice(0,1200)}</pre></div>`);
+        }
+      }
+    }catch(err){ console.warn('GetFeatureInfo falhou', r.name, err); }
+  }));
+
+  pop.setContent(sections.length
+    ? `<div style="font-size:12.5px">${sections.join('<hr style="border:none;border-top:2px solid #eee">')}</div>`
+    : '<div style="font-size:12.5px;color:#667">Nenhuma informação de feição neste ponto (ou o servidor bloqueou a consulta — CORS).</div>');
+}
+
+/* --- Capturar geometria + atributos da feição clicada para camada local (via WFS) --- */
+const captureLayerIndex = {}; // typeName|geomType -> lyr
+async function captureClick(e){
+  const cands = wmsCatalogLayers();
+  if(!cands.length) return;
+  status('Capturando feições…');
+  // tolerância de ~6 px convertida para graus
+  const p = map.latLngToContainerPoint(e.latlng);
+  const a = map.containerPointToLatLng([p.x-6, p.y+6]);
+  const b2 = map.containerPointToLatLng([p.x+6, p.y-6]);
+  const bbox = [Math.min(a.lng,b2.lng), Math.min(a.lat,b2.lat), Math.max(a.lng,b2.lng), Math.max(a.lat,b2.lat), 'EPSG:4326'].join(',');
+
+  let totalNew = 0, tried = 0, denied = 0;
+  for(const r of cands){
+    tried++;
+    try{
+      const url = owsUrl(r.def.url, {
+        service:'WFS', version:'2.0.0', request:'GetFeature',
+        typeNames:r.def.layers, outputFormat:'application/json',
+        srsName:'EPSG:4326', count:'10', bbox
+      });
+      const resp = await fetch(url, {mode:'cors'});
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const gj = await resp.json();
+      if(!gj.features || !gj.features.length) continue;
+
+      gj.features.forEach(f=>{
+        const cls = geomClass(f.geometry?.type); if(!cls) return;
+        const key = r.def.layers+'|'+cls;
+        let lyr = captureLayerIndex[key];
+        if(!lyr || !vectorLayers.includes(lyr)){
+          // esquema inferido da primeira feição capturada
+          const fields = Object.entries(f.properties||{}).slice(0,30).map(([k,v])=>({
+            name:k, type: typeof v==='number' ? 'number' : typeof v==='boolean' ? 'checkbox' : 'text', options:[], required:false
+          }));
+          lyr = newVectorLayer('Capturas — '+r.name, cls, fields);
+          lyr.meta = { source:r.def.source || r.def.url, abstract:r.def.abstract||'', typeName:r.def.layers };
+          captureLayerIndex[key] = lyr;
+        }
+        // evita duplicar a mesma feição (id do WFS)
+        if(f.id && lyr.group.getLayers().some(x=>x.feature && x.feature.id===f.id)) return;
+
+        const gl = L.geoJSON(f, { style:()=>styleFor(lyr), pointToLayer:(_,ll)=>pointMarker(ll, lyr) });
+        gl.eachLayer(x=>{
+          x.feature = x.feature || {type:'Feature', properties:{}};
+          if(f.id) x.feature.id = f.id;
+          registerFeature(x, lyr);
+          Object.assign(x.feature.properties, f.properties||{});
+          x.bindPopup(featurePopup(x, ''));
+          lyr.group.addLayer(x);
+          pushAction({type:'add', layer:x, target:lyr});
+          totalNew++;
+        });
+      });
+    }catch(err){ denied++; console.warn('Captura WFS falhou', r.name, err); }
+  }
+  renderVectorList();
+  if(totalNew){
+    status(totalNew+' feição(ões) capturada(s) para camada(s) locais ✓');
+    showVectorTab();
+  } else if(denied===tried){
+    status('Nenhum servidor permitiu a captura (WFS indisponível ou CORS).');
+  } else {
+    status('Nenhuma feição encontrada neste ponto.');
+  }
+}
+
+/* ---------- Teclas ---------- */
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') deactivate();
+  if(e.target.matches('input, textarea, select')) return;
+  if((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); doUndo(); }
+  if((e.ctrlKey||e.metaKey) && (e.key.toLowerCase()==='y' || (e.shiftKey && e.key.toLowerCase()==='z'))){ e.preventDefault(); doRedo(); }
+});
+</script>
+</body>
+</html>

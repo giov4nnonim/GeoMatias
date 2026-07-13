@@ -1,0 +1,26 @@
+# Dados de campo e projetos exportados (podem conter fotos com dados sensíveis)
+*.geomatias.json
+*.geojson.bak
+
+# Versões de rascunho/desenvolvimento — apenas index.html é o canônico publicado
+webgis_*.html
+*_CORS_FIXED.html
+*_FIXED.html
+
+# Notas de sessão, patches e instruções internas
+CORS_PATCH.js
+CORS_FIX_INSTRUCTIONS.md
+README_CORS_FIXED.md
+SUMARIO_FINAL.txt
+DOWNLOAD_INSTRUCTIONS.txt
+__LEIA_PRIMEIRO.txt
+*.txt.bak
+
+# Backups genéricos
+*.bak
+*.old
+*~
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db

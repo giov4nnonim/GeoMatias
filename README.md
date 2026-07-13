@@ -1,17 +1,5 @@
 # GeoMatias — WebGIS
-WebGIS de arquivo único (sem backend) para desenho, medição, importação/exportação de dados geoespaciais, busca em catálogos públicos (OGC WMS/WFS e ArcGIS REST) e **inventário arbóreo com identificação de espécie por foto**.
-
-Abra o `index.html` no navegador — tudo roda no cliente.
-
-## Publicar no GitHub Pages
-
-1. Crie um repositório **público** e envie o `index.html` (e este `README.md`).
-2. Vá em **Settings → Pages**.
-3. Em **Source**, escolha **Deploy from a branch**; em **Branch**, selecione **main** e a pasta **/ (root)**. Salve.
-4. Aguarde ~1–2 min. O endereço publicado aparece em Settings → Pages, no formato:
-   `https://SEU-USUARIO.github.io/NOME-DO-REPO/`
-
-Para atualizar depois, basta reenviar o `index.html` (Upload files → substituir → commit). O Pages republica sozinho.
+WebGIS de arquivo único (sem backend) para estudo.
 
 ## Ativar a identificação de árvores (Pl@ntNet)
 
@@ -41,7 +29,6 @@ No celular, o botão de foto abre a câmera diretamente. Dá para "adicionar à 
 Federais/estaduais/municipais, via OGC (WMS/WFS) e adaptador ArcGIS REST:
 IBGE, INDE, DNIT (via INDE), IDE-Sisema MG, GeoDourados-MS, IBAMA/Pamgia, IGC-SP, ANM/SIGMINE, SIMA-SP, DataGEO-SP, SICAR/CAR, SGB/CPRM e IDE-SP.
 
-Disponibilidade varia por órgão (uptime/CORS). Bases em HTTP (ex.: IGC-SP na porta 6080) têm os *tiles raster* bloqueados por mixed-content quando a página está em HTTPS — limitação do navegador; a descoberta e o download de feições dessas bases ainda funcionam via proxy.
 
 ## Privacidade
 

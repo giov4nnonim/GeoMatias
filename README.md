@@ -1,7 +1,4 @@
 # GeoMatias — WebGIS
-
-![GeoMatias — WebGIS de arquivo único com inventário arbóreo por foto](banner.png)
-
 WebGIS de arquivo único (sem backend) para desenho, medição, importação/exportação de dados geoespaciais, busca em catálogos públicos (OGC WMS/WFS e ArcGIS REST) e **inventário arbóreo com identificação de espécie por foto**.
 
 Abra o `index.html` no navegador — tudo roda no cliente.

@@ -12,6 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shp/3.1.0/shp.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.20.9/proj4.min.js"></script>
 
 <style>
 :root{
@@ -382,10 +383,12 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(55, 194, 160, 0.7) !important;
 }
 
+#inventorySheet{display:none}
 @media print{
   @page{size:A4 landscape; margin:10mm}
-  body > *:not(#printSheet){display:none!important}
   html,body{overflow:visible; background:#fff; color:#000; height:auto}
+  /* modo padrão: folha de mapa */
+  body:not(.print-inv) > *:not(#printSheet){display:none!important}
   #printSheet{display:block!important; width:100%; color:#000; font-family:Georgia, "Times New Roman", serif}
   #printSheet .p-head{border-bottom:3px double #000; padding-bottom:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-end}
   #printSheet h1{font-size:24pt; margin:0}
@@ -401,6 +404,24 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   #printSheet .p-legend .sw.pt{width:4mm; height:4mm; border-radius:50%}
   #printSheet .p-legend .sw.ln{height:1mm; border:none}
   #printSheet .p-foot{margin-top:3mm; font-size:8pt; color:#333; display:flex; justify-content:space-between; font-family:Arial, sans-serif}
+
+  /* modo fichas: grade de caracterização */
+  body.print-inv > *:not(#inventorySheet){display:none!important}
+  body.print-inv #printSheet{display:none!important}
+  #inventorySheet{display:block!important; width:100%; color:#000; font-family:Arial, sans-serif}
+  #inventorySheet .iv-head{border-bottom:3px double #000; padding-bottom:5px; margin-bottom:6px}
+  #inventorySheet .iv-head h1{font-size:18pt; margin:0 0 2px}
+  #inventorySheet .iv-head .iv-sub{font-size:9pt; color:#333}
+  #inventorySheet .iv-card{display:grid; grid-template-columns:52mm 52mm 1fr; gap:5mm; border:1px solid #000; padding:4mm; margin-bottom:5mm; page-break-inside:avoid}
+  #inventorySheet .iv-card figure{margin:0}
+  #inventorySheet .iv-card img{width:100%; height:60mm; object-fit:cover; border:1px solid #666; display:block}
+  #inventorySheet .iv-card figcaption{font-size:7.5pt; color:#555; text-align:center; margin-top:1mm}
+  #inventorySheet .iv-noimg{width:100%; height:60mm; border:1px dashed #999; display:flex; align-items:center; justify-content:center; color:#999; font-size:8pt}
+  #inventorySheet .iv-attrs{font-size:9pt; line-height:1.45}
+  #inventorySheet .iv-attrs .k{font-weight:700}
+  #inventorySheet .iv-attrs .sci{font-style:italic}
+  #inventorySheet .iv-attrs .warn{color:#b26a00; font-size:7.5pt}
+  #inventorySheet .iv-foot{margin-top:3mm; font-size:8pt; color:#333; border-top:1px solid #000; padding-top:2mm; display:flex; justify-content:space-between}
 }
 /* ---------- Módulo de inventário arbóreo ---------- */
 .tree-photo-box{border:2px dashed var(--line); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:.15s; background:var(--panel2)}
@@ -424,6 +445,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .gbif-gal img{width:96px; height:96px; object-fit:cover; border-radius:6px; display:block}
 .gbif-gal figcaption{font-size:9px; color:var(--muted); margin-top:2px; line-height:1.2; overflow:hidden; max-height:24px}
 .tree-sec-title{font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:14px 0 6px; border-top:1px solid var(--line); padding-top:10px}
+.tree-sug{font-size:9.5px; font-weight:600; color:var(--accent); background:rgba(55,194,160,.12); border:1px solid rgba(55,194,160,.4); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
+.tree-warn{font-size:9.5px; font-weight:600; color:#e5a13f; background:rgba(229,161,63,.12); border:1px solid rgba(229,161,63,.4); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
+.tree-photos-2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.tree-photos-2 .tree-photo-box{padding:10px}
+.tree-photos-2 .tree-photo-box img{max-height:120px}
+.tree-photos-2 .tp-cap{font-size:10.5px; color:var(--muted); margin-bottom:4px; font-weight:600}
+.tree-num-tip{background:#fff; color:#123; border:2px solid #2e7d46; border-radius:50%; width:20px; height:20px; line-height:16px; text-align:center; font-weight:700; font-size:11px; padding:0; box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.tree-num-tip:before{display:none}
 </style>
 </head>
 <body>
@@ -445,6 +474,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     <span class="lbl">Projeto</span>
   </button>
+  <button class="tb-btn" id="btnCRS" title="Sistema de projeção">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.2" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    <span class="lbl">Projeção</span>
+  </button>
   <button class="tb-btn" id="btnFields">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
     <span class="lbl">Atributos</span>
@@ -460,6 +493,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tb-btn primary" id="btnPrint">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
     <span class="lbl">Imprimir</span>
+  </button>
+  <button class="tb-btn" id="btnInventory" title="Saídas do inventário arbóreo">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/></svg>
+    <span class="lbl">Inventário</span>
   </button>
 </div>
 
@@ -504,6 +541,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
   <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
   <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
+  <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
   <div class="tool-sep"></div>
   <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="erase"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span class="tip">Apagar / limpar medições</span></button>
@@ -680,6 +718,35 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
 </div>
 
+<!-- ===== Modal: saídas do inventário arbóreo ===== -->
+<div class="modal-back" id="mInventory">
+  <div class="modal wide" style="width:520px; max-height:92vh; overflow:auto">
+    <h3>Saídas do inventário arbóreo</h3>
+    <p class="sub">Gera automaticamente, a partir dos indivíduos registrados, os produtos de laudo: <b>mapa georreferenciado</b> com pontos numerados, <b>grade de fichas</b> (foto + atributos) e <b>planilha de campo (CSV)</b>. Cálculos de DAP, DAP equivalente (multifustes) e volume seguem a metodologia usada no laudo.</p>
+    <div id="invSummary" style="font-size:12.5px;color:var(--muted);margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)"></div>
+
+    <div class="field"><label>Título do laudo / mapa</label><input type="text" id="invTitle" placeholder="Ex.: Exemplares arbóreos georreferenciados — Itararé, São Vicente/SP"></div>
+    <div class="field"><label>Responsável técnico (opcional)</label><input type="text" id="invAuthor" placeholder="Ex.: Eng. Amb. Fulano — CREA 000000000"></div>
+
+    <div class="field"><label>Filtrar indivíduos</label>
+      <select id="invFilter">
+        <option value="all">Todos os indivíduos</option>
+        <option value="enquadra">Somente os que enquadram na compensação (nativa, DAP≥5)</option>
+        <option value="corte">Somente pretensão = Corte</option>
+      </select>
+    </div>
+
+    <div class="tree-sec-title">Gerar</div>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <button class="tb-btn primary" id="invGenMap">🗺️ Mapa georreferenciado (pontos numerados)</button>
+      <button class="tb-btn primary" id="invGenCards">🗂️ Grade de fichas (foto + atributos)</button>
+      <button class="tb-btn" id="invGenCsv">📄 Planilha de campo (CSV)</button>
+    </div>
+    <p class="sub" style="margin-top:10px">Dica: para o mapa sair como no laudo (imagem aérea de drone), carregue o ortomosaico como <b>raster do tipo Imagem</b> — ele é lido sem bloqueio de CORS. Bases de satélite XYZ (Google/Esri) funcionam na maioria dos casos, mas podem ser bloqueadas pelo navegador.</p>
+    <div class="actions"><button class="tb-btn" data-close>Fechar</button></div>
+  </div>
+</div>
+
 <!-- ===== Modal: esquema de atributos ===== -->
 <div class="modal-back" id="mFields">
   <div class="modal">
@@ -731,8 +798,20 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <p class="sub">Anexe ou tire uma foto do indivíduo. A identificação por imagem (Pl@ntNet) pré-preenche espécie e família; as fotos de referência (GBIF) ajudam a confirmar visualmente. A identificação é sempre uma <b>sugestão</b> — confirme antes de salvar.</p>
 
     <input type="file" id="treePhotoInput" accept="image/*" capture="environment" hidden>
-    <div class="tree-photo-box" id="treePhotoBox">
-      <div id="treePhotoHint">📷 Toque para tirar foto ou anexar imagem<br><small style="color:var(--muted)">folha, flor, fruto ou casca — quanto mais nítido, melhor</small></div>
+    <input type="file" id="treeTrunkInput" accept="image/*" capture="environment" hidden>
+    <div class="tree-photos-2">
+      <div>
+        <div class="tp-cap">Indivíduo (usada na identificação)</div>
+        <div class="tree-photo-box" id="treePhotoBox">
+          <div id="treePhotoHint">📷 Foto do indivíduo<br><small style="color:var(--muted)">folha, flor, fruto ou casca</small></div>
+        </div>
+      </div>
+      <div>
+        <div class="tp-cap">Tronco / lacre (opcional)</div>
+        <div class="tree-photo-box" id="treeTrunkBox">
+          <div id="treeTrunkHint">📷 Foto do tronco<br><small style="color:var(--muted)">lacre e medição do CAP</small></div>
+        </div>
+      </div>
     </div>
 
     <div class="tree-organs" id="treeOrgans">
@@ -759,6 +838,26 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div class="actions" style="justify-content:space-between; margin-top:12px">
       <button class="tb-btn" id="treeSkip">Salvar sem atributos</button>
       <button class="tb-btn primary" id="treeSave">Salvar árvore</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: segmentação IA (SAM) ===== -->
+<div class="modal-back" id="mSegment">
+  <div class="modal" style="width:520px">
+    <h3>Segmentação IA (SAM) <span style="font-size:11px;font-weight:400;color:var(--muted)">experimental</span></h3>
+    <p class="sub">Contorna automaticamente um objeto a partir de um raster de imagem já adicionado ao projeto. Roda inteiramente no navegador (modelo SlimSAM, ≈40MB, baixado do Hugging Face na primeira vez e cacheado pelo navegador). Funciona apenas com rasters do tipo <b>Imagem</b> (upload local) — camadas WMS/XYZ de terceiros normalmente bloqueiam a leitura de pixels por CORS.</p>
+    <div class="field"><label>Raster de origem</label><select id="segRasterSel"></select></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+      <button class="tb-btn" id="segLoadModel">Carregar modelo IA</button>
+      <button class="tb-btn" id="segAnalyze" disabled>Analisar imagem</button>
+      <button class="tb-btn" id="segClearPts" disabled>Limpar pontos</button>
+    </div>
+    <div id="segStatus" style="font-size:12px;color:var(--muted);min-height:32px"></div>
+    <p class="sub" style="margin-top:2px">Depois de analisar: toque no mapa sobre o objeto, dentro da área do raster. Toque normal = ponto positivo (é isso). Shift+toque = ponto negativo (não é isso). A prévia da máscara aparece sobre o mapa a cada toque.</p>
+    <div class="actions">
+      <button class="tb-btn" data-close id="segClose">Fechar</button>
+      <button class="tb-btn primary" id="segConfirm" disabled>Confirmar polígono</button>
     </div>
   </div>
 </div>
@@ -818,6 +917,23 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
 </div>
 
+<!-- ===== Modal: sistema de projeção ===== -->
+<div class="modal-back" id="mCRS">
+  <div class="modal">
+    <h3>Sistema de projeção</h3>
+    <p class="sub">Define o sistema de referência usado na leitura de coordenadas do mapa e na exportação em <b>Shapefile</b> (o .prj é gravado automaticamente para o sistema escolhido). GeoJSON e KML/KMZ seguem sempre WGS 84 (EPSG:4326), conforme exigido por esses formatos.</p>
+    <div class="field">
+      <label>Sistema de referência do projeto</label>
+      <select id="crsSelect"></select>
+    </div>
+    <div class="empty-hint" id="crsInfo" style="margin-top:6px"></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="crsApply">Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Modal: tabela de atributos ===== -->
 <div class="modal-back" id="mTable">
   <div class="modal wide">
@@ -852,9 +968,12 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
   <div class="p-foot">
     <span id="psAuthor"></span>
-    <span>Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias WebGIS</span>
+    <span id="psSRC">Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias WebGIS</span>
   </div>
 </div>
+
+<!-- ===== Inventory cards sheet (only visible on print, modo fichas) ===== -->
+<div id="inventorySheet"></div>
 
 <script>
 /* =========================================================
@@ -1621,26 +1740,106 @@ document.getElementById('attrSave').addEventListener('click', ()=>{
    (Pl@ntNet) + imagens de referência (GBIF).
    ========================================================= */
 const TREE_FIELDS = [
+  {name:'numero_ponto', type:'number', options:[], required:false},
   {name:'codigo', type:'text', options:[], required:false},
   {name:'especie', type:'text', options:[], required:false},
+  {name:'nome_popular', type:'text', options:[], required:false},
   {name:'nome_cientifico', type:'text', options:[], required:false},
   {name:'familia', type:'text', options:[], required:false},
+  {name:'origem', type:'select', options:['Nativa','Exótica','Exótica invasora','Indeterminada'], required:false},
   {name:'confianca_id', type:'number', options:[], required:false},
+  {name:'cap_fustes', type:'text', options:[], required:false},
   {name:'dap_cm', type:'number', options:[], required:false},
   {name:'altura_m', type:'number', options:[], required:false},
-  {name:'cap_cm', type:'number', options:[], required:false},
+  {name:'volume_m3', type:'number', options:[], required:false},
   {name:'estado_fito', type:'select', options:['Saudável','Praga/doença','Danificada','Necessita poda','Morta'], required:false},
+  {name:'pretensao', type:'select', options:['Corte','Transplante','Manutenção'], required:false},
   {name:'observacoes', type:'text', options:[], required:false},
   {name:'data_registro', type:'timestamp', options:[], required:false},
+  {name:'enquadra_compensacao', type:'checkbox', options:[], required:false},
   {name:'identificacao_confirmada', type:'checkbox', options:[], required:false}
 ];
 const TREE_LABELS = {
-  codigo:'Código do indivíduo', especie:'Espécie (nome comum)', nome_cientifico:'Nome científico',
-  familia:'Família', confianca_id:'Confiança da ID (0–1)', dap_cm:'DAP (cm)', altura_m:'Altura (m)',
-  cap_cm:'CAP (cm)', estado_fito:'Estado fitossanitário', observacoes:'Observações',
-  data_registro:'Data do registro', identificacao_confirmada:'Identificação confirmada por mim'
+  numero_ponto:'Nº do ponto (rótulo no mapa)', codigo:'Identificação (lacre)', especie:'Espécie (nome comum)',
+  nome_popular:'Nome popular', nome_cientifico:'Nome científico', familia:'Família',
+  origem:'Origem', confianca_id:'Confiança da ID (0–1)',
+  cap_fustes:'CAP (cm) — fustes separados por ; ', dap_cm:'DAP (cm) — sugerido, editável',
+  altura_m:'Altura (m)', volume_m3:'Volume (m³) — sugerido, editável',
+  estado_fito:'Estado fitossanitário', pretensao:'Pretensão', observacoes:'Observações',
+  data_registro:'Data do registro', enquadra_compensacao:'Enquadra na compensação (nativa, DAP≥5)',
+  identificacao_confirmada:'Identificação confirmada por mim'
 };
 function treeLabel(n){ return TREE_LABELS[n] || n; }
+
+/* =========================================================
+   Cálculos do laudo arbóreo (Itararé / SEMIL 02-2024)
+   - DAP = CAP/π ; multifustes: DAP_eq = √(Σ DAPᵢ²)
+   - Volume (Vibrans et al. 2015 apud SFB 2018):
+       V = e^(−17,96 + 0,96·Ln(CAP²) + 0,76·Ln(h)) · 1000  [m³]
+   Valores derivados são SUGESTÕES: se o usuário editar DAP ou
+   volume à mão, marca-se dap_manual / volume_manual e o campo
+   deixa de ser re-derivado.
+   ========================================================= */
+function parseFustes(str){
+  if(str==null) return [];
+  return String(str).split(/[;,\s]+/).map(s=>parseFloat(s.replace(',','.'))).filter(v=>isFinite(v) && v>0);
+}
+function dapFromCaps(caps){
+  if(!caps.length) return null;
+  if(caps.length===1) return caps[0]/Math.PI;
+  // DAP equivalente: raiz da soma dos quadrados dos DAP de cada fuste
+  const s = caps.reduce((a,c)=>{ const d=c/Math.PI; return a + d*d; }, 0);
+  return Math.sqrt(s);
+}
+function volumeVibrans(capTotalCm, alturaM){
+  // CAP usado é o somatório das circunferências dos fustes (mesma base do DAP_eq)
+  if(!(capTotalCm>0) || !(alturaM>0)) return null;
+  const v = Math.exp(-17.96 + 0.96*Math.log(capTotalCm*capTotalCm) + 0.76*Math.log(alturaM)) * 1000;
+  return isFinite(v) ? v : null;
+}
+/* Recalcula dap_cm, volume_m3 e enquadra_compensacao a partir de
+   cap_fustes, altura_m e origem. Respeita overrides manuais. */
+function computeTreeMetrics(props){
+  const caps = parseFustes(props.cap_fustes);
+  const dapVal = dapFromCaps(caps);
+  // DAP sugerido
+  if(!props.dap_manual){
+    props.dap_cm = dapVal==null ? '' : +dapVal.toFixed(2);
+    props.dap_multifuste = caps.length>=2;
+  }
+  // Volume sugerido. Base do CAP para a equação de Vibrans:
+  //  - fuste único: o próprio CAP medido
+  //  - multifustes: CAP equivalente = DAP_eq × π (coerente com o laudo, P7 → 0,0111)
+  if(!props.volume_manual){
+    const h = parseFloat(props.altura_m);
+    const dapForVol = props.dap_manual ? parseFloat(props.dap_cm) : dapVal;
+    const capBase = (caps.length===1) ? caps[0] : (isFinite(dapForVol) ? dapForVol*Math.PI : null);
+    const vol = volumeVibrans(capBase, h);
+    props.volume_m3 = vol==null ? '' : +vol.toFixed(4);
+    // marca se está fora da faixa formal de validade (DAP > 10 cm)
+    const dapNum = parseFloat(props.dap_cm);
+    props.volume_fora_faixa = (vol!=null && isFinite(dapNum) && dapNum<=10);
+  }
+  // Enquadramento na compensação: nativa E DAP ≥ 5 cm
+  const dapNum = parseFloat(props.dap_cm);
+  const nativa = (props.origem||'').toLowerCase().startsWith('nativa');
+  props.enquadra_compensacao = !!(nativa && isFinite(dapNum) && dapNum>=5);
+  return props;
+}
+/* Auto-verificação (console) contra os pontos do laudo Itararé */
+(function selfTestTreeMetrics(){
+  try{
+    const approx=(a,b,t)=>Math.abs(a-b)<=(t||0.05);
+    // Ponto 4: CAP 41, h 8 → DAP 13,05 ; V ~0,096
+    const p4=computeTreeMetrics({cap_fustes:'41',altura_m:8,origem:'Nativa'});
+    // Ponto 7 bifurcada: fustes 13 e 18 → DAP_eq 7,07
+    const p7=computeTreeMetrics({cap_fustes:'13;18',altura_m:2.2,origem:'Nativa'});
+    const ok = approx(p4.dap_cm,13.05,0.05) && approx(p7.dap_cm,7.07,0.05) &&
+               approx(p4.volume_m3,0.0962,0.002) && approx(p7.volume_m3,0.0111,0.002);
+    console.log('[GeoMatias] auto-teste cálculos arbóreos:', ok?'OK ✓':'FALHOU ✗',
+      {p4_dap:p4.dap_cm, p7_dap:p7.dap_cm, p4_vol:p4.volume_m3, p7_vol:p7.volume_m3});
+  }catch(e){ console.warn('auto-teste arbóreo falhou', e); }
+})();
 
 let inventoryLayer = null;
 function ensureInventoryLayer(){
@@ -1655,8 +1854,288 @@ function ensureInventoryLayer(){
   return lyr;
 }
 
+/* ================= Segmentação IA (SAM / SlimSAM) — experimental =================
+   Roda inteiramente no navegador via transformers.js, importado dinamicamente do
+   jsDelivr apenas quando a ferramenta é usada (nada fica embutido no index.html).
+   Funciona só sobre rasters do tipo "Imagem" (upload local, sem problema de CORS
+   para leitura de pixels). O SAM devolve apenas a FORMA do objeto, não a classe —
+   a identificação/rótulo continua sendo humana, preenchida no formulário de
+   atributos ao final, no mesmo espírito da identificação do Pl@ntNet: sugestão,
+   nunca verdade automática. O contorno é extraído por varredura de linhas do
+   maior componente conectado da máscara (aproximação robusta; formas muito
+   côncavas ou com buracos internos podem ficar simplificadas demais). */
+
+let segLib=null;                 // módulo transformers.js (SamModel, AutoProcessor, RawImage, Tensor)
+let segModel=null, segProcessor=null;
+let segImageInputs=null, segImageEmbeddings=null;
+let segPoints=[];                // {x,y normalizados 0..1 na imagem, label 1|0}
+let segRasterEntry=null;         // entrada de rasterLayers em uso
+let segPreviewOverlay=null;      // L.imageOverlay com a prévia da máscara
+let segLastMask=null;            // {data:Uint8Array, W, H, score}
+let segmentLayer=null;
+
+const SEGMENT_FIELDS=[
+  {name:'tipo_objeto', type:'select', options:['Árvore/vegetação','Edificação','Outro'], required:false},
+  {name:'confianca_iou', type:'number', options:[], required:false},
+  {name:'fonte', type:'text', options:[], required:false},
+  {name:'confirmado_humano', type:'checkbox', options:[], required:false}
+];
+function ensureSegmentLayer(){
+  if(segmentLayer && vectorLayers.includes(segmentLayer)) return segmentLayer;
+  const existing = vectorLayers.find(l=>l.segmentAI);
+  if(existing){ segmentLayer = existing; return existing; }
+  const lyr = newVectorLayer('Segmentação IA', 'polygon', SEGMENT_FIELDS.map(f=>({...f})), '#b06ee8');
+  lyr.segmentAI = true;
+  segmentLayer = lyr;
+  renderVectorList();
+  return lyr;
+}
+
+function imageRasters(){ return rasterLayers.filter(r=>r.def && r.def.type==='img'); }
+
+function segSetStatus(t, isErr){
+  const el = document.getElementById('segStatus');
+  if(!el) return;
+  el.textContent = t;
+  el.style.color = isErr ? '#e5673f' : 'var(--muted)';
+}
+
+function openSegmentModal(){
+  const sel = document.getElementById('segRasterSel');
+  const imgs = imageRasters();
+  sel.innerHTML = imgs.length
+    ? imgs.map(r=>`<option value="${r.id}">${r.name}</option>`).join('')
+    : `<option value="">— nenhum raster de imagem no projeto —</option>`;
+  segPoints = []; segImageEmbeddings = null; segImageInputs = null; segLastMask = null;
+  document.getElementById('segAnalyze').disabled = !imgs.length || !segModel;
+  document.getElementById('segClearPts').disabled = true;
+  document.getElementById('segConfirm').disabled = true;
+  const loadBtn = document.getElementById('segLoadModel');
+  loadBtn.textContent = segModel ? 'Modelo carregado ✓' : 'Carregar modelo IA';
+  loadBtn.disabled = !!segModel;
+  segSetStatus(segModel ? 'Modelo já carregado. Escolha o raster e toque em "Analisar imagem".' : 'Toque em "Carregar modelo IA" para começar (baixa ≈40MB na primeira vez).');
+  clearSegPreview();
+  open('mSegment');
+}
+
+async function loadSamLib(){
+  if(segLib) return segLib;
+  segLib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0');
+  return segLib;
+}
+
+document.getElementById('segLoadModel').addEventListener('click', async ()=>{
+  const btn = document.getElementById('segLoadModel');
+  if(segModel){ segSetStatus('Modelo já carregado ✓'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Baixando... 0%';
+  segSetStatus('Baixando modelo (≈40MB, só na primeira vez — pode demorar em conexão lenta)...');
+  try{
+    const lib = await loadSamLib();
+    let lastPct = 0;
+    const progress_callback = (data)=>{
+      if(data.status==='progress' && data.total){
+        const pct = Math.round((data.loaded / data.total) * 100);
+        if(pct !== lastPct){
+          lastPct = pct;
+          btn.textContent = `Baixando... ${pct}%`;
+          segSetStatus(`Baixando ${data.file || 'arquivo do modelo'} — ${pct}%`);
+        }
+      } else if(data.status==='done'){
+        segSetStatus(`${data.file || 'Arquivo'} pronto, preparando...`);
+      }
+    };
+    segModel = await lib.SamModel.from_pretrained('Xenova/slimsam-77-uniform', { progress_callback });
+    segProcessor = await lib.AutoProcessor.from_pretrained('Xenova/slimsam-77-uniform', { progress_callback });
+    btn.textContent = 'Modelo carregado ✓';
+    btn.disabled = true;
+    segSetStatus('Modelo carregado ✓. Escolha o raster e toque em "Analisar imagem".');
+    document.getElementById('segAnalyze').disabled = !imageRasters().length;
+  }catch(err){
+    console.error(err);
+    btn.textContent = 'Carregar modelo IA';
+    btn.disabled = false;
+    segSetStatus('Erro ao carregar o modelo: '+err.message, true);
+  }
+});
+
+function loadImgEl(src){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>res(img);
+    img.onerror = ()=>rej(new Error('Falha ao carregar a imagem do raster.'));
+    img.src = src;
+  });
+}
+
+document.getElementById('segAnalyze').addEventListener('click', async ()=>{
+  const rid = +document.getElementById('segRasterSel').value;
+  const entry = imageRasters().find(r=>r.id===rid);
+  if(!entry){ segSetStatus('Selecione um raster de imagem válido.', true); return; }
+  if(!segModel){ segSetStatus('Carregue o modelo primeiro.', true); return; }
+  segRasterEntry = entry;
+  segSetStatus('Analisando imagem (etapa mais pesada — só acontece agora, por imagem)...');
+  try{
+    const img = await loadImgEl(entry.def.dataUrl);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    const lib = await loadSamLib();
+    const rawImage = lib.RawImage.fromCanvas(canvas);
+    segImageInputs = await segProcessor(rawImage);
+    segImageEmbeddings = await segModel.get_image_embeddings(segImageInputs);
+    segPoints = []; segLastMask = null;
+    document.getElementById('segClearPts').disabled = false;
+    document.getElementById('segConfirm').disabled = true;
+    clearSegPreview();
+    segSetStatus('Pronto. Toque no mapa sobre o objeto, dentro da área do raster (Shift+toque = ponto negativo).');
+    map.on('click', segMapClick);
+  }catch(err){
+    console.error(err);
+    segSetStatus('Erro ao analisar a imagem: '+err.message, true);
+  }
+});
+
+document.getElementById('segClearPts').addEventListener('click', ()=>{
+  segPoints = []; segLastMask = null;
+  clearSegPreview();
+  document.getElementById('segConfirm').disabled = true;
+  segSetStatus('Pontos limpos. Toque novamente sobre o objeto.');
+});
+
+function segLatLngToNorm(latlng, bounds){
+  const s=bounds[0][0], w=bounds[0][1], n=bounds[1][0], e=bounds[1][1];
+  return { x:(latlng.lng - w) / (e - w), y:(n - latlng.lat) / (n - s) };
+}
+
+async function segMapClick(e){
+  if(!segImageEmbeddings || !segRasterEntry) return;
+  const {x,y} = segLatLngToNorm(e.latlng, segRasterEntry.def.bounds);
+  if(x<0 || x>1 || y<0 || y>1){ segSetStatus('Toque dentro da área do raster selecionado.', true); return; }
+  const label = (e.originalEvent && e.originalEvent.shiftKey) ? 0 : 1;
+  segPoints.push({x, y, label});
+  await segRunDecoder();
+}
+
+async function segRunDecoder(){
+  segSetStatus('Rodando IA...');
+  try{
+    const lib = await loadSamLib();
+    const reshaped = segImageInputs.reshaped_input_sizes[0]; // [h, w]
+    const input_points = new lib.Tensor('float32',
+      segPoints.flatMap(p=>[p.x * reshaped[1], p.y * reshaped[0]]),
+      [1, 1, segPoints.length, 2]);
+    const input_labels = new lib.Tensor('int64',
+      segPoints.map(p=>BigInt(p.label)),
+      [1, 1, segPoints.length]);
+    const outputs = await segModel({ ...segImageEmbeddings, input_points, input_labels });
+    const masks = await segProcessor.post_process_masks(outputs.pred_masks, segImageInputs.original_sizes, segImageInputs.reshaped_input_sizes);
+    const scores = outputs.iou_scores.data;
+    let best = 0;
+    for(let i=1;i<scores.length;i++) if(scores[i] > scores[best]) best = i;
+    const maskT = masks[0];
+    const [, , H, W] = maskT.dims;
+    const offset = best * H * W;
+    const data = new Uint8Array(H*W);
+    for(let i=0;i<H*W;i++){ const v = maskT.data[offset+i]; data[i] = (v>0.5 || v===true || v===1) ? 1 : 0; }
+    segLastMask = { data, W, H, score:scores[best] };
+    drawSegPreview();
+    document.getElementById('segConfirm').disabled = false;
+    segSetStatus(`Máscara atualizada — confiança ${(scores[best]*100).toFixed(1)}%.`);
+  }catch(err){
+    console.error(err);
+    segSetStatus('Erro ao rodar a IA: '+err.message, true);
+  }
+}
+
+function clearSegPreview(){
+  if(segPreviewOverlay){ map.removeLayer(segPreviewOverlay); segPreviewOverlay=null; }
+}
+
+function drawSegPreview(){
+  clearSegPreview();
+  if(!segLastMask || !segRasterEntry) return;
+  const { data, W, H } = segLastMask;
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const ictx = c.getContext('2d');
+  const imgData = ictx.createImageData(W, H);
+  for(let i=0;i<W*H;i++){
+    const p = i*4;
+    if(data[i]){ imgData.data[p]=0xb0; imgData.data[p+1]=0x6e; imgData.data[p+2]=0xe8; imgData.data[p+3]=140; }
+    else imgData.data[p+3]=0;
+  }
+  ictx.putImageData(imgData, 0, 0);
+  segPreviewOverlay = L.imageOverlay(c.toDataURL(), segRasterEntry.def.bounds, {opacity:1, interactive:false}).addTo(map);
+}
+
+/* maior componente conectado + contorno por varredura de linhas (silhueta) */
+function maskToPolygonRing(mask, W, H){
+  const visited = new Uint8Array(W*H);
+  let bestComp=null, bestSize=0;
+  for(let i=0;i<W*H;i++){
+    if(mask[i] && !visited[i]){
+      const stack=[i]; visited[i]=1; const comp=[];
+      while(stack.length){
+        const p = stack.pop(); comp.push(p);
+        const x = p % W, y = (p / W) | 0;
+        const cands = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
+        for(const [nx,ny] of cands){
+          if(nx>=0 && nx<W && ny>=0 && ny<H){
+            const ni = ny*W+nx;
+            if(mask[ni] && !visited[ni]){ visited[ni]=1; stack.push(ni); }
+          }
+        }
+      }
+      if(comp.length > bestSize){ bestSize = comp.length; bestComp = comp; }
+    }
+  }
+  if(!bestComp) return null;
+  const comp = new Uint8Array(W*H);
+  bestComp.forEach(i=>comp[i]=1);
+  const left=[], right=[];
+  const step = Math.max(1, Math.round(H/300)); // subamostra linhas p/ não gerar polígono gigante
+  for(let y=0; y<H; y+=step){
+    let l=-1, r=-1;
+    for(let x=0; x<W; x++){ if(comp[y*W+x]){ if(l===-1) l=x; r=x; } }
+    if(l!==-1){ left.push([l,y]); right.push([r,y]); }
+  }
+  if(!left.length) return null;
+  return left.concat(right.reverse());
+}
+
+document.getElementById('segConfirm').addEventListener('click', ()=>{
+  if(!segLastMask || !segRasterEntry) return;
+  const ring = maskToPolygonRing(segLastMask.data, segLastMask.W, segLastMask.H);
+  if(!ring || ring.length < 3){ segSetStatus('Não foi possível extrair um contorno válido — ajuste os pontos e tente de novo.', true); return; }
+  const b = segRasterEntry.def.bounds;
+  const s=b[0][0], w=b[0][1], n=b[1][0], e=b[1][1];
+  const latlngs = ring.map(([px,py])=>L.latLng(
+    n - (py/segLastMask.H) * (n - s),
+    w + (px/segLastMask.W) * (e - w)
+  ));
+  const target = ensureSegmentLayer();
+  const poly = L.polygon(latlngs, styleFor(target));
+  const gaid = registerFeature(poly, target);
+  poly.feature.properties.fonte = 'Segmentação IA (SlimSAM) — sugestão, requer confirmação';
+  poly.feature.properties.confianca_iou = +(segLastMask.score||0).toFixed(3);
+  poly.bindPopup(featurePopup(poly));
+  target.group.addLayer(poly);
+  pushAction({type:'add', layer:poly, target});
+  renderVectorList();
+  status('Polígono da Segmentação IA salvo — confirme o tipo de objeto no formulário.');
+  map.off('click', segMapClick);
+  clearSegPreview();
+  close('mSegment');
+  openAttrForm(gaid);
+});
+
+document.querySelectorAll('#mSegment [data-close]').forEach(b=>b.addEventListener('click', ()=>{
+  map.off('click', segMapClick);
+  clearSegPreview();
+}));
+
 /* --- estado do formulário aberto --- */
-let treeTargetId = null, treePhotoDataUrl = null, treeOrgan = 'auto', treeSelectedSpecies = null;
+let treeTargetId = null, treePhotoDataUrl = null, treeTrunkDataUrl = null, treeOrgan = 'auto', treeSelectedSpecies = null;
 
 /* --- chave Pl@ntNet (do usuário) --- */
 const PLANTNET_KEY_STORE = 'geomatias_plantnet_key';
@@ -1723,12 +2202,20 @@ async function fetchTreeReferenceImages(gbifId, sci){
 }
 
 /* --- formulário --- */
+let treeFormProps = null; // referência viva para recálculo em tempo real
 function renderTreeForm(props){
+  treeFormProps = props;
   const el = document.getElementById('treeForm');
   el.innerHTML = '';
   TREE_FIELDS.forEach((f,i)=>{
     const cur = props[f.name];
-    let inner;
+    let inner, note='';
+    if(f.name==='dap_cm' && !props.dap_manual && cur!=null && cur!=='')
+      note = `<span class="tree-sug">sugerido${props.dap_multifuste?' (DAP eq. de fustes)':''}</span>`;
+    if(f.name==='volume_m3' && !props.volume_manual && cur!=null && cur!==''){
+      note = `<span class="tree-sug">sugerido</span>`;
+      if(props.volume_fora_faixa) note += `<span class="tree-warn" title="Equação de Vibrans é formalmente definida para DAP > 10 cm">⚠ fora da faixa (DAP≤10)</span>`;
+    }
     if(f.type==='number')
       inner = `<input type="number" step="any" data-tf="${i}" value="${(cur!=null&&cur!=='')?cur:''}">`;
     else if(f.type==='select')
@@ -1742,9 +2229,35 @@ function renderTreeForm(props){
       inner = `<input type="text" data-tf="${i}" value="${cur||nowStamp()}" readonly style="opacity:.7">`;
     else
       inner = `<input type="text" data-tf="${i}" value="${cur!=null?String(cur).replace(/"/g,'&quot;'):''}">`;
-    el.insertAdjacentHTML('beforeend', `<div class="field"><label>${treeLabel(f.name)}</label>${inner}</div>`);
+    el.insertAdjacentHTML('beforeend', `<div class="field"><label>${treeLabel(f.name)} ${note}</label>${inner}</div>`);
   });
+  wireTreeFormRecalc();
 }
+/* Recalcula DAP/volume ao editar CAP, altura ou origem; detecta override manual em DAP/volume */
+function wireTreeFormRecalc(){
+  const idxOf = n => TREE_FIELDS.findIndex(f=>f.name===n);
+  const get = n => document.querySelector('#treeForm [data-tf="'+idxOf(n)+'"]');
+  const capEl=get('cap_fustes'), altEl=get('altura_m'), origEl=get('origem'), dapEl=get('dap_cm'), volEl=get('volume_m3');
+  const recompute = ()=>{
+    if(!treeFormProps) return;
+    treeFormProps.cap_fustes = capEl ? capEl.value : treeFormProps.cap_fustes;
+    treeFormProps.altura_m   = altEl ? altEl.value : treeFormProps.altura_m;
+    treeFormProps.origem     = origEl ? origEl.value : treeFormProps.origem;
+    computeTreeMetrics(treeFormProps);
+    // reescreve os campos derivados que ainda são sugestão
+    if(dapEl && !treeFormProps.dap_manual) dapEl.value = treeFormProps.dap_cm ?? '';
+    if(volEl && !treeFormProps.volume_manual) volEl.value = treeFormProps.volume_m3 ?? '';
+    // atualiza selos de sugestão/aviso e enquadramento sem re-render total
+    renderTreeForm(treeFormProps);
+  };
+  if(capEl) capEl.addEventListener('input', debounceTree(recompute));
+  if(altEl) altEl.addEventListener('input', debounceTree(recompute));
+  if(origEl) origEl.addEventListener('change', recompute);
+  if(dapEl) dapEl.addEventListener('input', ()=>{ if(treeFormProps){ treeFormProps.dap_manual = dapEl.value!=='' ; } });
+  if(volEl) volEl.addEventListener('input', ()=>{ if(treeFormProps){ treeFormProps.volume_manual = volEl.value!=='' ; } });
+}
+let _treeDeb=null;
+function debounceTree(fn){ return ()=>{ clearTimeout(_treeDeb); _treeDeb=setTimeout(fn,450); }; }
 function setTreeField(name, val){
   const i = TREE_FIELDS.findIndex(f=>f.name===name);
   const el = document.querySelector('#treeForm [data-tf="'+i+'"]');
@@ -1757,8 +2270,14 @@ function renderTreePhoto(){
     box.innerHTML = `<img src="${treePhotoDataUrl}" alt="foto da árvore">`;
     idBtn.disabled = false;
   } else {
-    box.innerHTML = `<div id="treePhotoHint">📷 Toque para tirar foto ou anexar imagem<br><small style="color:var(--muted)">folha, flor, fruto ou casca — quanto mais nítido, melhor</small></div>`;
+    box.innerHTML = `<div id="treePhotoHint">📷 Foto do indivíduo<br><small style="color:var(--muted)">folha, flor, fruto ou casca</small></div>`;
     idBtn.disabled = true;
+  }
+  const tbox = document.getElementById('treeTrunkBox');
+  if(tbox){
+    tbox.innerHTML = treeTrunkDataUrl
+      ? `<img src="${treeTrunkDataUrl}" alt="foto do tronco">`
+      : `<div id="treeTrunkHint">📷 Foto do tronco<br><small style="color:var(--muted)">lacre e medição do CAP</small></div>`;
   }
 }
 
@@ -1769,6 +2288,7 @@ function openTreeForm(gaid){
   treeSelectedSpecies = null;
   const props = reg.layer.feature.properties;
   treePhotoDataUrl = props.foto || null;
+  treeTrunkDataUrl = props.foto_tronco || null;
   treeOrgan = 'auto';
   document.querySelectorAll('#treeOrgans button').forEach(b=>b.classList.toggle('on', b.dataset.organ==='auto'));
   renderTreeForm(props);
@@ -1827,6 +2347,12 @@ async function loadTreeGbif(gid, sci){
   }
 }
 
+function nextTreePointNumber(){
+  const inv = ensureInventoryLayer();
+  let max = 0;
+  inv.group.eachLayer(l=>{ const n = l.feature?.properties?.numero_ponto; if(isFinite(n) && +n>max) max=+n; });
+  return max+1;
+}
 function saveTree(){
   const reg = featReg.get(treeTargetId);
   if(!reg){ close('mTree'); return; }
@@ -1839,23 +2365,41 @@ function saveTree(){
     else v = el.value;
     props[f.name] = v;
   });
+  // auto-numeração do ponto se vazio
+  if(props.numero_ponto==null || props.numero_ponto===''){ props.numero_ponto = nextTreePointNumber(); }
+  // recalcula métricas (respeita overrides manuais já marcados no formulário)
+  computeTreeMetrics(props);
   if(treePhotoDataUrl) props.foto = treePhotoDataUrl;
+  if(treeTrunkDataUrl) props.foto_tronco = treeTrunkDataUrl;
+  // rótulo numérico no marcador
+  applyTreeLabel(reg.layer);
   reg.layer.bindPopup(treePopup(reg.layer), {maxWidth:280});
-  treeTargetId = null; treePhotoDataUrl = null; treeSelectedSpecies = null;
+  treeTargetId = null; treePhotoDataUrl = null; treeTrunkDataUrl = null; treeSelectedSpecies = null;
   close('mTree');
   status('Árvore registrada ✓');
   renderVectorList();
   scheduleSave();
 }
+/* rótulo numérico permanente ao lado do ponto (aparece no mapa e na captura) */
+function applyTreeLabel(layer){
+  const n = layer.feature?.properties?.numero_ponto;
+  if(n==null || n==='') return;
+  if(layer.bindTooltip){
+    layer.bindTooltip(String(n), {permanent:true, direction:'right', className:'tree-num-tip', offset:[8,0]});
+  }
+}
 function treePopup(layer){
   const p = (layer.feature && layer.feature.properties) || {};
   const thumb = p.foto ? `<img src="${p.foto}" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px" alt="árvore">` : '';
   const line = (k,lab)=> (p[k]!=null && p[k]!=='') ? `<b>${lab}</b>: ${p[k]===true?'sim':p[k]}<br>` : '';
+  const head = (p.numero_ponto!=null && p.numero_ponto!=='') ? `<div style="font-weight:700;margin-bottom:2px">Ponto ${p.numero_ponto}${p.codigo?' · '+p.codigo:''}</div>` : '';
   let body = line('especie','Espécie') + line('nome_cientifico','N. científico') + line('familia','Família') +
-             line('dap_cm','DAP (cm)') + line('altura_m','Altura (m)') + line('estado_fito','Estado');
+             line('origem','Origem') + line('cap_fustes','CAP (cm)') + line('dap_cm','DAP (cm)') +
+             line('altura_m','Altura (m)') + line('volume_m3','Volume (m³)') + line('estado_fito','Estado') + line('pretensao','Pretensão');
   if(p.confianca_id!=null && p.confianca_id!=='') body += `<b>Confiança ID</b>: ${Math.round(p.confianca_id*100)}%<br>`;
+  try{ const ll=layer.getLatLng?.(); if(ll) body += `<b>Coord.</b>: ${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}<br>`; }catch(e){}
   const edit = `<button class="tree-edit" data-gaid="${layer._gaid}" style="margin-top:4px;background:var(--accent);color:#07231c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar árvore</button>`;
-  return thumb + (body || 'Árvore sem atributos<br>') + edit;
+  return head + thumb + (body || 'Árvore sem atributos<br>') + edit;
 }
 map.on('popupopen', e=>{
   const b = e.popup.getElement()?.querySelector('.tree-edit');
@@ -1872,6 +2416,18 @@ document.getElementById('treePhotoInput').addEventListener('change', async e=>{
     treePhotoDataUrl = await compressImage(f);
     renderTreePhoto();
     st.textContent = getPlantNetKey() ? 'Foto pronta. Toque em "Identificar espécie".' : 'Foto pronta. Configure a chave 🔑 para identificar.';
+  }catch(err){ st.textContent = '⚠ '+err.message; }
+  e.target.value = '';
+});
+document.getElementById('treeTrunkBox').addEventListener('click', ()=>document.getElementById('treeTrunkInput').click());
+document.getElementById('treeTrunkInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const st = document.getElementById('treeIdStatus');
+  st.textContent = 'Processando foto do tronco…';
+  try{
+    treeTrunkDataUrl = await compressImage(f);
+    renderTreePhoto();
+    st.textContent = 'Foto do tronco pronta.';
   }catch(err){ st.textContent = '⚠ '+err.message; }
   e.target.value = '';
 });
@@ -1906,7 +2462,7 @@ document.getElementById('treeIdentify').addEventListener('click', async ()=>{
 });
 document.getElementById('treeSave').addEventListener('click', saveTree);
 document.getElementById('treeSkip').addEventListener('click', saveTree);
-document.getElementById('treeCloseX').addEventListener('click', ()=>{ treeTargetId=null; close('mTree'); });
+document.getElementById('treeCloseX').addEventListener('click', ()=>{ treeTargetId=null; treePhotoDataUrl=null; treeTrunkDataUrl=null; close('mTree'); });
 
 /* ---------- Tabela de atributos (visão em planilha) ---------- */
 let tableLayer = null;
@@ -2062,6 +2618,8 @@ function deactivate(){
   map.off('click', coordClick);
   if(typeof queryClick==='function') map.off('click', queryClick);
   if(typeof captureClick==='function') map.off('click', captureClick);
+  if(typeof segMapClick==='function') map.off('click', segMapClick);
+  if(typeof clearSegPreview==='function') clearSegPreview();
   curveMode=false; measureMode=null; activeTool=null;
   if(typeof catalogRegionMode!=='undefined') catalogRegionMode=false;
   document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.remove('active'));
@@ -2167,6 +2725,15 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
         map.on('click', captureClick);
         showHint('Toque sobre uma feição da camada de catálogo para copiá-la (geometria + atributos) para uma camada local.');
         break;
+      case 'segment':
+        if(!imageRasters().length){
+          status('Adicione um raster do tipo "Imagem" (Adicionar raster → Imagem) antes de usar a Segmentação IA.');
+          deactivate();
+          return;
+        }
+        openSegmentModal();
+        showHint('Use o painel para carregar o modelo, analisar a imagem e depois tocar sobre o objeto no mapa.');
+        break;
       case 'edit': {
         const groups = vectorLayers.filter(l=>l.visible);
         if(!groups.length){ status('Nada para editar.'); deactivate(); return; }
@@ -2203,15 +2770,24 @@ function coordClick(e){
     const d=Math.floor(Math.abs(v)), mF=(Math.abs(v)-d)*60, m=Math.floor(mF), s=((mF-m)*60).toFixed(2);
     return `${d}° ${m}' ${s}"`;
   };
-  const txt = `${fmt(lat)}, ${fmt(lng)}`;
+  let projLine = '';
+  let copyTxt = `${fmt(lat)}, ${fmt(lng)}`;
+  if(currentCRS.kind==='utm'){
+    const [E,N] = projectCoord([lng, lat], currentCRS);
+    projLine = `<b>${currentCRS.name} (EPSG:${currentCRS.epsg})</b><br>E ${E.toFixed(2)} m · N ${N.toFixed(2)} m<br>`;
+    copyTxt = `${E.toFixed(2)}, ${N.toFixed(2)}`;
+  } else if(currentCRS.epsg!==4326){
+    projLine = `<b>${currentCRS.name} (EPSG:${currentCRS.epsg})</b><br>${fmt(lat)}, ${fmt(lng)}<br>`;
+  }
   const html = `<div class="coord-pop">
-    <b>Decimal</b><br>${fmt(lat)}, ${fmt(lng)}<br>
+    <b>Decimal (WGS 84)</b><br>${fmt(lat)}, ${fmt(lng)}<br>
     <b>GMS</b><br>${dms(lat)} ${lat>=0?'N':'S'} · ${dms(lng)} ${lng>=0?'L':'O'}<br>
-    <button id="cpCopy">Copiar decimal</button></div>`;
+    ${projLine}
+    <button id="cpCopy">Copiar ${currentCRS.kind==='utm'?'E/N':'decimal'}</button></div>`;
   L.popup().setLatLng(e.latlng).setContent(html).openOn(map);
   setTimeout(()=>{
     const b=document.getElementById('cpCopy');
-    if(b) b.onclick=()=>{ navigator.clipboard?.writeText(txt); b.textContent='Copiado ✓'; };
+    if(b) b.onclick=()=>{ navigator.clipboard?.writeText(copyTxt); b.textContent='Copiado ✓'; };
   },50);
 }
 
@@ -2479,8 +3055,9 @@ document.getElementById('expGo').addEventListener('click', async ()=>{
       download(await zip.generateAsync({type:'blob', compression:'DEFLATE'}), name+'.kmz');
     } else if(format==='shp'){
       const zip = new JSZip();
+      const gjOut = currentCRS.kind==='utm' ? reprojectGeoJSON(gj, currentCRS) : gj;
       const groups = { point:[], line:[], polygon:[] };
-      gj.features.forEach(f=>{
+      gjOut.features.forEach(f=>{
         const g = f.geometry; if(!g) return;
         const cls = geomClass(g.type); if(!cls) return;
         if(g.type.startsWith('Multi'))
@@ -2491,7 +3068,7 @@ document.getElementById('expGo').addEventListener('click', async ()=>{
       let wrote = false;
       Object.entries(groups).forEach(([cls, fs])=>{
         if(!fs.length) return;
-        const files = writeShapefile(fs, cls);
+        const files = writeShapefile(fs, cls, currentCRS);
         const base = name + suffix[cls];
         zip.file(base+'.shp', files.shp);
         zip.file(base+'.shx', files.shx);
@@ -2625,6 +3202,7 @@ document.getElementById('pGo').addEventListener('click', async ()=>{
   document.getElementById('psTitle').textContent = document.getElementById('pTitle').value || 'Mapa sem título';
   document.getElementById('psDesc').textContent = document.getElementById('pDesc').value || '';
   document.getElementById('psAuthor').textContent = document.getElementById('pAuthor').value ? 'Responsável: '+document.getElementById('pAuthor').value : '';
+  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias WebGIS';
   const c = map.getCenter();
   document.getElementById('psMeta').innerHTML =
     `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
@@ -2665,10 +3243,308 @@ document.getElementById('pGo').addEventListener('click', async ()=>{
 });
 
 /* =========================================================
+   SAÍDAS DO INVENTÁRIO ARBÓREO
+   - Mapa georreferenciado com pontos numerados (reusa captureMap)
+   - Grade de fichas (foto do indivíduo + tronco + atributos)
+   - Planilha de campo (CSV)
+   Cálculos: computeTreeMetrics (DAP, DAP_eq, volume Vibrans).
+   ========================================================= */
+function inventoryFeatures(filter){
+  const inv = vectorLayers.find(l=>l.inventory);
+  if(!inv) return [];
+  const arr = [];
+  inv.group.eachLayer(l=>{
+    if(!l.feature) return;
+    const p = l.feature.properties || {};
+    if(filter==='enquadra' && !p.enquadra_compensacao) return;
+    if(filter==='corte' && (p.pretensao||'')!=='Corte') return;
+    let ll=null; try{ ll=l.getLatLng?.(); }catch(e){}
+    arr.push({layer:l, p, ll});
+  });
+  arr.sort((a,b)=>{
+    const na=+a.p.numero_ponto, nb=+b.p.numero_ponto;
+    if(isFinite(na)&&isFinite(nb)) return na-nb;
+    return 0;
+  });
+  return arr;
+}
+
+document.getElementById('btnInventory').addEventListener('click', ()=>{
+  const inv = vectorLayers.find(l=>l.inventory);
+  const all = inventoryFeatures('all');
+  const enq = all.filter(f=>f.p.enquadra_compensacao).length;
+  const corte = all.filter(f=>(f.p.pretensao||'')==='Corte').length;
+  const sum = document.getElementById('invSummary');
+  if(!inv || !all.length){
+    sum.innerHTML = 'Nenhum indivíduo registrado ainda. Use a ferramenta <b>Árvore</b> na barra lateral para registrar exemplares.';
+  } else {
+    sum.innerHTML = `<b>${all.length}</b> indivíduo(s) registrado(s) · <b>${enq}</b> enquadra(m) na compensação (nativa, DAP≥5) · <b>${corte}</b> com pretensão de corte.`;
+  }
+  if(!document.getElementById('invTitle').value)
+    document.getElementById('invTitle').value = 'Exemplares arbóreos georreferenciados';
+  open('mInventory');
+});
+document.querySelectorAll('#mInventory [data-close]').forEach(b=>b.addEventListener('click', ()=>close('mInventory')));
+
+/* ---------- Mapa numerado ---------- */
+document.getElementById('invGenMap').addEventListener('click', async ()=>{
+  const filter = document.getElementById('invFilter').value;
+  const feats = inventoryFeatures(filter);
+  if(!feats.length){ status('Nenhum indivíduo para o filtro selecionado.'); return; }
+  close('mInventory');
+  status('Gerando mapa do inventário…');
+  document.body.classList.remove('print-inv');
+
+  // enquadra os pontos na tela antes de capturar
+  try{
+    const inv = vectorLayers.find(l=>l.inventory);
+    if(inv && inv.group.getLayers().length){ map.fitBounds(inv.group.getBounds().pad(0.25)); }
+  }catch(e){}
+  await new Promise(r=>setTimeout(r,400)); // deixa os tiles carregarem
+
+  document.getElementById('psTitle').textContent = document.getElementById('invTitle').value || 'Exemplares arbóreos georreferenciados';
+  const author = document.getElementById('invAuthor').value;
+  document.getElementById('psAuthor').textContent = author ? 'Responsável: '+author : '';
+  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias WebGIS';
+  const c = map.getCenter();
+  document.getElementById('psMeta').innerHTML =
+    `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
+  document.getElementById('psScaleTxt').textContent = 'Norte geográfico · Escala aproximada 1:' +
+    Math.round(591657550.5 / Math.pow(2, map.getZoom()-1) / 2).toLocaleString('pt-BR');
+  document.getElementById('psDesc').textContent =
+    `Inventário arbóreo — ${feats.length} exemplar(es). Pontos numerados conforme tabela de caracterização. `+
+    `Coordenadas geográficas (lat/long) em ${currentCRS.name}.`;
+
+  // legenda temática do inventário
+  const nativas = feats.filter(f=>(f.p.origem||'').toLowerCase().startsWith('nativa')).length;
+  const exoticas = feats.length - nativas;
+  const enq = feats.filter(f=>f.p.enquadra_compensacao).length;
+  const leg = document.getElementById('psLegend');
+  leg.innerHTML =
+    `<div class="li"><span class="sw pt" style="background:#fff;border:2px solid #2e7d46"></span> Exemplar arbóreo (nº = ponto)</div>`+
+    `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`+
+    `<div class="li" style="margin-top:2mm"><b>Nativas:</b>&nbsp;${nativas} &nbsp;·&nbsp; <b>Exóticas:</b>&nbsp;${exoticas}</div>`+
+    `<div class="li"><b>Enquadram na compensação:</b>&nbsp;${enq}</div>`;
+
+  try{
+    const dataUrl = await captureInventoryMap(feats);
+    document.getElementById('psImg').src = dataUrl;
+  }catch(e){ console.error(e); status('Falha ao capturar o mapa.'); return; }
+  status('');
+  setTimeout(()=>window.print(), 300);
+});
+
+/* captura o mapa e desenha os números dos pontos no canvas (nativo) */
+async function captureInventoryMap(feats){
+  // reproduz captureMap mas retorna o canvas para desenhar rótulos por cima
+  const size = map.getSize();
+  const scaleF = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = size.x*scaleF; canvas.height = size.y*scaleF;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scaleF, scaleF);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size.x,size.y);
+  const mapRect = map.getContainer().getBoundingClientRect();
+
+  const imgs = map.getContainer().querySelectorAll('.leaflet-tile-pane img, .leaflet-overlay-pane img');
+  const jobs = [...imgs].map(img=>new Promise(res=>{
+    const r = img.getBoundingClientRect();
+    const draw = el=>{ try{
+      ctx.globalAlpha = parseFloat(getComputedStyle(img).opacity)||1;
+      ctx.drawImage(el, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
+    }catch(e){} ctx.globalAlpha=1; res(); };
+    if(img.complete && img.naturalWidth){
+      const cc = new Image(); cc.crossOrigin='anonymous';
+      cc.onload = ()=>draw(cc); cc.onerror = ()=>draw(img);
+      cc.src = img.src;
+    } else res();
+  }));
+  await Promise.all(jobs);
+
+  const svg = map.getContainer().querySelector('.leaflet-overlay-pane svg');
+  if(svg){
+    const r = svg.getBoundingClientRect();
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    const blob = new Blob([new XMLSerializer().serializeToString(clone)], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    await new Promise(res=>{
+      const im = new Image();
+      im.onload = ()=>{ ctx.drawImage(im, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height); URL.revokeObjectURL(url); res(); };
+      im.onerror = ()=>res();
+      im.src = url;
+    });
+  }
+
+  // desenha os pontos numerados (círculo branco + borda verde + nº)
+  ctx.font = '700 12px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  feats.forEach(f=>{
+    if(!f.ll) return;
+    const pt = map.latLngToContainerPoint(f.ll);
+    const n = (f.p.numero_ponto!=null && f.p.numero_ponto!=='') ? String(f.p.numero_ponto) : '';
+    // ponto
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#c62828'; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+    if(n){
+      // rótulo numerado ao lado
+      const lx = pt.x + 12, ly = pt.y - 12, rad = 9;
+      ctx.beginPath(); ctx.arc(lx, ly, rad, 0, Math.PI*2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#2e7d46'; ctx.stroke();
+      ctx.fillStyle = '#123'; ctx.fillText(n, lx, ly+0.5);
+    }
+  });
+  return canvas.toDataURL('image/jpeg', .92);
+}
+
+/* ---------- Grade de fichas ---------- */
+document.getElementById('invGenCards').addEventListener('click', ()=>{
+  const filter = document.getElementById('invFilter').value;
+  const feats = inventoryFeatures(filter);
+  if(!feats.length){ status('Nenhum indivíduo para o filtro selecionado.'); return; }
+  close('mInventory');
+  const title = document.getElementById('invTitle').value || 'Caracterização dos exemplares arbóreos';
+  const author = document.getElementById('invAuthor').value;
+  buildInventoryCards(feats, title, author);
+  document.body.classList.add('print-inv');
+  status('Gerando fichas…');
+  setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove('print-inv'), 500); status(''); }, 350);
+});
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function buildInventoryCards(feats, title, author){
+  const sheet = document.getElementById('inventorySheet');
+  const head = `<div class="iv-head"><h1>${esc(title)}</h1>`+
+    `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoMatias WebGIS</div></div>`;
+  const cards = feats.map(f=>{
+    const p = f.p;
+    const foto = p.foto ? `<figure><img src="${p.foto}" alt="indivíduo"><figcaption>Indivíduo</figcaption></figure>`
+                        : `<div class="iv-noimg">sem foto</div>`;
+    const tronco = p.foto_tronco ? `<figure><img src="${p.foto_tronco}" alt="tronco"><figcaption>Tronco / lacre</figcaption></figure>`
+                        : `<div class="iv-noimg">sem foto do tronco</div>`;
+    const ll = f.ll;
+    const row = (k,v,extra='')=> (v!=null && v!=='') ? `<div><span class="k">${k}:</span> ${v}${extra}</div>` : '';
+    const capTxt = p.cap_fustes ? (String(p.cap_fustes).includes(';') ? String(p.cap_fustes).split(/[;,\s]+/).filter(Boolean).map((c,i)=>`Fuste ${i+1}: ${c} cm`).join(' · ') : p.cap_fustes+' cm') : '';
+    const dapTxt = (p.dap_cm!=null && p.dap_cm!=='') ? p.dap_cm+' cm'+(p.dap_multifuste?' (eq.)':'') : '';
+    const volWarn = p.volume_fora_faixa ? ` <span class="warn">⚠ estimado fora da faixa de validade (DAP≤10 cm)</span>` : '';
+    const volTxt = (p.volume_m3!=null && p.volume_m3!=='') ? p.volume_m3+' m³' : '';
+    const attrs =
+      `<div style="font-weight:700;font-size:11pt;margin-bottom:1.5mm">Ponto ${esc(p.numero_ponto??'—')}</div>`+
+      row('Identificação', esc(p.codigo))+
+      (p.nome_cientifico?`<div><span class="k">Espécie:</span> <span class="sci">${esc(p.nome_cientifico)}</span></div>`:'')+
+      row('Nome popular', esc(p.nome_popular||p.especie))+
+      row('Família', esc(p.familia))+
+      row('Origem', esc(p.origem))+
+      (ll?`<div><span class="k">Coordenadas:</span> Lat ${ll.lat.toFixed(6)} · Long ${ll.lng.toFixed(6)}</div>`:'')+
+      row('Altura', p.altura_m!=null&&p.altura_m!==''?p.altura_m+' m':'')+
+      row('CAP', capTxt)+
+      row('DAP', dapTxt)+
+      row('Volume', volTxt, volWarn)+
+      row('Estado fitossanitário', esc(p.estado_fito))+
+      row('Pretensão', esc(p.pretensao))+
+      (p.confianca_id!=null&&p.confianca_id!==''?`<div><span class="k">Confiança da ID:</span> ${Math.round(p.confianca_id*100)}%${p.identificacao_confirmada?' (confirmada)':' (sugestão)'}</div>`:'')+
+      row('Observações', esc(p.observacoes));
+    return `<div class="iv-card">${foto}${tronco}<div class="iv-attrs">${attrs}</div></div>`;
+  }).join('');
+  const foot = `<div class="iv-foot"><span>${author?'Responsável: '+esc(author):''}</span>`+
+    `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoMatias WebGIS</span></div>`;
+  sheet.innerHTML = head + cards + foot;
+}
+
+/* ---------- CSV (planilha de campo) ---------- */
+document.getElementById('invGenCsv').addEventListener('click', ()=>{
+  const filter = document.getElementById('invFilter').value;
+  const feats = inventoryFeatures(filter);
+  if(!feats.length){ status('Nenhum indivíduo para o filtro selecionado.'); return; }
+  const cols = ['numero_ponto','codigo','especie','nome_popular','nome_cientifico','familia','origem',
+    'lat','long','cap_fustes','dap_cm','dap_eq','altura_m','volume_m3','volume_fora_faixa',
+    'estado_fito','pretensao','enquadra_compensacao','confianca_id','identificacao_confirmada','observacoes','data_registro'];
+  const csvCell = v => { const s = (v==null?'':String(v)); return /[";\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const rows = feats.map(f=>{
+    const p = f.p, ll = f.ll;
+    const rec = {
+      ...p,
+      lat: ll?ll.lat.toFixed(8):'',
+      long: ll?ll.lng.toFixed(8):'',
+      dap_eq: p.dap_multifuste?'sim':'não',
+      volume_fora_faixa: p.volume_fora_faixa?'sim':'não',
+      enquadra_compensacao: p.enquadra_compensacao?'sim':'não',
+      identificacao_confirmada: p.identificacao_confirmada?'sim':'não'
+    };
+    return cols.map(c=>csvCell(rec[c])).join(';');
+  });
+  const csv = '\ufeff'+cols.join(';')+'\n'+rows.join('\n');
+  download(new Blob([csv], {type:'text/csv;charset=utf-8'}), 'inventario_arboreo.csv');
+  status('CSV do inventário exportado ✓');
+  close('mInventory');
+});
+
+/* =========================================================
    Gravador nativo de Shapefile (ESRI .shp/.shx/.dbf/.prj)
    Sem dependências externas. WGS 84.
    ========================================================= */
 const WGS84_WKT = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+
+/* =========================================================
+   Sistema de projeção — transformações via proj4js.
+   Geográficas: WGS 84 (EPSG:4326) e SIRGAS 2000 (EPSG:4674).
+   proj4 registra as duas sem parâmetros de deslocamento de datum
+   (towgs84 0,0,0): essa é a prática oficial adotada pelo IBGE e
+   pelo próprio registro EPSG, que consideram SIRGAS 2000 e WGS 84
+   (ITRF/WGS84-G1150 em diante) coincidentes ao nível de poucos
+   centímetros — dentro da precisão de qualquer GPS de campo.
+   Projetadas: SIRGAS 2000 / UTM, fusos 18S–25S (EPSG 31978–31985),
+   calculadas por proj4 (+proj=utm +ellps=GRS80 +south).
+   ========================================================= */
+const SIRGAS2000_WKT = 'GEOGCS["GCS_SIRGAS_2000",DATUM["D_SIRGAS_2000",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+function utmWkt(zone, south){
+  return 'PROJCS["SIRGAS_2000_UTM_Zone_'+zone+(south?'S':'N')+'",'
+    +'GEOGCS["GCS_SIRGAS_2000",DATUM["D_SIRGAS_2000",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],'
+    +'PROJECTION["Transverse_Mercator"],'
+    +'PARAMETER["False_Easting",500000.0],'
+    +'PARAMETER["False_Northing",'+(south?'10000000.0':'0.0')+'],'
+    +'PARAMETER["Central_Meridian",'+(zone*6-183)+'.0],'
+    +'PARAMETER["Scale_Factor",0.9996],'
+    +'PARAMETER["Latitude_Of_Origin",0.0],'
+    +'UNIT["Meter",1.0]]';
+}
+const UTM_EPSG_SOUTH = {18:31978,19:31979,20:31980,21:31981,22:31982,23:31983,24:31984,25:31985};
+const CRS_LIST = [
+  { epsg:4326, name:'WGS 84 — geográfica (padrão)', kind:'geo', wkt:WGS84_WKT,
+    proj4def:'+proj=longlat +datum=WGS84 +no_defs' },
+  { epsg:4674, name:'SIRGAS 2000 — geográfica', kind:'geo', wkt:SIRGAS2000_WKT,
+    proj4def:'+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs' },
+  ...[18,19,20,21,22,23,24,25].map(z=>({
+    epsg: UTM_EPSG_SOUTH[z], name:'SIRGAS 2000 / UTM '+z+'S', kind:'utm', zone:z, hemi:'S', wkt:utmWkt(z,true),
+    proj4def:'+proj=utm +zone='+z+' +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
+  }))
+];
+CRS_LIST.forEach(c=>proj4.defs('EPSG:'+c.epsg, c.proj4def));
+
+let currentCRS = CRS_LIST[0]; // padrão: WGS 84 geográfica
+
+/** Transforma [lon,lat] em WGS 84 para a CRS alvo, via proj4. Retorna [x,y]. */
+function projectCoord(c, crs){
+  if(crs.epsg===4326) return c;
+  return proj4('EPSG:4326', 'EPSG:'+crs.epsg, [c[0], c[1]]);
+}
+function reprojectCoords(coords, crs){
+  if(typeof coords[0]==='number') return projectCoord(coords, crs);
+  return coords.map(c=>reprojectCoords(c, crs));
+}
+function reprojectGeoJSON(gj, crs){
+  return { type:'FeatureCollection', features: gj.features.map(f=>({
+    type:'Feature', properties:f.properties,
+    geometry: f.geometry ? { type:f.geometry.type, coordinates: reprojectCoords(f.geometry.coordinates, crs) } : f.geometry
+  })) };
+}
+function setCRS(epsg){
+  const found = CRS_LIST.find(c=>c.epsg===epsg);
+  if(found) currentCRS = found;
+  return currentCRS;
+}
 
 function ringSignedArea(ring){ // >0 anti-horário em coordenadas planas lon/lat
   let s=0;
@@ -2680,7 +3556,8 @@ function closeRing(r){
   if(a[0]!==b[0] || a[1]!==b[1]) return [...r, a];
   return r;
 }
-function writeShapefile(features, cls){
+function writeShapefile(features, cls, crs){
+  crs = crs || { wkt: WGS84_WKT };
   const SHAPE = { point:1, line:3, polygon:5 }[cls];
 
   /* --- prepara geometrias como {parts:[[x,y]...], bbox} --- */
@@ -2835,7 +3712,7 @@ function writeShapefile(features, cls){
   });
   dbfU8[dbfBuf.byteLength-1] = 0x1A;
 
-  return { shp:shpBuf, shx:shxBuf, dbf:dbfBuf, prj:WGS84_WKT, cpg:'ISO-8859-1' };
+  return { shp:shpBuf, shx:shxBuf, dbf:dbfBuf, prj:crs.wkt, cpg:'ISO-8859-1' };
 }
 
 /* =========================================================
@@ -2848,6 +3725,7 @@ function serializeProject(){
   return {
     app:'GeoMatias', version:1, savedAt:new Date().toISOString(),
     view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() },
+    crs: currentCRS.epsg,
     base: currentBaseName,
     groups: groups.map(g=>({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed})),
     customCatalogs: catalogs.filter(c=>c.custom).map(c=>({name:c.name, url:c.url})),
@@ -2905,6 +3783,7 @@ function clearProjectState(){
 }
 function applyProject(p){
   clearProjectState();
+  setCRS(p.crs || 4326);
   if(p.base && bases[p.base]){
     map.removeLayer(currentBase);
     currentBase = bases[p.base].addTo(map);
@@ -2941,6 +3820,15 @@ function applyProject(p){
       x.feature = x.feature || {type:'Feature', properties:{}};
       registerFeature(x, lyr);
       Object.assign(x.feature.properties, x.feature.properties);
+      if(lyr.inventory){
+        const pr = x.feature.properties;
+        // migração de projetos antigos: cap_cm -> cap_fustes
+        if((pr.cap_fustes==null||pr.cap_fustes==='') && pr.cap_cm!=null && pr.cap_cm!==''){ pr.cap_fustes = String(pr.cap_cm); }
+        // se DAP já existia manualmente digitado num projeto antigo, preserva como manual
+        if(pr.dap_cm!=null && pr.dap_cm!=='' && pr.dap_manual==null){ pr.dap_manual = true; }
+        try{ computeTreeMetrics(pr); }catch(e){}
+        applyTreeLabel(x);
+      }
       x.bindPopup(lyr.inventory ? treePopup(x) : featurePopup(x, ''), lyr.inventory?{maxWidth:280}:undefined);
       lyr.group.addLayer(x);
     });
@@ -2963,6 +3851,37 @@ function applyProject(p){
     }
   }catch(e){ console.warn('Falha ao restaurar projeto', e); }
 })();
+
+/* modal de sistema de projeção */
+(function initCRSSelect(){
+  const sel = document.getElementById('crsSelect');
+  CRS_LIST.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.epsg; opt.textContent = c.name+' (EPSG:'+c.epsg+')';
+    sel.appendChild(opt);
+  });
+})();
+function crsInfoText(c){
+  return c.kind==='utm'
+    ? 'Coordenadas planas em metros (E/N). Aplicado às leituras de coordenada no mapa e ao .prj do Shapefile exportado.'
+    : 'Coordenadas geográficas (lon/lat). GeoJSON e KML/KMZ são sempre exportados em WGS 84.';
+}
+document.getElementById('btnCRS').addEventListener('click', ()=>{
+  document.getElementById('crsSelect').value = currentCRS.epsg;
+  document.getElementById('crsInfo').textContent = crsInfoText(currentCRS);
+  open('mCRS');
+});
+document.getElementById('crsSelect').addEventListener('change', e=>{
+  const c = CRS_LIST.find(x=>x.epsg===Number(e.target.value));
+  if(c) document.getElementById('crsInfo').textContent = crsInfoText(c);
+});
+document.getElementById('crsApply').addEventListener('click', ()=>{
+  const epsg = Number(document.getElementById('crsSelect').value);
+  setCRS(epsg);
+  saveLocal();
+  close('mCRS');
+  status('Sistema de projeção definido: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+').');
+});
 
 /* modal do projeto */
 document.getElementById('btnProject').addEventListener('click', ()=>{

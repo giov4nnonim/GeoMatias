@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>GeoMatias — WebGIS</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -16,22 +16,109 @@
 
 <style>
 :root{
-  --ink:#141a20; --panel:#1d252d; --panel2:#242f39; --line:#31404d;
-  --text:#e8eef3; --muted:#8fa3b3; --accent:#37c2a0; --accent2:#2ba187;
-  --danger:#e5673f; --radius:12px;
+  /* ---- Tema escuro (padrão) ---- */
+  --ink:#141a20;        /* fundo do app */
+  --panel:#1d252d;      /* painéis, modais */
+  --panel2:#242f39;     /* superfície secundária / hover */
+  --field:#0c1116;      /* fundo de campos de formulário */
+  --line:#31404d;       /* bordas e divisores */
+  --text:#e8eef3;
+  --muted:#8fa3b3;
+  --accent:#37c2a0;
+  --accent2:#2ba187;
+  --on-accent:#07231c;  /* texto sobre o accent */
+  --danger:#e5673f;
+  --map-bg:#0d1216;     /* fundo do mapa antes dos tiles */
+  --bar-a:rgba(20,26,32,.96);   /* topbar: gradiente topo */
+  --bar-b:rgba(20,26,32,.88);   /* topbar: gradiente base */
+  --bar-solid:rgba(20,26,32,.92); /* statusbar */
+  --scale-bg:rgba(20,26,32,.8);
+  --shadow:rgba(0,0,0,.45);
+  --shadow-strong:rgba(0,0,0,.55);
+  --backdrop:rgba(5,9,12,.65);  /* fundo atrás dos modais */
+  --tip-bg:#0c1116;             /* tooltips */
+  --sub-bg:rgba(13,18,22,.5);   /* faixas internas do painel */
+  --swatch-bd:rgba(255,255,255,.35);
+  --accent-soft:rgba(55,194,160,.1);
+  --accent-soft2:rgba(55,194,160,.06);
+  --accent-bd:rgba(55,194,160,.4);
+  --accent-bright:#37c2a0; /* accent sobre superfície escura (tooltips do mapa) */
+  --warn:#e5a13f;
+  --warn-soft:rgba(229,161,63,.12);
+  --warn-bd:rgba(229,161,63,.4);
+  --radius:12px;
+  color-scheme:dark;
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+/* ---- Tema claro ---- */
+:root[data-theme="light"]{
+  --ink:#e9eef2;
+  --panel:#ffffff;
+  --panel2:#eff4f7;
+  --field:#f7fafb;
+  --line:#d2dce4;
+  --text:#16212b;
+  --muted:#5c7185;
+  --accent:#11806a;      /* teal profundo: WCAG AA sobre branco e como fundo */
+  --accent2:#0c6b56;
+  --on-accent:#ffffff;   /* texto sobre o accent */
+  --danger:#c4432a;
+  --map-bg:#e6ebef;
+  --bar-a:rgba(255,255,255,.97);
+  --bar-b:rgba(255,255,255,.90);
+  --bar-solid:rgba(255,255,255,.94);
+  --scale-bg:rgba(255,255,255,.85);
+  --shadow:rgba(15,35,55,.14);
+  --shadow-strong:rgba(15,35,55,.22);
+  --backdrop:rgba(28,42,56,.45);
+  --tip-bg:#26323d;      /* tooltip permanece escuro: contraste sobre o mapa */
+  --sub-bg:rgba(20,40,60,.05);
+  --swatch-bd:rgba(0,0,0,.28);
+  --accent-soft:rgba(17,128,106,.13);
+  --accent-soft2:rgba(17,128,106,.07);
+  --accent-bd:rgba(17,128,106,.38);
+  --accent-bright:#37c2a0; /* permanece brilhante: fica sobre fundo escuro */
+  --warn:#9d672c;
+  --warn-soft:rgba(157,103,44,.12);
+  --warn-bd:rgba(157,103,44,.38);
+  color-scheme:light;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)}
-#map{position:absolute; inset:0; background:#0d1216}
+/* altura dinâmica: compensa a barra de endereço que aparece/some no mobile */
+@supports (height:100dvh){ html,body{height:100dvh} }
+#map{position:absolute; inset:0; background:var(--map-bg)}
 
 /* ---------- Top bar ---------- */
 #topbar{
   position:absolute; top:0; left:0; right:0; height:52px; z-index:1200;
   display:flex; align-items:center; gap:8px; padding:0 12px;
-  background:linear-gradient(180deg, rgba(20,26,32,.96), rgba(20,26,32,.88));
+  padding-left:max(12px, env(safe-area-inset-left));
+  padding-right:max(12px, env(safe-area-inset-right));
+  background:linear-gradient(180deg, var(--bar-a), var(--bar-b));
   border-bottom:1px solid var(--line); backdrop-filter:blur(6px);
 }
+/* Ações da topbar: rolagem horizontal — nunca corta botões em nenhuma largura */
+#tbActions{
+  display:flex; align-items:center; gap:8px; min-width:0; flex:0 1 auto;
+  overflow-x:auto; overflow-y:hidden; scrollbar-width:none; -ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch; padding:2px 0;
+  scroll-snap-type:x proximity;
+}
+#tbActions::-webkit-scrollbar{display:none}
+#tbActions .tb-btn{flex:none; scroll-snap-align:end}
+.tb-btn.icon-only{width:34px; padding:0; justify-content:center; flex:none}
+.tb-btn.icon-only svg{width:16px; height:16px}
+/* transição suave ao trocar de tema (desligada para quem prefere menos movimento) */
+@media (prefers-reduced-motion:no-preference){
+  html.theme-anim, html.theme-anim *{transition:background-color .22s ease, color .22s ease, border-color .22s ease}
+}
+/* pistas visuais de que há mais botões fora da área visível */
+#tbActions.sc-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px), transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 22px), transparent)}
+#tbActions.sc-l{-webkit-mask-image:linear-gradient(90deg,transparent, #000 22px); mask-image:linear-gradient(90deg,transparent, #000 22px)}
+#tbActions.sc-l.sc-r{-webkit-mask-image:linear-gradient(90deg,transparent, #000 22px, #000 calc(100% - 22px), transparent); mask-image:linear-gradient(90deg,transparent, #000 22px, #000 calc(100% - 22px), transparent)}
+#brand{flex:none}
+#panelToggle{flex:none}
 #brand{display:flex; align-items:center; gap:8px; margin-right:6px; user-select:none}
 #brand svg{flex:none}
 #brand b{font-size:15px; letter-spacing:.4px}
@@ -42,7 +129,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   border-radius:8px; cursor:pointer; font-size:13px; white-space:nowrap;
 }
 .tb-btn:hover{border-color:var(--accent); color:var(--accent)}
-.tb-btn.primary{background:var(--accent); border-color:var(--accent); color:#07231c; font-weight:600}
+.tb-btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
 .tb-btn.primary:hover{background:var(--accent2)}
 #topbar .spacer{flex:1}
 
@@ -52,7 +139,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
   display:flex; flex-direction:column; overflow:hidden;
   transition:transform .25s ease, opacity .25s ease;
-  box-shadow:0 8px 30px rgba(0,0,0,.45);
+  box-shadow:0 8px 30px var(--shadow);
 }
 #panel.hidden{transform:translateX(-115%); opacity:0; pointer-events:none}
 #panel header{padding:12px 14px 8px; font-size:12px; letter-spacing:1.5px; color:var(--muted)}
@@ -65,11 +152,11 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   flex:1; padding:7px 4px; font-size:12px; background:var(--panel2); color:var(--muted);
   border:1px solid var(--line); border-radius:8px; cursor:pointer;
 }
-.ptab.active{background:var(--accent); border-color:var(--accent); color:#07231c; font-weight:600}
+.ptab.active{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
 .tabpane{padding-top:8px}
 
 /* Camada vetorial ativa */
-.layer-row.active-layer{border-color:var(--accent); background:rgba(55,194,160,.1)}
+.layer-row.active-layer{border-color:var(--accent); background:var(--accent-soft)}
 .layer-row .badge{
   font-size:9.5px; letter-spacing:.5px; color:var(--muted); border:1px solid var(--line);
   border-radius:5px; padding:1px 5px; text-transform:uppercase; flex:none;
@@ -90,7 +177,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* Detalhes / metadados / legenda da camada */
 .layer-detail{
-  margin:-2px 0 6px; padding:10px 12px; background:rgba(13,18,22,.5);
+  margin:-2px 0 6px; padding:10px 12px; background:var(--sub-bg);
   border:1px solid var(--line); border-radius:0 0 10px 10px; font-size:12px; line-height:1.55;
 }
 .layer-detail .d-abs{color:var(--text)}
@@ -107,12 +194,12 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .grp-head.dropover, .grp-body.dropover{outline:2px dashed var(--accent); outline-offset:-2px; border-radius:8px}
 #vectorList.dropover, #rasterList.dropover{outline:2px dashed var(--muted); outline-offset:-2px; border-radius:8px}
 .grp-head .gname-input{
-  flex:1; background:var(--ink); border:1px solid var(--accent); color:var(--text);
+  flex:1; background:var(--field); border:1px solid var(--accent); color:var(--text);
   border-radius:6px; padding:4px 8px; font-size:12.5px; font-family:inherit; min-width:60px;
 }
 .grp-head .gcolor{width:16px; height:16px; border:none; padding:0; background:none; cursor:pointer; flex:none}
 .grp-head .gcolor::-webkit-color-swatch-wrapper{padding:0}
-.grp-head .gcolor::-webkit-color-swatch{border:1px solid rgba(255,255,255,.3); border-radius:4px}
+.grp-head .gcolor::-webkit-color-swatch{border:1px solid var(--swatch-bd); border-radius:4px}
 
 /* Busca inteligente em catálogos */
 .cat-row{display:flex; align-items:center; gap:8px; padding:7px 9px; margin-bottom:4px; background:var(--panel2); border-radius:8px; font-size:12.5px}
@@ -127,7 +214,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .res-row .rm{font-size:11px; color:var(--muted); line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
 .res-row .ra{display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:8px}
 .res-row .rsrc{font-size:10.5px; color:var(--accent); letter-spacing:.5px}
-.res-add{background:var(--accent); color:#07231c; border:none; border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600}
+.res-add{background:var(--accent); color:var(--on-accent); border:none; border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600}
 .res-add:disabled{opacity:.5; cursor:default}
 #bboxInfo{font-size:12px; color:var(--muted); padding:6px 2px}
 #bboxInfo b{color:var(--accent)}
@@ -139,11 +226,25 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:1300;
   display:none; align-items:center; gap:8px; padding:8px 10px;
   background:var(--panel); border:1px solid var(--accent); border-radius:999px;
-  box-shadow:0 8px 30px rgba(0,0,0,.55);
+  box-shadow:0 8px 30px var(--shadow-strong);
 }
 #drawBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
+#drawBar .db-count{
+  font-size:12px; font-weight:600; color:var(--accent);
+  background:var(--field); border:1px solid var(--line); border-radius:999px;
+  padding:4px 10px; white-space:nowrap;
+}
 #drawBar button{height:32px; border-radius:999px}
-@media (max-width:760px){ #drawBar{bottom:104px; width:calc(100vw - 24px); justify-content:center} #drawBar .db-msg{display:none} }
+#drawBar button:disabled{opacity:.45; cursor:not-allowed}
+@media (max-width:760px){
+  #drawBar{
+    bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom));
+    left:8px; right:8px; width:auto; transform:none; justify-content:center;
+  }
+  #drawBar .db-msg{display:none}
+  #drawBar .db-count{padding:6px 12px; font-size:12.5px}
+  #drawBar button{height:38px; padding-left:12px; padding-right:12px}
+}
 .layer-row{
   display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:4px;
   background:var(--panel2); border:1px solid transparent; border-radius:8px; font-size:13px;
@@ -151,7 +252,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .layer-row:hover{border-color:var(--line)}
 .layer-row .name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .layer-row input[type=checkbox], .layer-row input[type=radio]{accent-color:var(--accent); width:15px; height:15px; cursor:pointer}
-.swatch{width:14px; height:14px; border-radius:4px; border:1px solid rgba(255,255,255,.35); flex:none; cursor:pointer; padding:0; background:none; -webkit-appearance:none; appearance:none}
+.swatch{width:14px; height:14px; border-radius:4px; border:1px solid var(--swatch-bd); flex:none; cursor:pointer; padding:0; background:none; -webkit-appearance:none; appearance:none}
 .swatch::-webkit-color-swatch-wrapper{padding:0}
 .swatch::-webkit-color-swatch{border:none; border-radius:3px}
 .icon-btn{background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px}
@@ -165,7 +266,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   position:absolute; right:10px; top:60px; z-index:1100;
   display:flex; flex-direction:column; gap:4px; padding:6px;
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-  box-shadow:0 8px 30px rgba(0,0,0,.45);
+  box-shadow:0 8px 30px var(--shadow);
 }
 .tool{
   width:42px; height:42px; display:flex; align-items:center; justify-content:center;
@@ -174,10 +275,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 }
 .tool svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
 .tool:hover{background:var(--panel2)}
-.tool.active{background:var(--accent); color:#07231c}
+.tool.active{background:var(--accent); color:var(--on-accent)}
 .tool .tip{
   position:absolute; right:52px; top:50%; transform:translateY(-50%);
-  background:#0c1116; color:var(--text); font-size:12px; padding:5px 9px; border-radius:6px;
+  background:var(--tip-bg); color:#e8eef3; font-size:12px; padding:5px 9px; border-radius:6px;
   white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; border:1px solid var(--line);
 }
 .tool:hover .tip{opacity:1}
@@ -187,7 +288,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #statusbar{
   position:absolute; left:0; right:0; bottom:0; height:30px; z-index:1200;
   display:flex; align-items:center; gap:18px; padding:0 12px;
-  background:rgba(20,26,32,.92); border-top:1px solid var(--line);
+  background:var(--bar-solid); border-top:1px solid var(--line);
   font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;
 }
 #statusbar b{color:var(--text); font-weight:500}
@@ -203,26 +304,38 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 /* ---------- Hint banner ---------- */
 #hint{
   position:absolute; top:60px; left:50%; transform:translateX(-50%); z-index:1150;
-  background:#0c1116; border:1px solid var(--accent); color:var(--text);
+  background:var(--field); border:1px solid var(--accent); color:var(--text);
   padding:8px 16px; border-radius:999px; font-size:13px; display:none; max-width:92vw; text-align:center;
 }
 
 /* ---------- Modals ---------- */
 .modal-back{
-  position:fixed; inset:0; background:rgba(5,9,12,.65); z-index:2000;
+  position:fixed; inset:0; background:var(--backdrop); z-index:2000;
   display:none; align-items:center; justify-content:center; padding:16px;
+  padding-top:max(16px, env(safe-area-inset-top));
+  padding-bottom:max(16px, env(safe-area-inset-bottom));
 }
 .modal-back.open{display:flex}
 .modal{
+  position:relative;
   width:420px; max-width:100%; max-height:90vh; overflow-y:auto;
   background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px;
+  -webkit-overflow-scrolling:touch;
+}
+@supports (max-height:90dvh){ .modal{max-height:90dvh} }
+/* Botão fechar (✕) ancorado ao canto do próprio modal e visível durante a rolagem */
+.modal-x{
+  position:sticky; top:-4px; float:right; z-index:5;
+  width:30px; height:30px; padding:0; line-height:1;
+  margin:-6px -6px 6px 8px;
+  display:flex; align-items:center; justify-content:center;
 }
 .modal h3{font-size:16px; margin-bottom:4px}
 .modal p.sub{color:var(--muted); font-size:12.5px; margin-bottom:14px; line-height:1.45}
 .field{margin-bottom:12px}
 .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px}
 .field input[type=text], .field input[type=number], .field textarea, .field select{
-  width:100%; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  width:100%; background:var(--field); border:1px solid var(--line); color:var(--text);
   border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit;
 }
 .field textarea{resize:vertical; min-height:70px}
@@ -242,7 +355,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .coord-pop{font-size:12.5px; line-height:1.6}
 .coord-pop b{font-size:11px; color:#556; text-transform:uppercase; letter-spacing:.8px}
 .coord-pop button{
-  margin-top:6px; background:var(--accent); color:#07231c; border:none; border-radius:6px;
+  margin-top:6px; background:var(--accent); color:var(--on-accent); border:none; border-radius:6px;
   padding:5px 10px; font-size:12px; cursor:pointer; font-weight:600;
 }
 
@@ -251,11 +364,11 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .leaflet-control-zoom{border:1px solid var(--line)!important; border-radius:10px!important; overflow:hidden; margin-top:64px!important}
 .leaflet-control-zoom a{background:var(--panel)!important; color:var(--text)!important; border-color:var(--line)!important}
 .leaflet-control-zoom a:hover{background:var(--panel2)!important; color:var(--accent)!important}
-.leaflet-control-scale-line{background:rgba(20,26,32,.8); color:var(--text); border-color:var(--muted)}
+.leaflet-control-scale-line{background:var(--scale-bg); color:var(--text); border-color:var(--muted)}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .measure-label{
   background:linear-gradient(135deg, #37c2a0 0%, #2ba187 100%); 
-  color:#07231c; border:2px solid #fff;
+  color:var(--on-accent); border:2px solid #fff;
   border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; white-space:nowrap;
   box-shadow:0 6px 16px rgba(55, 194, 160, 0.5), 0 0 12px rgba(55, 194, 160, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
   text-shadow:0 1px 2px rgba(0,0,0,0.2);
@@ -270,18 +383,18 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   background:rgba(13,18,22,.55)!important;
   border:2px solid #37c2a0!important;
   border-radius:50%!important;
-  box-shadow:0 0 0 1.5px rgba(0,0,0,.45);
+  box-shadow:0 0 0 1.5px var(--shadow);
 }
 .leaflet-editing-icon:hover{background:#37c2a0!important}
 .leaflet-touch .leaflet-editing-icon{width:17px!important; height:17px!important; margin-left:-9px!important; margin-top:-9px!important}
 .leaflet-draw-tooltip{
-  background:rgba(13, 18, 22, 0.95); border:2px solid var(--accent); color:var(--accent);
+  background:rgba(13, 18, 22, 0.95); border:2px solid var(--accent-bright); color:var(--accent-bright);
   border-radius:8px; font-family:inherit; font-size:13px; padding:8px 12px;
   box-shadow:0 4px 12px rgba(55, 194, 160, 0.3);
   font-weight:600;
 }
-.leaflet-draw-tooltip:before{border-right-color:#0c1116}
-.leaflet-draw-tooltip-subtext{color:var(--accent)!important}
+.leaflet-draw-tooltip:before{border-right-color:rgba(13, 18, 22, 0.95)}
+.leaflet-draw-tooltip-subtext{color:var(--accent-bright)!important}
 
 /* Melhoria para linhas e polígonos de medição */
 .leaflet-pane .leaflet-path-measure{
@@ -319,7 +432,20 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* Tabela de atributos */
 .modal.wide{width:860px; max-width:96vw}
-#atWrap{overflow:auto; max-height:60vh; border:1px solid var(--line); border-radius:10px}
+/* tamanhos nomeados (substituem estilos inline, permitindo media queries) */
+.modal.m-tree{width:560px; max-width:96vw; max-height:92vh; overflow:auto}
+.modal.m-inv{width:520px; max-width:96vw; max-height:92vh; overflow:auto}
+@supports (max-height:92dvh){ .modal.m-tree, .modal.m-inv{max-height:92dvh} }
+@media (max-width:760px){
+  .modal-back{padding:8px; padding-bottom:max(8px, env(safe-area-inset-bottom))}
+  .modal{width:100%!important; max-width:100%!important; padding:16px; border-radius:12px}
+  .modal.wide, .modal.m-tree, .modal.m-inv{width:100%!important; max-width:100%!important}
+  .modal .actions{position:sticky; bottom:-16px; background:var(--panel); padding:10px 0 2px; margin-top:12px; border-top:1px solid var(--line); z-index:2}
+  .modal .actions .tb-btn{flex:1; justify-content:center}
+  .modal .actions .tb-btn .lbl{display:inline}
+}
+#atWrap{overflow:auto; max-height:60vh; border:1px solid var(--line); border-radius:10px; -webkit-overflow-scrolling:touch}
+@supports (max-height:60dvh){ #atWrap{max-height:60dvh} }
 #atTable{border-collapse:collapse; width:100%; font-size:12.5px; min-width:520px}
 #atTable th{
   position:sticky; top:0; background:var(--panel2); color:var(--muted); text-align:left;
@@ -328,31 +454,87 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 }
 #atTable td{padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:middle; white-space:nowrap}
 #atTable tr:last-child td{border-bottom:none}
-#atTable tr:hover td{background:rgba(55,194,160,.06)}
+#atTable tr:hover td{background:var(--accent-soft2)}
 #atTable td input[type=text], #atTable td input[type=number], #atTable td select{
   width:100%; min-width:90px; background:transparent; border:1px solid transparent; color:var(--text);
   border-radius:6px; padding:6px 7px; font-size:12.5px; font-family:inherit;
 }
 #atTable td input:hover, #atTable td select:hover{border-color:var(--line)}
-#atTable td input:focus, #atTable td select:focus{outline:none; border-color:var(--accent); background:var(--ink)}
+#atTable td input:focus, #atTable td select:focus{outline:none; border-color:var(--accent); background:var(--field)}
 #atTable td input[type=checkbox]{accent-color:var(--accent); width:15px; height:15px}
 #atTable td.num{color:var(--muted); font-variant-numeric:tabular-nums}
 #atTable td.geo{color:var(--muted); font-size:11.5px}
 #atStats{font-size:12px; color:var(--muted); margin:10px 2px 0}
 
-/* ---------- Mobile ---------- */
+/* ---------- Responsivo ---------- */
 #panelToggle{display:flex}
-@media (max-width:760px){
-  #brand small{display:none}
+
+/* A barra de ferramentas nunca deve estourar a altura da tela */
+#toolbar{ max-height:calc(100vh - 130px); overflow-y:auto; overflow-x:hidden; scrollbar-width:thin }
+@supports (height:100dvh){ #toolbar{ max-height:calc(100dvh - 130px) } }
+#toolbar::-webkit-scrollbar{width:4px}
+#toolbar::-webkit-scrollbar-thumb{background:var(--line); border-radius:2px}
+
+/* ===== Tablet e telas médias (≤1100px): botões viram ícones ===== */
+@media (max-width:1100px){
   .tb-btn .lbl{display:none}
   .tb-btn{padding:0 10px}
-  #panel{left:8px; right:8px; width:auto; top:58px; bottom:auto; max-height:52vh}
-  #toolbar{top:auto; bottom:44px; right:8px; flex-direction:row; flex-wrap:wrap; max-width:calc(100vw - 90px); justify-content:flex-end}
+  #brand small{display:none}
+}
+
+/* ===== Tablet retrato / telas médias (761–1024px) ===== */
+@media (min-width:761px) and (max-width:1024px){
+  #panel{width:270px}
+  #statusbar{gap:12px}
+}
+
+/* ===== Celular (≤760px) ===== */
+@media (max-width:760px){
+  #brand small{display:none}
+  #brand b{font-size:14px}
+  .tb-btn .lbl{display:none}
+  .tb-btn{padding:0 10px}
+  #panel{left:8px; right:8px; width:auto; top:58px; bottom:auto; max-height:min(52vh, 420px)}
+  @supports (height:100dvh){ #panel{max-height:min(52dvh, 420px)} }
+  #toolbar{
+    top:auto; bottom:calc(40px + env(safe-area-inset-bottom)); right:8px; left:8px;
+    flex-direction:row; flex-wrap:wrap; max-width:none; justify-content:center;
+    max-height:none; overflow:visible;
+  }
+  .tool{width:40px; height:40px}
   .tool .tip{display:none}
-  .tool-sep{width:1px; height:auto; margin:4px 2px}
+  .tool-sep{width:1px; height:26px; margin:4px 2px}
   #north{bottom:auto; top:60px; right:12px; transform:scale(.8)}
-  #statusbar{gap:10px; font-size:11px}
+  #statusbar{gap:10px; font-size:11px; padding-bottom:env(safe-area-inset-bottom); height:calc(30px + env(safe-area-inset-bottom))}
   #stScale{display:none}
+}
+
+/* ===== Celular estreito (≤380px): compacta ainda mais ===== */
+@media (max-width:380px){
+  #brand b{font-size:13px}
+  #brand svg{width:22px; height:22px}
+  .tool{width:38px; height:38px}
+  .tool svg{width:19px; height:19px}
+  #statusbar{gap:8px; font-size:10.5px}
+}
+
+/* ===== Paisagem baixa (celular deitado): altura é o recurso escasso ===== */
+@media (max-height:500px) and (orientation:landscape){
+  /* toolbar vira faixa horizontal no rodapé (cabe em 1 linha na largura da paisagem) */
+  #toolbar{
+    top:auto; bottom:calc(34px + env(safe-area-inset-bottom)); right:8px; left:8px;
+    flex-direction:row; flex-wrap:wrap; justify-content:center;
+    max-height:none; overflow:visible;
+  }
+  .tool{width:36px; height:36px}
+  .tool svg{width:18px; height:18px}
+  .tool .tip{display:none}
+  .tool-sep{width:1px; height:24px; margin:4px 2px}
+  #panel{top:56px; bottom:auto; max-height:calc(100vh - 150px); width:260px}
+  #north{display:none}
+  #drawBar{bottom:calc(var(--tbH, 56px) + 42px + env(safe-area-inset-bottom))}
+  #topbar{height:46px}
+  #statusbar{height:calc(26px + env(safe-area-inset-bottom)); font-size:10.5px}
 }
 
 /* ---------- Print layout ---------- */
@@ -430,10 +612,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .tree-photo-actions{display:flex; gap:8px; margin:8px 0; flex-wrap:wrap}
 .tree-organs{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0}
 .tree-organs button{font-size:11px; padding:4px 9px; border-radius:14px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); cursor:pointer}
-.tree-organs button.on{background:var(--accent); color:#07231c; border-color:var(--accent); font-weight:600}
+.tree-organs button.on{background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:600}
 .id-result{display:flex; align-items:center; gap:10px; padding:8px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; cursor:pointer; background:var(--panel2)}
 .id-result:hover{border-color:var(--accent)}
-.id-result.sel{border-color:var(--accent); background:rgba(55,194,160,.1)}
+.id-result.sel{border-color:var(--accent); background:var(--accent-soft)}
 .id-result .id-main{flex:1; min-width:0}
 .id-result .id-sci{font-style:italic; font-size:13px; color:var(--text)}
 .id-result .id-com{font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -445,15 +627,38 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .gbif-gal img{width:96px; height:96px; object-fit:cover; border-radius:6px; display:block}
 .gbif-gal figcaption{font-size:9px; color:var(--muted); margin-top:2px; line-height:1.2; overflow:hidden; max-height:24px}
 .tree-sec-title{font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:14px 0 6px; border-top:1px solid var(--line); padding-top:10px}
-.tree-sug{font-size:9.5px; font-weight:600; color:var(--accent); background:rgba(55,194,160,.12); border:1px solid rgba(55,194,160,.4); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
-.tree-warn{font-size:9.5px; font-weight:600; color:#e5a13f; background:rgba(229,161,63,.12); border:1px solid rgba(229,161,63,.4); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
+.tree-sug{font-size:9.5px; font-weight:600; color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-bd); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
+.tree-warn{font-size:9.5px; font-weight:600; color:var(--warn); background:var(--warn-soft); border:1px solid var(--warn-bd); border-radius:8px; padding:0 6px; margin-left:4px; vertical-align:middle}
 .tree-photos-2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 .tree-photos-2 .tree-photo-box{padding:10px}
 .tree-photos-2 .tree-photo-box img{max-height:120px}
 .tree-photos-2 .tp-cap{font-size:10.5px; color:var(--muted); margin-bottom:4px; font-weight:600}
+@media (max-width:400px){
+  .tree-photos-2{grid-template-columns:1fr}
+  .tree-photos-2 .tree-photo-box img{max-height:150px}
+}
+/* alvos de toque confortáveis no celular */
+@media (max-width:760px){
+  .tree-organs button{padding:6px 11px; font-size:12px}
+  .tree-photo-actions .tb-btn{flex:1; justify-content:center}
+  .gbif-gal figure{width:80px}
+  .gbif-gal img{width:80px; height:80px}
+  .id-result{padding:10px}
+}
 .tree-num-tip{background:#fff; color:#123; border:2px solid #2e7d46; border-radius:50%; width:20px; height:20px; line-height:16px; text-align:center; font-weight:700; font-size:11px; padding:0; box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .tree-num-tip:before{display:none}
 </style>
+<script>
+/* Aplica o tema antes da primeira pintura, evitando piscar (FOUC).
+   O motor completo do tema fica no script principal, no fim do body. */
+(function(){
+  try{
+    var t = localStorage.getItem('geomatias_theme');
+    if(!t) t = (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
 </head>
 <body>
 
@@ -470,7 +675,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div><b>GeoMatias</b><small>WEBGIS</small></div>
   </div>
   <div class="spacer"></div>
-  <button class="tb-btn" id="btnProject">
+  <div id="tbActions">
+  <button class="tb-btn" id="btnProject" title="Projeto">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     <span class="lbl">Projeto</span>
   </button>
@@ -478,19 +684,19 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.2" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
     <span class="lbl">Projeção</span>
   </button>
-  <button class="tb-btn" id="btnFields">
+  <button class="tb-btn" id="btnFields" title="Atributos das geometrias">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
     <span class="lbl">Atributos</span>
   </button>
-  <button class="tb-btn" id="btnImport">
+  <button class="tb-btn" id="btnImport" title="Importar dados">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     <span class="lbl">Importar</span>
   </button>
-  <button class="tb-btn" id="btnExport">
+  <button class="tb-btn" id="btnExport" title="Exportar dados">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     <span class="lbl">Exportar</span>
   </button>
-  <button class="tb-btn primary" id="btnPrint">
+  <button class="tb-btn primary" id="btnPrint" title="Layout de impressão">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
     <span class="lbl">Imprimir</span>
   </button>
@@ -498,6 +704,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/></svg>
     <span class="lbl">Inventário</span>
   </button>
+  <button class="tb-btn icon-only" id="btnTheme" title="Alternar tema" aria-label="Alternar tema claro/escuro"></button>
+  </div>
 </div>
 
 <!-- ===== Layers panel ===== -->
@@ -555,9 +763,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <!-- ===== Barra de finalização do desenho ===== -->
 <div id="drawBar">
   <span class="db-msg" id="dbMsg">Desenhando…</span>
-  <button class="tb-btn" id="dbVertex">↩ Vértice</button>
+  <span id="dbCount" class="db-count">0 pontos</span>
+  <button class="tb-btn" id="dbVertex" title="Desfazer último ponto">↩ Vértice</button>
   <button class="tb-btn" id="dbCancel">Cancelar</button>
-  <button class="tb-btn primary" id="dbFinish">✓ Concluir geometria</button>
+  <button class="tb-btn primary" id="dbFinish">✓ Concluir</button>
 </div>
 
 <!-- ===== Modal: nova camada vetorial ===== -->
@@ -720,7 +929,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Modal: saídas do inventário arbóreo ===== -->
 <div class="modal-back" id="mInventory">
-  <div class="modal wide" style="width:520px; max-height:92vh; overflow:auto">
+  <div class="modal m-inv">
     <h3>Saídas do inventário arbóreo</h3>
     <p class="sub">Gera automaticamente, a partir dos indivíduos registrados, os produtos de laudo: <b>mapa georreferenciado</b> com pontos numerados, <b>grade de fichas</b> (foto + atributos) e <b>planilha de campo (CSV)</b>. Cálculos de DAP, DAP equivalente (multifustes) e volume seguem a metodologia usada no laudo.</p>
     <div id="invSummary" style="font-size:12.5px;color:var(--muted);margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)"></div>
@@ -792,8 +1001,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Modal: inventário arbóreo (ferramenta Árvore) ===== -->
 <div class="modal-back" id="mTree">
-  <button class="tb-btn" style="position:absolute;right:15px;top:15px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;z-index:2001" id="treeCloseX" title="Fechar">✕</button>
-  <div class="modal wide" style="width:560px; max-height:92vh; overflow:auto">
+  <div class="modal m-tree">
+    <button class="tb-btn modal-x" id="treeCloseX" title="Fechar">✕</button>
     <h3>Registro de árvore</h3>
     <p class="sub">Anexe ou tire uma foto do indivíduo. A identificação por imagem (Pl@ntNet) pré-preenche espécie e família; as fotos de referência (GBIF) ajudam a confirmar visualmente. A identificação é sempre uma <b>sugestão</b> — confirme antes de salvar.</p>
 
@@ -864,8 +1073,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Modal: busca em catálogos ===== -->
 <div class="modal-back" id="mCatalog">
-  <button class="tb-btn" style="position:absolute;right:15px;top:15px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;z-index:2001" data-close title="Fechar">✕</button>
   <div class="modal wide" style="width:560px">
+    <button class="tb-btn modal-x" data-close title="Fechar">✕</button>
     <h3 id="catTitle">Busca inteligente em catálogos</h3>
     <p class="sub" id="catSub">Pesquise camadas publicadas em serviços OGC de catálogos conhecidos. Demarque um retângulo no mapa para restringir a busca à sua região de interesse.</p>
     <div class="field"><label>Termos de busca</label><input type="text" id="catTerm" placeholder="Ex.: hidrografia, uso do solo, app, imóveis, carta náutica…"></div>
@@ -1667,7 +1876,7 @@ function featurePopup(layer, extra){
     .map(([k,v])=>`<b>${k}</b>: ${v===true?'sim':v===false?'não':v}`).join('<br>');
   const reg = layer._gaid ? featReg.get(layer._gaid) : null;
   const edit = reg && reg.lyr.fields.length
-    ? `<br><button class="ga-editattr" data-gaid="${layer._gaid}" style="margin-top:6px;background:var(--accent);color:#07231c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar atributos</button>`
+    ? `<br><button class="ga-editattr" data-gaid="${layer._gaid}" style="margin-top:6px;background:var(--accent);color:var(--on-accent);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar atributos</button>`
     : '';
   return (extra||'') + (rows ? (extra?'<hr style="border:none;border-top:1px solid #ddd;margin:6px 0">':'') + rows : '') + edit || 'Sem atributos';
 }
@@ -2398,7 +2607,7 @@ function treePopup(layer){
              line('altura_m','Altura (m)') + line('volume_m3','Volume (m³)') + line('estado_fito','Estado') + line('pretensao','Pretensão');
   if(p.confianca_id!=null && p.confianca_id!=='') body += `<b>Confiança ID</b>: ${Math.round(p.confianca_id*100)}%<br>`;
   try{ const ll=layer.getLatLng?.(); if(ll) body += `<b>Coord.</b>: ${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}<br>`; }catch(e){}
-  const edit = `<button class="tree-edit" data-gaid="${layer._gaid}" style="margin-top:4px;background:var(--accent);color:#07231c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar árvore</button>`;
+  const edit = `<button class="tree-edit" data-gaid="${layer._gaid}" style="margin-top:4px;background:var(--accent);color:var(--on-accent);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">Editar árvore</button>`;
   return head + thumb + (body || 'Árvore sem atributos<br>') + edit;
 }
 map.on('popupopen', e=>{
@@ -2604,7 +2813,7 @@ function doRedo(){
 }
 btnUndo.addEventListener('click', doUndo);
 btnRedo.addEventListener('click', doRedo);
-map.on('draw:drawvertex', updHistory);
+map.on('draw:drawvertex', ()=>{ updHistory(); if(typeof updDrawCount==='function') updDrawCount(); });
 
 /* ---------- Ferramentas de desenho ---------- */
 const hint = document.getElementById('hint');
@@ -2638,6 +2847,22 @@ const measureStyle = { color:'#f2d24b', weight:3, dashArray:'6 6', fillColor:'#f
 
 /* Barra "Concluir geometria" */
 const drawBar = document.getElementById('drawBar');
+const dbCountEl = document.getElementById('dbCount');
+const dbFinishEl = document.getElementById('dbFinish');
+const dbVertexEl = document.getElementById('dbVertex');
+function drawMinVertices(){ return (activeTool==='polygon'||activeTool==='marea') ? 3 : 2; }
+/* Atualiza o contador de vértices e o estado dos botões — dá feedback claro
+   no toque (mobile), onde cada ponto adicionado nem sempre é óbvio. */
+function updDrawCount(){
+  const n = (activeDrawer && activeDrawer._markers) ? activeDrawer._markers.length : 0;
+  const min = drawMinVertices();
+  if(dbCountEl) dbCountEl.textContent = n===1 ? '1 ponto' : n+' pontos';
+  if(dbVertexEl) dbVertexEl.disabled = n===0;
+  if(dbFinishEl){
+    dbFinishEl.disabled = n < min;
+    dbFinishEl.textContent = n < min ? `Toque +${min-n} no mapa` : '✓ Concluir';
+  }
+}
 function updDrawBar(){
   const isDrawing = activeTool && ['line','curve','polygon','mline','marea'].includes(activeTool) && activeDrawer;
   drawBar.style.display = isDrawing ? 'flex' : 'none';
@@ -2650,6 +2875,7 @@ function updDrawBar(){
       mline:'Medindo distância', marea:'Medindo área'
     };
     document.getElementById('dbMsg').textContent = msgs[activeTool]||'Desenhando…';
+    updDrawCount();
   }
 }
 document.getElementById('dbFinish').addEventListener('click', ()=>{
@@ -2663,6 +2889,7 @@ document.getElementById('dbFinish').addEventListener('click', ()=>{
 document.getElementById('dbVertex').addEventListener('click', ()=>{
   if(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers?.length) activeDrawer.deleteLastVertex();
   updHistory();
+  updDrawCount();
 });
 document.getElementById('dbCancel').addEventListener('click', ()=>{ deactivate(); status('Desenho cancelado.'); });
 
@@ -2690,12 +2917,12 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
       }
       case 'line':
         activeDrawer = new L.Draw.Polyline(map, { shapeOptions: drawStyle(tool) });
-        showHint('Clique ponto a ponto e use "✓ Concluir geometria" (ou duplo clique) para finalizar.'+dest);
+        showHint('Toque no mapa para adicionar cada ponto da linha; o contador embaixo mostra quantos já há. Toque em "✓ Concluir" (ou duplo toque) para finalizar e "↩ Vértice" para desfazer o último.'+dest);
         break;
       case 'curve':
         curveMode = true;
         activeDrawer = new L.Draw.Polyline(map, { shapeOptions: drawStyle(tool, true) });
-        showHint('Clique os pontos de controle e use "✓ Concluir geometria". A linha será suavizada.'+dest);
+        showHint('Toque no mapa para adicionar cada ponto de controle e depois em "✓ Concluir". A linha será suavizada.'+dest);
         break;
       case 'polygon':
         activeDrawer = new L.Draw.Polygon(map, { shapeOptions: drawStyle(tool), allowIntersection:true });
@@ -2891,6 +3118,81 @@ document.querySelectorAll('.modal-back').forEach(m=>m.addEventListener('click', 
 }));
 const open = id=>document.getElementById(id).classList.add('open');
 const close = id=>document.getElementById(id).classList.remove('open');
+
+/* ---------- Layout responsivo: altura real da toolbar -> --tbH ----------
+   A toolbar quebra em 1..3 linhas conforme a largura do dispositivo.
+   Medir a altura real evita que a drawBar sobreponha as ferramentas. */
+(function trackToolbarHeight(){
+  const tb = document.getElementById('toolbar');
+  if(!tb) return;
+  const set = ()=>document.documentElement.style.setProperty('--tbH', tb.offsetHeight+'px');
+  if(window.ResizeObserver){ new ResizeObserver(set).observe(tb); }
+  window.addEventListener('resize', set);
+  window.addEventListener('orientationchange', ()=>setTimeout(set,250));
+  set();
+})();
+
+/* ---------- Tema claro / escuro ----------
+   Preferência salva em localStorage; se nunca escolhida, segue o sistema.
+   O tema é aplicado cedo (script no <head>) para evitar piscar. */
+(function themeEngine(){
+  const KEY = 'geomatias_theme';
+  const root = document.documentElement;
+  const btn = document.getElementById('btnTheme');
+  const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  const ICON_SUN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>';
+
+  function apply(t, animate){
+    if(animate){
+      root.classList.add('theme-anim');
+      setTimeout(()=>root.classList.remove('theme-anim'), 300);
+    }
+    root.setAttribute('data-theme', t);
+    if(btn){
+      // mostra o ícone do tema para o qual vai alternar
+      btn.innerHTML = (t==='light') ? ICON_MOON : ICON_SUN;
+      btn.title = (t==='light') ? 'Alternar para tema escuro' : 'Alternar para tema claro';
+    }
+    // barra de status do navegador (PWA / mobile)
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if(!meta){ meta=document.createElement('meta'); meta.name='theme-color'; document.head.appendChild(meta); }
+    meta.content = (t==='light') ? '#ffffff' : '#141a20';
+  }
+
+  const stored = (()=>{ try{ return localStorage.getItem(KEY); }catch(e){ return null; } })();
+  apply(stored || root.getAttribute('data-theme') || 'dark', false);
+
+  if(btn) btn.addEventListener('click', ()=>{
+    const next = root.getAttribute('data-theme')==='light' ? 'dark' : 'light';
+    apply(next, true);
+    try{ localStorage.setItem(KEY, next); }catch(e){}
+    status('Tema ' + (next==='light' ? 'claro' : 'escuro') + ' ativado.');
+  });
+
+  // se o usuário nunca escolheu, acompanha a preferência do sistema
+  if(!stored && window.matchMedia){
+    const mq = matchMedia('(prefers-color-scheme: light)');
+    const onChange = e=>{ let s=null; try{ s=localStorage.getItem(KEY); }catch(err){}
+      if(!s) apply(e.matches?'light':'dark', true); };
+    if(mq.addEventListener) mq.addEventListener('change', onChange);
+    else if(mq.addListener) mq.addListener(onChange);
+  }
+})();
+(function trackTopbarScroll(){
+  const el = document.getElementById('tbActions');
+  if(!el) return;
+  const upd = ()=>{
+    const more = el.scrollWidth - el.clientWidth;
+    if(more <= 2){ el.classList.remove('sc-l','sc-r'); return; }
+    el.classList.toggle('sc-l', el.scrollLeft > 2);
+    el.classList.toggle('sc-r', el.scrollLeft < more - 2);
+  };
+  el.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', upd);
+  window.addEventListener('orientationchange', ()=>setTimeout(upd,250));
+  if(window.ResizeObserver){ new ResizeObserver(upd).observe(el); }
+  setTimeout(upd, 0);
+})();
 
 document.getElementById('panelToggle').addEventListener('click', ()=>document.getElementById('panel').classList.toggle('hidden'));
 if(window.innerWidth<760) document.getElementById('panel').classList.add('hidden');
@@ -4352,16 +4654,23 @@ function wmsCatalogLayers(){
 }
 
 /* --- Consultar informações da feição sob o clique (WMS GetFeatureInfo) --- */
+let wmsInfoPopup = null; // popup de consulta WMS ativo (coexiste com popups de feição)
 async function queryClick(e){
   const cands = wmsCatalogLayers();
   if(!cands.length) return;
   const size = map.getSize();
   const b = map.getBounds();
   const pt = map.latLngToContainerPoint(e.latlng);
-  const pop = L.popup({maxWidth:340, maxHeight:280})
+  // fecha apenas a consulta WMS anterior (não os popups de atributos de feições)
+  if(wmsInfoPopup){ map.closePopup(wmsInfoPopup); wmsInfoPopup = null; }
+  // autoClose/closeOnClick=false => coexiste com o popup de preenchimento de
+  // atributos de um ponto/linha/geometria, sem que um feche o outro
+  const pop = L.popup({maxWidth:340, maxHeight:280, autoClose:false, closeOnClick:false, className:'wms-info-popup'})
     .setLatLng(e.latlng)
     .setContent('<div style="font-size:12.5px"><span class="spin"></span> Consultando '+cands.length+' camada(s)…</div>')
     .openOn(map);
+  wmsInfoPopup = pop;
+  pop.on('remove', ()=>{ if(wmsInfoPopup===pop) wmsInfoPopup = null; });
 
   const sections = [];
   await Promise.all(cands.map(async r=>{

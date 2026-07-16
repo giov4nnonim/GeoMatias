@@ -522,8 +522,6 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   .tool{width:40px; height:40px}
   .tool .tip{display:none}
   .tool-sep{width:1px; height:26px; margin:4px 2px}
-  #tbCollapse svg{transform:rotate(-90deg)}
-  #toolbar.collapsed #tbCollapse svg{transform:rotate(90deg)}
   #north{bottom:auto; top:60px; right:12px; transform:scale(.8); z-index:1099}
   #statusbar{gap:10px; font-size:11px; padding-bottom:env(safe-area-inset-bottom); height:calc(30px + env(safe-area-inset-bottom))}
   #stScale{display:none}
@@ -791,7 +789,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <!-- ===== Drawing toolbar ===== -->
 <div id="toolbar">
   <button class="tool" id="tbCollapse" aria-label="Recolher barra de ferramentas" aria-expanded="true" aria-controls="toolbar">
-    <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg><span class="tip">Recolher barra</span>
+    <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg><span class="tip">Recolher barra</span>
   </button>
   <div class="tool-sep"></div>
   <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>

@@ -118,7 +118,20 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #tbActions.sc-l{-webkit-mask-image:linear-gradient(90deg,transparent, #000 22px); mask-image:linear-gradient(90deg,transparent, #000 22px)}
 #tbActions.sc-l.sc-r{-webkit-mask-image:linear-gradient(90deg,transparent, #000 22px, #000 calc(100% - 22px), transparent); mask-image:linear-gradient(90deg,transparent, #000 22px, #000 calc(100% - 22px), transparent)}
 #brand{flex:none}
-#panelToggle{flex:none}
+#panelToggle, #menuToggle{flex:none}
+/* ---- Menu suspenso (mesma mecânica do painel de camadas) ---- */
+#menuDrop{
+  position:absolute; top:60px; left:10px; z-index:1150; width:250px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:0 8px 30px var(--shadow); overflow:hidden;
+  transition:transform .25s ease, opacity .25s ease;
+}
+#menuDrop.hidden{transform:translateX(-115%); opacity:0; pointer-events:none}
+#menuDrop header{padding:12px 14px 8px; font-size:12px; letter-spacing:1.5px; color:var(--muted)}
+#menuDrop .menu-body{display:flex; flex-direction:column; gap:4px; padding:0 10px 12px}
+#menuDrop .menu-item{width:100%; height:40px; justify-content:flex-start; gap:10px; padding:0 12px}
+#menuDrop .menu-item .lbl{display:inline !important; font-size:13.5px}
+#menuDrop .menu-item svg{flex:none}
 #brand{display:flex; align-items:center; gap:8px; margin-right:6px; user-select:none}
 #brand svg{flex:none}
 #brand b{font-size:15px; letter-spacing:.4px}
@@ -261,7 +274,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* ---------- Toolbar (drawing) ---------- */
 #toolbar{
-  position:absolute; right:10px; top:60px; z-index:1100;
+  position:absolute; right:10px; top:128px; z-index:1100;
   display:flex; flex-direction:column; gap:4px; padding:6px;
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
   box-shadow:0 8px 30px var(--shadow);
@@ -278,13 +291,22 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #btnLocate.locating, #btnTreeGps.locating{color:#4f9cf0; animation:gpsPulse 1s ease-in-out infinite}
 @keyframes gpsPulse{0%,100%{opacity:1}50%{opacity:.35}}
 #stGps b{color:#4f9cf0}
+/* position:fixed escapa do overflow da barra (que recorta em X por causa do
+   scroll em Y). A posição é calculada no hover, só com mouse. */
 .tool .tip{
-  position:absolute; right:52px; top:50%; transform:translateY(-50%);
+  position:fixed; z-index:1400; transform:translateY(-50%);
   background:var(--tip-bg); color:#e8eef3; font-size:12px; padding:5px 9px; border-radius:6px;
   white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; border:1px solid var(--line);
 }
 .tool:hover .tip{opacity:1}
 .tool-sep{height:1px; background:var(--line); margin:3px 4px}
+/* ---- Recolher / expandir a barra ---- */
+#tbCollapse{color:var(--muted)}
+#tbCollapse:hover{color:var(--accent)}
+#tbCollapse svg{transition:transform .2s ease}
+#toolbar.collapsed{max-height:none; overflow:visible}
+#toolbar.collapsed > *:not(#tbCollapse){display:none}
+#toolbar.collapsed #tbCollapse svg{transform:rotate(180deg)}
 
 /* ---------- Status bar ---------- */
 #statusbar{
@@ -297,7 +319,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* ---------- North arrow ---------- */
 #north{
-  position:absolute; right:12px; bottom:44px; z-index:1100; width:52px; height:64px;
+  position:absolute; right:12px; top:58px; z-index:1100; width:52px; height:64px;
   display:flex; flex-direction:column; align-items:center; pointer-events:none;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
 }
@@ -464,8 +486,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #panelToggle{display:flex}
 
 /* A barra de ferramentas nunca deve estourar a altura da tela */
-#toolbar{ max-height:calc(100vh - 130px); overflow-y:auto; overflow-x:hidden; scrollbar-width:thin }
-@supports (height:100dvh){ #toolbar{ max-height:calc(100dvh - 130px) } }
+#toolbar{ max-height:calc(100vh - 198px); overflow-y:auto; overflow-x:hidden; scrollbar-width:thin }
+@supports (height:100dvh){ #toolbar{ max-height:calc(100dvh - 198px) } }
 #toolbar::-webkit-scrollbar{width:4px}
 #toolbar::-webkit-scrollbar-thumb{background:var(--line); border-radius:2px}
 
@@ -489,6 +511,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   .tb-btn .lbl{display:none}
   .tb-btn{padding:0 10px}
   #panel{left:8px; right:8px; width:auto; top:58px; bottom:auto; max-height:min(52vh, 420px)}
+  #menuDrop{left:8px; right:8px; width:auto; top:58px}
+  #menuDrop .menu-item{height:46px}
   @supports (height:100dvh){ #panel{max-height:min(52dvh, 420px)} }
   #toolbar{
     top:auto; bottom:calc(40px + env(safe-area-inset-bottom)); right:8px; left:8px;
@@ -498,7 +522,9 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   .tool{width:40px; height:40px}
   .tool .tip{display:none}
   .tool-sep{width:1px; height:26px; margin:4px 2px}
-  #north{bottom:auto; top:60px; right:12px; transform:scale(.8)}
+  #tbCollapse svg{transform:rotate(-90deg)}
+  #toolbar.collapsed #tbCollapse svg{transform:rotate(90deg)}
+  #north{bottom:auto; top:60px; right:12px; transform:scale(.8); z-index:1099}
   #statusbar{gap:10px; font-size:11px; padding-bottom:env(safe-area-inset-bottom); height:calc(30px + env(safe-area-inset-bottom))}
   #stScale{display:none}
 }
@@ -681,6 +707,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Top bar ===== -->
 <div id="topbar">
+  <button class="tb-btn" id="menuToggle" title="Menu" aria-expanded="false" aria-controls="menuDrop">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    <span class="lbl">Menu</span>
+  </button>
   <button class="tb-btn" id="panelToggle" title="Camadas">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
     <span class="lbl">Camadas</span>
@@ -691,30 +721,6 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
   <div class="spacer"></div>
   <div id="tbActions">
-  <button class="tb-btn" id="btnProject" title="Projeto">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    <span class="lbl">Projeto</span>
-  </button>
-  <button class="tb-btn" id="btnCRS" title="Sistema de projeção">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.2" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-    <span class="lbl">Projeção</span>
-  </button>
-  <button class="tb-btn" id="btnFields" title="Atributos das geometrias">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
-    <span class="lbl">Atributos</span>
-  </button>
-  <button class="tb-btn" id="btnImport" title="Importar dados">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <span class="lbl">Importar</span>
-  </button>
-  <button class="tb-btn" id="btnExport" title="Exportar dados">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    <span class="lbl">Exportar</span>
-  </button>
-  <button class="tb-btn primary" id="btnPrint" title="Layout de impressão">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-    <span class="lbl">Imprimir</span>
-  </button>
   <button class="tb-btn" id="btnInventory" title="Saídas do inventário arbóreo">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/></svg>
     <span class="lbl">Inventário</span>
@@ -722,6 +728,37 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tb-btn icon-only" id="btnTheme" title="Alternar tema" aria-label="Alternar tema claro/escuro"></button>
   </div>
 </div>
+
+<!-- ===== Menu suspenso ===== -->
+<nav id="menuDrop" class="hidden" aria-label="Menu principal">
+  <header>PROJETO E DADOS</header>
+  <div class="menu-body">
+    <button class="menu-item tb-btn" id="btnProject" title="Projeto">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="lbl">Projeto</span>
+  </button>
+    <button class="menu-item tb-btn" id="btnCRS" title="Sistema de projeção">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.2" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    <span class="lbl">Projeção</span>
+  </button>
+    <button class="menu-item tb-btn" id="btnFields" title="Atributos das geometrias">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
+    <span class="lbl">Atributos</span>
+  </button>
+    <button class="menu-item tb-btn" id="btnImport" title="Importar dados">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span class="lbl">Importar</span>
+  </button>
+    <button class="menu-item tb-btn" id="btnExport" title="Exportar dados">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span class="lbl">Exportar</span>
+  </button>
+    <button class="menu-item tb-btn primary" id="btnPrint" title="Layout de impressão">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    <span class="lbl">Imprimir</span>
+  </button>
+  </div>
+</nav>
 
 <!-- ===== Layers panel ===== -->
 <aside id="panel">
@@ -753,9 +790,17 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Drawing toolbar ===== -->
 <div id="toolbar">
-  <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
+  <button class="tool" id="tbCollapse" aria-label="Recolher barra de ferramentas" aria-expanded="true" aria-controls="toolbar">
+    <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg><span class="tip">Recolher barra</span>
+  </button>
+  <div class="tool-sep"></div>
+  <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
+  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
   <button class="tool" data-tool="tree"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><path d="M9 10.5l3 3 3-3"/></svg><span class="tip">Árvore — registrar por toque no mapa</span></button>
   <button class="tool" id="btnTreeGps"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><circle cx="12" cy="10.2" r="1.6" fill="currentColor" stroke="none"/></svg><span class="tip">Árvore — registrar na minha posição (GPS)</span></button>
+  <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
   <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
   <button class="tool" data-tool="curve"><svg viewBox="0 0 24 24"><path d="M3 20c6 0 4-14 10-14 4 0 5 5 8 5"/><circle cx="3" cy="20" r="1.6"/><circle cx="21" cy="11" r="1.6"/></svg><span class="tip">Curva suavizada</span></button>
   <button class="tool" data-tool="polygon"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/><circle cx="21" cy="9" r="1.4" fill="currentColor"/><circle cx="3" cy="9" r="1.4" fill="currentColor"/></svg><span class="tip">Polígono (ponto a ponto)</span></button>
@@ -763,9 +808,6 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><path d="M3 17 21 7"/><path d="M5 14v4M9 12v4M13 10v4M17 8v4"/></svg><span class="tip">Medir distância</span></button>
   <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/><path d="M8 6v3M12 6v3M16 6v3"/></svg><span class="tip">Medir área</span></button>
   <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
-  <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
-  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
-  <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
   <div class="tool-sep"></div>
   <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 9.9a.6.6 0 0 0 .05 1.13l7.3 2.82 2.82 7.3a.6.6 0 0 0 1.13.05z"/><path d="M21.5 2.5 10.15 13.85"/></svg><span class="tip">Onde estou (GPS)</span></button>
   <div class="tool-sep"></div>
@@ -3699,6 +3741,52 @@ const close = id=>document.getElementById(id).classList.remove('open');
   set();
 })();
 
+/* ---------- Tooltips da barra: posicionados no viewport ----------
+   As dicas ficavam invisíveis no computador: a barra rola em Y, e isso obriga o
+   recorte em X, cortando qualquer coisa que saia para fora dela. Com
+   position:fixed elas escapam do recorte; a posição vem do botão, no hover. */
+(function toolbarTips(){
+  const tb = document.getElementById('toolbar');
+  if(!tb) return;
+  tb.querySelectorAll('.tool').forEach(btn=>{
+    const tip = btn.querySelector('.tip');
+    if(!tip) return;
+    if(!btn.hasAttribute('aria-label')) btn.setAttribute('aria-label', tip.textContent.trim());
+    btn.addEventListener('pointerenter', e=>{
+      if(e.pointerType && e.pointerType!=='mouse') return;
+      const r = btn.getBoundingClientRect();
+      tip.style.right = (window.innerWidth - r.left + 10) + 'px';
+      tip.style.top   = (r.top + r.height/2) + 'px';
+    });
+  });
+})();
+
+/* ---------- Recolher / expandir a barra de ferramentas ----------
+   Em tela baixa a barra chega a ocupar quase toda a lateral; recolher devolve o
+   mapa. O estado é lembrado no navegador. A altura real continua sendo medida
+   pelo ResizeObserver acima, então a drawBar acompanha sozinha. */
+(function toolbarCollapse(){
+  const tb = document.getElementById('toolbar');
+  const btn = document.getElementById('tbCollapse');
+  if(!tb || !btn) return;
+  const KEY = 'geomatias_toolbar_collapsed';
+  const apply = c=>{
+    tb.classList.toggle('collapsed', c);
+    btn.setAttribute('aria-expanded', String(!c));
+    btn.setAttribute('aria-label', c ? 'Expandir barra de ferramentas' : 'Recolher barra de ferramentas');
+    btn.querySelector('.tip').textContent = c ? 'Expandir barra' : 'Recolher barra';
+  };
+  let col = false;
+  try{ col = localStorage.getItem(KEY)==='1'; }catch(e){}
+  apply(col);
+  btn.addEventListener('click', ()=>{
+    col = !col;
+    apply(col);
+    try{ localStorage.setItem(KEY, col?'1':'0'); }catch(e){}
+    if(col && typeof deactivate==='function') deactivate();   // recolhida, nenhuma ferramenta fica armada
+  });
+})();
+
 /* ---------- Tema claro / escuro ----------
    Preferência salva em localStorage; se nunca escolhida, segue o sistema.
    O tema é aplicado cedo (script no <head>) para evitar piscar. */
@@ -3761,8 +3849,36 @@ const close = id=>document.getElementById(id).classList.remove('open');
   setTimeout(upd, 0);
 })();
 
-document.getElementById('panelToggle').addEventListener('click', ()=>document.getElementById('panel').classList.toggle('hidden'));
-if(window.innerWidth<760) document.getElementById('panel').classList.add('hidden');
+/* ---------- Menu suspenso e painel de camadas: mutuamente exclusivos ----------
+   Os dois ocupam o mesmo canto; abrir um fecha o outro. Fecha ao escolher um
+   item, ao tocar fora e no Esc — no celular não há "clicar fora" acidental. */
+const menuDrop = document.getElementById('menuDrop');
+const panelEl  = document.getElementById('panel');
+function setMenu(open){
+  menuDrop.classList.toggle('hidden', !open);
+  document.getElementById('menuToggle').setAttribute('aria-expanded', String(!!open));
+  if(open) panelEl.classList.add('hidden');
+}
+function setPanel(open){
+  panelEl.classList.toggle('hidden', !open);
+  if(open) setMenu(false);
+}
+document.getElementById('menuToggle').addEventListener('click', e=>{
+  e.stopPropagation();
+  setMenu(menuDrop.classList.contains('hidden'));
+});
+document.getElementById('panelToggle').addEventListener('click', e=>{
+  e.stopPropagation();
+  setPanel(panelEl.classList.contains('hidden'));
+});
+menuDrop.querySelectorAll('.menu-item').forEach(b=>b.addEventListener('click', ()=>setMenu(false)));
+document.addEventListener('pointerdown', e=>{
+  if(menuDrop.classList.contains('hidden')) return;
+  if(e.target.closest('#menuDrop, #menuToggle')) return;
+  setMenu(false);
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') setMenu(false); });
+if(window.innerWidth<760) panelEl.classList.add('hidden');
 
 /* Abas do painel: Base | Rasters | Vetores */
 document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click', ()=>{

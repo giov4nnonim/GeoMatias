@@ -333,6 +333,24 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   padding:8px 16px; border-radius:999px; font-size:13px; display:none; max-width:92vw; text-align:center;
 }
 
+/* ---------- Indicador de gravação de vídeo ---------- */
+#recIndicator{
+  position:fixed; top:calc(var(--tbH, 52px) + 10px); right:12px; z-index:1900;
+  display:none; align-items:center; gap:8px;
+  background:var(--panel); border:1px solid var(--line); border-radius:999px;
+  padding:6px 12px; box-shadow:0 2px 10px rgba(0,0,0,.35); font-size:13px; color:var(--text);
+}
+#recIndicator.on{display:flex}
+#recIndicator .dot{
+  width:10px; height:10px; border-radius:50%; background:#e5484d; flex:none;
+  animation:recPulse 1.2s ease-in-out infinite;
+}
+#recIndicator #recTime{font-variant-numeric:tabular-nums; min-width:38px}
+#recIndicator button{
+  border:none; background:transparent; color:var(--accent); font-size:13px; cursor:pointer; padding:0 2px;
+}
+@keyframes recPulse{0%,100%{opacity:1}50%{opacity:.25}}
+
 /* ---------- Modals ---------- */
 .modal-back{
   position:fixed; inset:0; background:var(--backdrop); z-index:2000;
@@ -501,6 +519,21 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .hist-item .hist-meta{font-size:11px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap}
 .hist-item .hist-time{font-variant-numeric:tabular-nums}
 .hist-item.hist-del .hist-label{color:var(--danger)}
+
+/* ---------- Verificação de camada ---------- */
+.vf-summary{font-size:13px; color:var(--text); margin-bottom:8px; padding:8px 10px; background:var(--warn-soft); border:1px solid var(--warn-bd); border-radius:8px}
+.vf-summary.vf-ok{background:var(--panel2, var(--panel)); border-color:var(--line); color:var(--muted)}
+#vfList{overflow:auto; max-height:56vh; -webkit-overflow-scrolling:touch}
+@supports (max-height:56dvh){ #vfList{max-height:56dvh} }
+.vf-item{display:flex; flex-direction:column; gap:4px; padding:9px 10px; border-bottom:1px solid var(--line)}
+.vf-item:last-child{border-bottom:none}
+.vf-item .vf-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap}
+.vf-item .vf-type{font-size:13px; font-weight:600; color:var(--warn)}
+.vf-item .vf-feat{font-size:11.5px; color:var(--muted)}
+.vf-item .vf-msg{font-size:12px; color:var(--text)}
+.vf-item .vf-actions{display:flex; gap:6px; margin-top:2px; flex-wrap:wrap}
+.vf-item .vf-actions .tb-btn{padding:3px 10px; font-size:12px; height:auto; min-height:0}
+.vf-empty{color:var(--muted); font-size:12px; padding:16px 8px; text-align:center}
 
 /* ---------- Responsivo ---------- */
 #panelToggle{display:flex}
@@ -814,6 +847,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
     <span class="lbl">Imprimir</span>
   </button>
+    <button class="menu-item tb-btn" id="btnRecord" title="Gravar vídeo da tela">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
+    <span class="lbl">Gravar vídeo</span>
+  </button>
   </div>
 </nav>
 
@@ -878,6 +915,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 </div>
 
 <div id="hint"></div>
+<div id="recIndicator"><span class="dot"></span><span id="recTime">00:00</span><button id="recStopBtn" title="Parar gravação">Parar</button></div>
 
 <!-- ===== Barra de finalização do desenho ===== -->
 <div id="drawBar">
@@ -1365,6 +1403,19 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
 </div>
 
+<!-- ===== Modal: gravação de vídeo da tela ===== -->
+<div class="modal-back" id="mRecord">
+  <div class="modal">
+    <h3>Gravar vídeo da tela</h3>
+    <p class="sub">Grava a tela (ou aba) do navegador enquanto você navega o mapa — nenhum dado sai do seu dispositivo. Quando o navegador pedir o que compartilhar, escolha <b>"Esta aba"</b> (quando disponível) para gravar só o GeoMatias.</p>
+    <div class="empty-hint" id="recInfo" style="margin-top:6px"></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="recStart">Iniciar gravação</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Modal: tabela de atributos ===== -->
 <div class="modal-back" id="mTable">
   <div class="modal wide">
@@ -1387,6 +1438,19 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div id="histList"><div class="empty-hint">Nenhuma ação registrada nesta sessão ainda.</div></div>
     <div class="actions">
       <button class="tb-btn" id="histExport">⬇ Exportar histórico (.json)</button>
+      <button class="tb-btn primary" data-close>Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: verificação geométrica de camada ===== -->
+<div class="modal-back" id="mVerify">
+  <div class="modal wide">
+    <h3 id="vfTitle">Verificar camada</h3>
+    <p class="sub">Checagens: auto-interseção, orientação/fechamento de anéis, coordenadas duplicadas consecutivas, geometrias degeneradas e coordenadas fora de faixa. Nenhuma correção é aplicada sem sua ação.</p>
+    <div id="vfSummary" class="vf-summary"></div>
+    <div id="vfList" class="vf-list"></div>
+    <div class="actions">
       <button class="tb-btn primary" data-close>Fechar</button>
     </div>
   </div>
@@ -2022,6 +2086,7 @@ function buildVectorRow(lyr){
      <button class="icon-btn zoom fit" title="Zoom para a camada">⌖</button>
      <button class="icon-btn zoom table" title="Tabela de atributos">▦</button>
      <button class="icon-btn zoom schema" title="Atributos da camada">☰</button>
+     <button class="icon-btn zoom verify" title="Verificar camada">✓</button>
      <button class="icon-btn" title="Remover">✕</button>`;
   const [chk, colorIn] = [row.children[0], row.children[1]];
   row.querySelector('.name').addEventListener('click', ()=>{
@@ -2047,6 +2112,7 @@ function buildVectorRow(lyr){
   });
   row.querySelector('.schema').addEventListener('click', ()=>openSchemaEditor(lyr));
   row.querySelector('.table').addEventListener('click', ()=>openAttrTable(lyr));
+  row.querySelector('.verify').addEventListener('click', ()=>openVerifyPanel(lyr));
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
     if(lyr.group.getLayers().length && !confirm(`Remover a camada "${lyr.name}" e suas ${lyr.group.getLayers().length} geometrias?`)) return;
     map.removeLayer(lyr.group);
@@ -3496,6 +3562,121 @@ function exportHistory(){
 }
 document.getElementById('btnHistory').addEventListener('click', ()=>{ renderHistoryPanel(); open('mHistory'); });
 document.getElementById('histExport').addEventListener('click', exportHistory);
+
+/* ---------- Gravação de vídeo da tela (getDisplayMedia + MediaRecorder) ---------- */
+(function screenRecorder(){
+  const btnRecord = document.getElementById('btnRecord');
+  const recStart = document.getElementById('recStart');
+  const recInfo = document.getElementById('recInfo');
+  const indicator = document.getElementById('recIndicator');
+  const recTimeEl = document.getElementById('recTime');
+  const recStopBtn = document.getElementById('recStopBtn');
+
+  const supported = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia && window.MediaRecorder);
+
+  if(!supported){
+    btnRecord.disabled = true;
+    btnRecord.style.opacity = '.4';
+    btnRecord.title = 'Gravação de tela indisponível neste navegador/dispositivo. Em muitos Android/WebView, use a gravação de tela nativa do sistema como alternativa.';
+  }
+
+  function pickMimeType(){
+    const candidates = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+      'video/mp4'
+    ];
+    for(const t of candidates){
+      if(window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+  }
+
+  let mediaRecorder = null, recStream = null, chunks = [], startTs = 0, timerId = null;
+
+  function fmtElapsed(ms){
+    const s = Math.floor(ms/1000);
+    return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  }
+
+  function tick(){ recTimeEl.textContent = fmtElapsed(Date.now()-startTs); }
+
+  function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  }
+
+  function cleanupUI(){
+    indicator.classList.remove('on');
+    clearInterval(timerId); timerId = null;
+    if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; }
+  }
+
+  recStopBtn.addEventListener('click', stopRecording);
+
+  btnRecord.addEventListener('click', ()=>{
+    if(btnRecord.disabled) return;
+    recInfo.textContent = '';
+    open('mRecord');
+  });
+
+  recStart.addEventListener('click', async ()=>{
+    close('mRecord');
+    try{
+      recStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false });
+    }catch(err){
+      if(err && err.name==='NotAllowedError'){
+        alert('Permissão de gravação negada. Para gravar, você precisa autorizar o compartilhamento de tela quando o navegador solicitar.');
+      }else{
+        alert('Não foi possível iniciar a gravação: '+(err && err.message ? err.message : err));
+      }
+      return;
+    }
+
+    const mimeType = pickMimeType();
+    if(!mimeType){
+      alert('Nenhum formato de vídeo suportado por este navegador foi encontrado.');
+      recStream.getTracks().forEach(t=>t.stop());
+      recStream = null;
+      return;
+    }
+
+    chunks = [];
+    try{
+      mediaRecorder = new MediaRecorder(recStream, { mimeType });
+    }catch(err){
+      alert('Não foi possível iniciar o gravador: '+err.message);
+      recStream.getTracks().forEach(t=>t.stop());
+      recStream = null;
+      return;
+    }
+
+    mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+    mediaRecorder.onstop = ()=>{
+      cleanupUI();
+      if(!chunks.length) return;
+      const blob = new Blob(chunks, { type: mimeType });
+      const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const now = new Date();
+      const pad = n=>String(n).padStart(2,'0');
+      const fname = `geomatias_gravacao_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.${ext}`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    };
+
+    // Encerramento do compartilhamento pelo próprio navegador (fora do botão "Parar")
+    recStream.getVideoTracks()[0].addEventListener('ended', stopRecording);
+
+    startTs = Date.now();
+    recTimeEl.textContent = '00:00';
+    indicator.classList.add('on');
+    timerId = setInterval(tick, 500);
+    mediaRecorder.start();
+  });
+})();
 function doUndo(){
   // durante um desenho ativo, desfaz o último vértice
   if(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers && activeDrawer._markers.length){
@@ -5749,8 +5930,6 @@ let catalogs = [
   { name:'IBGE — Geosserviços (malhas, biomas, vegetação)', url:'https://geoservicos.ibge.gov.br/geoserver/ows' },
   { name:'INDE — GeoServer nacional (federal/estadual)', url:'https://geoservicos.inde.gov.br/geoserver/ows' },
   { name:'DNIT — Rodovias federais / SNV (via INDE)', url:'https://geoservicos.inde.gov.br/geoserver/DNIT/ows' },
-  { name:'IDE-Sisema MG — meio ambiente e recursos hídricos', url:'https://geoserver.meioambiente.mg.gov.br/geoserver/ows' },
-  { name:'GeoDourados (MS) — base municipal', url:'https://geodourados.dourados.ms.gov.br/geoserver/ows' },
   { name:'IBAMA — Pamgia (embargos, desmatamento, fiscalização)', url:'https://pamgia.ibama.gov.br/server/rest/services', kind:'arcgis' },
   { name:'IGC-SP — Cartografia oficial (ArcGIS)', url:'http://geoportal.igc.sp.gov.br:6080/arcgis/rest/services', kind:'arcgis' },
   { name:'ANM/SIGMINE — processos minerários', url:'https://geo.anm.gov.br/arcgis/rest/services', kind:'arcgis' },

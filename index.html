@@ -24,8 +24,8 @@
   --line:#31404d;       /* bordas e divisores */
   --text:#e8eef3;
   --muted:#8fa3b3;
-  --accent:#37c2a0;
-  --accent2:#2ba187;
+  --accent:#6C5CE7;
+  --accent2:#5a4bd6;
   --on-accent:#07231c;  /* texto sobre o accent */
   --danger:#e5673f;
   --map-bg:#0d1216;     /* fundo do mapa antes dos tiles */
@@ -39,10 +39,10 @@
   --tip-bg:#0c1116;             /* tooltips */
   --sub-bg:rgba(13,18,22,.5);   /* faixas internas do painel */
   --swatch-bd:rgba(255,255,255,.35);
-  --accent-soft:rgba(55,194,160,.1);
-  --accent-soft2:rgba(55,194,160,.06);
-  --accent-bd:rgba(55,194,160,.4);
-  --accent-bright:#37c2a0; /* accent sobre superfície escura (tooltips do mapa) */
+  --accent-soft:rgba(108, 92, 231,.1);
+  --accent-soft2:rgba(108, 92, 231,.06);
+  --accent-bd:rgba(108, 92, 231,.4);
+  --accent-bright:#6C5CE7; /* accent sobre superfície escura (tooltips do mapa) */
   --warn:#e5a13f;
   --warn-soft:rgba(229,161,63,.12);
   --warn-bd:rgba(229,161,63,.4);
@@ -59,8 +59,8 @@
   --line:#d2dce4;
   --text:#16212b;
   --muted:#5c7185;
-  --accent:#11806a;      /* teal profundo: WCAG AA sobre branco e como fundo */
-  --accent2:#0c6b56;
+  --accent:#5233B3;      /* roxo profundo: WCAG AA sobre branco e como fundo */
+  --accent2:#452a94;
   --on-accent:#ffffff;   /* texto sobre o accent */
   --danger:#c4432a;
   --map-bg:#e6ebef;
@@ -74,10 +74,10 @@
   --tip-bg:#26323d;      /* tooltip permanece escuro: contraste sobre o mapa */
   --sub-bg:rgba(20,40,60,.05);
   --swatch-bd:rgba(0,0,0,.28);
-  --accent-soft:rgba(17,128,106,.13);
-  --accent-soft2:rgba(17,128,106,.07);
-  --accent-bd:rgba(17,128,106,.38);
-  --accent-bright:#37c2a0; /* permanece brilhante: fica sobre fundo escuro */
+  --accent-soft:rgba(82,51,179,.13);
+  --accent-soft2:rgba(82,51,179,.07);
+  --accent-bd:rgba(82,51,179,.38);
+  --accent-bright:#6C5CE7; /* permanece brilhante: fica sobre fundo escuro */
   --warn:#9d672c;
   --warn-soft:rgba(157,103,44,.12);
   --warn-bd:rgba(157,103,44,.38);
@@ -221,12 +221,18 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .grp-head .gcolor::-webkit-color-swatch{border:1px solid var(--swatch-bd); border-radius:4px}
 
 /* Busca inteligente em catálogos */
-.cat-row{display:flex; align-items:center; gap:8px; padding:7px 9px; margin-bottom:4px; background:var(--panel2); border-radius:8px; font-size:12.5px}
-.cat-row input{accent-color:var(--accent)}
+.cat-item{margin-bottom:4px}
+.cat-item.expanded .cat-row{border-radius:8px 8px 0 0}
+.cat-row{display:flex; align-items:center; gap:8px; padding:7px 9px; background:var(--panel2); border-radius:8px; font-size:12.5px}
+.cat-row .cat-main{display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden; cursor:pointer}
+.cat-row input{accent-color:var(--accent); flex-shrink:0}
 .cat-row .cname{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.cat-row .cstat{font-size:11px; color:var(--muted); white-space:nowrap}
+.cat-row .cstat{font-size:11px; color:var(--muted); white-space:nowrap; flex-shrink:0}
 .cat-row .cstat.ok{color:var(--accent)}
 .cat-row .cstat.err{color:var(--danger)}
+.cat-toggle{background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; padding:2px 4px; line-height:1; flex-shrink:0; transition:transform .15s}
+.cat-toggle.open{color:var(--accent); transform:rotate(180deg)}
+.cat-desc{font-size:11.5px; line-height:1.4; color:var(--muted); padding:2px 12px 8px 33px; background:var(--panel2); border-radius:0 0 8px 8px}
 #catResults{max-height:38vh; overflow-y:auto; margin-top:10px}
 .res-row{padding:9px 10px; margin-bottom:5px; background:var(--panel2); border:1px solid var(--line); border-radius:9px}
 .res-row .rt{font-size:13px; margin-bottom:2px}
@@ -255,6 +261,22 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     left:8px; right:8px; width:auto; transform:none; justify-content:center;
   }
   #drawBar .db-msg, #gpsDrawBar .db-msg{display:none}
+}
+
+/* Painel de perfil de elevação (medição 3D) */
+#elevPanel{
+  position:absolute; right:12px; bottom:100px; z-index:1250;
+  width:min(360px, 92vw); background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; box-shadow:0 8px 30px var(--shadow-strong); padding:10px 12px;
+}
+#elevHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+#elevHead #elevTitle{font-size:13px; font-weight:600}
+#elevHead #elevClose{background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px}
+#elevStats{font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:6px}
+#elevStats b{color:var(--text)}
+#elevCanvas{width:100%; height:140px; display:block; background:var(--panel2); border-radius:6px}
+@media (max-width:760px){
+  #elevPanel{ left:8px; right:8px; width:auto; bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)) }
 }
 .layer-row{
   display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:4px;
@@ -402,10 +424,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .leaflet-control-scale-line{background:var(--scale-bg); color:var(--text); border-color:var(--muted)}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .measure-label{
-  background:linear-gradient(135deg, #37c2a0 0%, #2ba187 100%); 
+  background:linear-gradient(135deg, #6C5CE7 0%, #5a4bd6 100%); 
   color:var(--on-accent); border:2px solid #fff;
   border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; white-space:nowrap;
-  box-shadow:0 6px 16px rgba(55, 194, 160, 0.5), 0 0 12px rgba(55, 194, 160, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow:0 6px 16px rgba(108, 92, 231, 0.5), 0 0 12px rgba(108, 92, 231, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
   text-shadow:0 1px 2px rgba(0,0,0,0.2);
   letter-spacing:0.5px;
 }
@@ -416,16 +438,16 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   width:13px!important; height:13px!important;
   margin-left:-7px!important; margin-top:-7px!important;
   background:rgba(13,18,22,.55)!important;
-  border:2px solid #37c2a0!important;
+  border:2px solid #6C5CE7!important;
   border-radius:50%!important;
   box-shadow:0 0 0 1.5px var(--shadow);
 }
-.leaflet-editing-icon:hover{background:#37c2a0!important}
+.leaflet-editing-icon:hover{background:#6C5CE7!important}
 .leaflet-touch .leaflet-editing-icon{width:17px!important; height:17px!important; margin-left:-9px!important; margin-top:-9px!important}
 .leaflet-draw-tooltip{
   background:rgba(13, 18, 22, 0.95); border:2px solid var(--accent-bright); color:var(--accent-bright);
   border-radius:8px; font-family:inherit; font-size:13px; padding:8px 12px;
-  box-shadow:0 4px 12px rgba(55, 194, 160, 0.3);
+  box-shadow:0 4px 12px rgba(108, 92, 231, 0.3);
   font-weight:600;
 }
 .leaflet-draw-tooltip:before{border-right-color:rgba(13, 18, 22, 0.95)}
@@ -433,8 +455,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* Melhoria para linhas e polígonos de medição */
 .leaflet-pane .leaflet-path-measure{
-  stroke:#37c2a0 !important; stroke-width:3 !important; opacity:1 !important;
-  filter:drop-shadow(0 2px 4px rgba(55, 194, 160, 0.5));
+  stroke:#6C5CE7 !important; stroke-width:3 !important; opacity:1 !important;
+  filter:drop-shadow(0 2px 4px rgba(108, 92, 231, 0.5));
 }
 
 /* Retângulo de demarcação de área (busca inteligente) */
@@ -446,7 +468,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* Vértices de medição */
 .leaflet-pane .measure-vertex{
-  fill:#37c2a0 !important; stroke:#fff !important; stroke-width:2 !important;
+  fill:#6C5CE7 !important; stroke:#fff !important; stroke-width:2 !important;
   filter:drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 }
 
@@ -614,7 +636,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 /* ---------- Print layout ---------- */
 #printSheet{display:none}
 /* Linhas e polígonos de medição com maior contraste */
-.leaflet-pane svg path[stroke="#37c2a0"],
+.leaflet-pane svg path[stroke="#6C5CE7"],
 .leaflet-pane svg path[stroke="#e8c34a"] {
   stroke-width: 3 !important;
   opacity: 0.95 !important;
@@ -629,14 +651,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* Vértices de desenho mais visíveis */
 .leaflet-editing-icon {
-  background: #37c2a0 !important;
+  background: #6C5CE7 !important;
   border: 3px solid #fff !important;
-  box-shadow: 0 0 0 2px #37c2a0, 0 2px 6px rgba(55, 194, 160, 0.5) !important;
+  box-shadow: 0 0 0 2px #6C5CE7, 0 2px 6px rgba(108, 92, 231, 0.5) !important;
 }
 
 .leaflet-editing-icon:hover {
-  background: #2ba187 !important;
-  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(55, 194, 160, 0.7) !important;
+  background: #5a4bd6 !important;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(108, 92, 231, 0.7) !important;
 }
 
 #inventorySheet{display:none}
@@ -684,14 +706,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 @supports (height:44dvh){ .ms-stage{height:44dvh} }
 .ms-stage video, .ms-stage canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block}
 .ms-level{position:absolute; left:8px; top:8px; z-index:3; font-size:12px; font-weight:700; padding:4px 9px; border-radius:999px; background:rgba(12,17,22,.82); color:#8fa3b3; border:1px solid var(--line)}
-.ms-level.ok{color:#37c2a0; border-color:#37c2a0}
+.ms-level.ok{color:#6C5CE7; border-color:#6C5CE7}
 .ms-level.warn{color:#e5a13f; border-color:#e5a13f}
 .ms-level.bad{color:#e5673f; border-color:#e5673f}
 .ms-horiz{position:absolute; left:0; right:0; top:50%; height:0; border-top:1px dashed rgba(255,255,255,.45); z-index:2; pointer-events:none}
 .ms-cross{position:absolute; left:50%; top:50%; width:60px; height:60px; margin:-30px 0 0 -30px; z-index:4; pointer-events:none}
-.ms-cross i{position:absolute; left:50%; top:0; bottom:0; width:0; border-left:1px solid #37c2a0}
-.ms-cross b{position:absolute; top:50%; left:0; right:0; height:0; border-top:1px solid #37c2a0}
-.ms-cross::after{content:''; position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border:1.5px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #37c2a0}
+.ms-cross i{position:absolute; left:50%; top:0; bottom:0; width:0; border-left:1px solid #6C5CE7}
+.ms-cross b{position:absolute; top:50%; left:0; right:0; height:0; border-top:1px solid #6C5CE7}
+.ms-cross::after{content:''; position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border:1.5px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #6C5CE7}
 .ms-zoom{position:absolute; right:8px; bottom:8px; z-index:3; font-size:11px; color:var(--muted); background:rgba(12,17,22,.82); border:1px solid var(--line); border-radius:999px; padding:3px 8px; font-variant-numeric:tabular-nums}
 .ms-step{font-size:12.5px; color:var(--text); background:var(--accent-soft); border:1px solid var(--accent-bd); border-radius:8px; padding:8px 10px; margin:8px 0}
 .ms-step b{color:var(--accent)}
@@ -802,7 +824,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <span class="lbl">Camadas</span>
   </button>
   <div id="brand">
-    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#37c2a0" stroke-width="2"/><path d="M13 2v22M2 13h22" stroke="#37c2a0" stroke-width="1" opacity=".5"/><circle cx="13" cy="13" r="3.5" fill="#37c2a0"/></svg>
+    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#6C5CE7" stroke-width="2"/><path d="M13 2v22M2 13h22" stroke="#6C5CE7" stroke-width="1" opacity=".5"/><circle cx="13" cy="13" r="3.5" fill="#6C5CE7"/></svg>
     <div><b>GeoMatias</b><small>WEBGIS</small></div>
   </div>
   <div class="spacer"></div>
@@ -920,9 +942,22 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <!-- ===== Barra de finalização do desenho ===== -->
 <div id="drawBar">
   <span class="db-msg" id="dbMsg">Desenhando…</span>
+  <label id="db3dWrap" style="display:none; align-items:center; gap:4px; font-size:12.5px; color:var(--muted); cursor:pointer">
+    <input type="checkbox" id="db3d" style="accent-color:var(--accent)"> 3D (terreno)
+  </label>
   <button class="tb-btn" id="dbVertex">↩ Vértice</button>
   <button class="tb-btn" id="dbCancel">Cancelar</button>
   <button class="tb-btn primary" id="dbFinish">✓ Concluir geometria</button>
+</div>
+
+<!-- ===== Painel: perfil de elevação (medição 3D) ===== -->
+<div id="elevPanel" style="display:none">
+  <div id="elevHead">
+    <span id="elevTitle">Perfil de elevação</span>
+    <button id="elevClose" title="Fechar">✕</button>
+  </div>
+  <div id="elevStats"></div>
+  <canvas id="elevCanvas" width="600" height="140"></canvas>
 </div>
 
 <!-- ===== Barra: digitalização por GPS ===== -->
@@ -948,7 +983,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
           <option value="polygon">Polígono</option>
         </select>
       </div>
-      <div class="field"><label>Cor</label><input type="color" id="nlColor" value="#37c2a0" style="width:100%; height:37px; background:var(--ink); border:1px solid var(--line); border-radius:8px; padding:4px; cursor:pointer"></div>
+      <div class="field"><label>Cor</label><input type="color" id="nlColor" value="#6C5CE7" style="width:100%; height:37px; background:var(--ink); border:1px solid var(--line); border-radius:8px; padding:4px; cursor:pointer"></div>
     </div>
 
     <div class="group-title" style="margin-left:0">Atributos da camada</div>
@@ -1068,6 +1103,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       <label><input type="radio" name="rType" value="wms"> WMS</label>
       <label><input type="radio" name="rType" value="img"> Imagem</label>
       <label><input type="radio" name="rType" value="cog"> COG / GeoTIFF</label>
+      <label><input type="radio" name="rType" value="dem"> DEM (elevação)</label>
     </div>
     <div class="field"><label>Nome da camada</label><input type="text" id="rName" placeholder="Ex.: Ortofoto 2024"></div>
     <div id="rXYZ">
@@ -1091,6 +1127,18 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       <div class="field"><label>Arquivo local (.tif / .tiff)</label><input type="file" id="rCogFile" accept=".tif,.tiff,image/tiff"></div>
       <div class="field"><label>…ou URL de um COG remoto (servidor precisa aceitar Range + CORS)</label><input type="text" id="rCogUrl" placeholder="https://…/ortomosaico.tif"></div>
       <div class="attr-check"><input type="checkbox" id="rCogKeep" checked><label for="rCogKeep" style="cursor:pointer">Guardar cópia no dispositivo (reabre sem reapontar o arquivo)</label></div>
+    </div>
+    <div id="rDEM" style="display:none">
+      <p class="sub" style="margin-bottom:10px">Modelo digital de elevação (MDT/MDS) em GeoTIFF de <b>banda única</b>. Usado como raster de fundo (hillshade/rampa de cinza) e como fonte de elevação para a medição de distância 3D (terreno).</p>
+      <div class="field"><label>Arquivo local (.tif / .tiff)</label><input type="file" id="rDemFile" accept=".tif,.tiff,image/tiff"></div>
+      <div class="field"><label>…ou URL de um DEM/COG remoto (servidor precisa aceitar Range + CORS)</label><input type="text" id="rDemUrl" placeholder="https://…/mdt.tif"></div>
+      <div class="field"><label>Renderização</label>
+        <select id="rDemRender">
+          <option value="hillshade" selected>Hillshade (relevo sombreado)</option>
+          <option value="gray">Rampa de cinza (min/max)</option>
+        </select>
+      </div>
+      <div class="attr-check"><input type="checkbox" id="rDemKeep" checked><label for="rDemKeep" style="cursor:pointer">Guardar cópia no dispositivo (reabre sem reapontar o arquivo)</label></div>
     </div>
     <div class="field"><label>Opacidade: <span id="rOpV">100%</span></label><input type="range" id="rOp" min="10" max="100" value="100" style="width:100%; accent-color:var(--accent)"></div>
     <div class="actions">
@@ -1170,6 +1218,58 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div class="actions">
       <button class="tb-btn" data-close>Fechar</button>
       <button class="tb-btn primary" id="fldAdd">Adicionar atributo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: simbologia da camada (estilo único / regras) ===== -->
+<div class="modal-back" id="mStyle">
+  <div class="modal wide" style="width:620px">
+    <h3 id="styTitle">Simbologia</h3>
+    <p class="sub">Estilo único (a cor da camada) ou por regras estruturadas, avaliadas em ordem — a primeira que casar vence. Sem expressões livres: apenas campo, operador e valor.</p>
+
+    <div class="field">
+      <label>Modo</label>
+      <select id="styMode">
+        <option value="single">Cor única</option>
+        <option value="rules">Por regras</option>
+      </select>
+    </div>
+
+    <div id="styRulesWrap" style="display:none">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px">
+        <select id="styQuickField" style="max-width:220px"></select>
+        <button class="tb-btn" id="styQuickCategorize">Categorizar por campo</button>
+        <span style="flex:1"></span>
+        <button class="tb-btn" id="styPresetSave">💾 Salvar como preset</button>
+        <button class="tb-btn" id="styPresetApply">📂 Aplicar preset</button>
+      </div>
+      <div id="styRuleList"></div>
+      <button class="tb-btn" id="styRuleAdd" style="margin-top:8px">+ Adicionar regra</button>
+
+      <div class="tree-sec-title">Estilo "senão" (quando nenhuma regra casar)</div>
+      <div class="grid2" style="align-items:end">
+        <div class="field"><label>Cor</label><input type="color" id="styElseColor" value="#6C5CE7"></div>
+        <div class="field"><label>Rótulo na legenda</label><input type="text" id="styElseLabel" placeholder="Outros"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="tb-btn" data-close>Fechar</button>
+      <button class="tb-btn primary" id="stySave">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: remapear campo de preset de simbologia ===== -->
+<div class="modal-back" id="mStyleRemap">
+  <div class="modal">
+    <h3>Remapear campo do preset</h3>
+    <p class="sub" id="styRemapSub"></p>
+    <div class="field"><label>Campo desta camada a usar no lugar</label><select id="styRemapField"></select></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="styRemapGo">Aplicar preset</button>
     </div>
   </div>
 </div>
@@ -1497,7 +1597,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
    string "a:xxxx" e vive em IndexedDB (ou OPFS, se grande).
    Trocar o backend = trocar um adapter, sem tocar no resto.
    ========================================================= */
-const DB_NAME = 'geomatias', DB_VER = 1;
+const DB_NAME = 'geomatias', DB_VER = 2;
 let _dbP = null;
 function idb(){
   if(_dbP) return _dbP;
@@ -1507,6 +1607,7 @@ function idb(){
       const d = rq.result;
       if(!d.objectStoreNames.contains('projects')) d.createObjectStore('projects');
       if(!d.objectStoreNames.contains('assets'))   d.createObjectStore('assets');
+      if(!d.objectStoreNames.contains('stylePresets')) d.createObjectStore('stylePresets');
     };
     rq.onsuccess = ()=>res(rq.result);
     rq.onerror   = ()=>rej(rq.error);
@@ -1660,19 +1761,19 @@ L.drawLocal.edit.handlers.remove.tooltip = { text:'Clique em uma feição para r
 const style = document.createElement('style');
 style.textContent = `
   .leaflet-draw-layer path {
-    stroke: #37c2a0 !important;
+    stroke: #6C5CE7 !important;
     stroke-width: 3 !important;
-    filter: drop-shadow(0 2px 6px rgba(55, 194, 160, 0.5));
+    filter: drop-shadow(0 2px 6px rgba(108, 92, 231, 0.5));
   }
   
   .leaflet-measure-line {
-    stroke: #37c2a0 !important;
+    stroke: #6C5CE7 !important;
     stroke-width: 3 !important;
     opacity: 0.95 !important;
   }
   
   .leaflet-editing-icon {
-    box-shadow: 0 0 0 3px rgba(55, 194, 160, 0.3), 0 0 0 1.5px #37c2a0 !important;
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.3), 0 0 0 1.5px #6C5CE7 !important;
   }
 `;
 document.head.appendChild(style);
@@ -1725,13 +1826,14 @@ const vectorLayers = [];   // {id, name, color, group(L.FeatureGroup), visible}
 const rasterLayers = [];   // {id, name, layer, visible}
 const measureGroup = L.featureGroup().addTo(map);
 
-const PALETTE = ['#37c2a0','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c'];
+const PALETTE = ['#6C5CE7','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c'];
 const GEOM_LABEL = { point:'Ponto', line:'Linha', polygon:'Polígono', mixed:'Misto' };
 
 /* Uma camada = tipo de geometria único + esquema de atributos único, compartilhados por todas as suas feições. */
 function newVectorLayer(name, geomType='mixed', fields=[], color){
   color = color || PALETTE[vectorLayers.length % PALETTE.length];
-  const lyr = { id:++layerSeq, name, color, geomType, fields, group:L.featureGroup().addTo(map), visible:true };
+  const lyr = { id:++layerSeq, name, color, geomType, fields, group:L.featureGroup().addTo(map), visible:true,
+    styleMode:'single', rules:[], rulesElse:null, rulesVersion:0 };
   vectorLayers.push(lyr);
   return lyr;
 }
@@ -1746,17 +1848,105 @@ function targetLayerFor(tool){
   return null; // sem camada compatível: será criada após o desenho
 }
 
-function styleFor(lyr){
-  return { color:lyr.color, weight:3, fillColor:lyr.color, fillOpacity:.25 };
+/* =========================================================
+   Simbologia baseada em regras
+   ---------------------------------------------------------
+   Cada camada pode ter styleMode:'single' (cor única, padrão)
+   ou styleMode:'rules' (lista de regras estruturadas, sem eval).
+   styleFor(lyr, feature) é o único ponto de avaliação: toda
+   renderização (criação, realce temporário, impressão) passa
+   por aqui, garantindo consistência sem duplicar lógica.
+   ========================================================= */
+const RULE_OPS = ['=','!=','>','<','>=','<=','contains','empty'];
+const OP_LABEL = { '=':'=', '!=':'≠', '>':'>', '<':'<', '>=':'≥', '<=':'≤', 'contains':'contém', 'empty':'é vazio' };
+
+function evalRuleCond(rule, props){
+  const raw = props ? props[rule.field] : undefined;
+  if(rule.op==='empty') return raw===undefined || raw===null || raw==='';
+  const rv = rule.value;
+  switch(rule.op){
+    case '=':  return String(raw??'')===String(rv??'');
+    case '!=': return String(raw??'')!==String(rv??'');
+    case 'contains': return String(raw??'').toLowerCase().includes(String(rv??'').toLowerCase());
+    case '>': case '<': case '>=': case '<=': {
+      const a = parseFloat(raw), b = parseFloat(rv);
+      if(!isFinite(a) || !isFinite(b)) return false;
+      if(rule.op==='>')  return a>b;
+      if(rule.op==='<')  return a<b;
+      if(rule.op==='>=') return a>=b;
+      return a<=b;
+    }
+  }
+  return false;
 }
-function pointMarker(latlng, lyr){
-  return L.circleMarker(latlng, { radius:7, color:'#fff', weight:2, fillColor:lyr.color, fillOpacity:1 });
+function matchRule(lyr, props, zoom){
+  for(const r of (lyr.rules||[])){
+    if(r.zoomMin!=null && zoom<r.zoomMin) continue;
+    if(r.zoomMax!=null && zoom>r.zoomMax) continue;
+    if(evalRuleCond(r, props)) return r;
+  }
+  return null;
 }
+function mergedStyle(lyr, ruleStyle, defaults){
+  defaults = defaults || {};
+  const weight = defaults.weight!=null ? defaults.weight : 3;
+  const fillOpacity = defaults.fillOpacity!=null ? defaults.fillOpacity : .25;
+  const base = { color:lyr.color, weight, fillColor:lyr.color, fillOpacity, radius:7 };
+  if(!ruleStyle) return base;
+  return {
+    color: ruleStyle.color || base.color,
+    weight: ruleStyle.weight!=null ? ruleStyle.weight : base.weight,
+    fillColor: ruleStyle.color || base.fillColor,
+    fillOpacity: ruleStyle.fillOpacity!=null ? ruleStyle.fillOpacity : base.fillOpacity,
+    radius: ruleStyle.radius!=null ? ruleStyle.radius : base.radius
+  };
+}
+/* Único avaliador de estilo da aplicação. `feature` é opcional (geometrias
+   ainda não registradas caem no estilo "senão"/base). Resultado cacheado no
+   próprio objeto feature — invalida sozinho quando props ou zoom mudam
+   (entram na chave), e quando as regras mudam (rulesVersion). */
+function styleFor(lyr, feature, defaults){
+  const hasRules = lyr.styleMode==='rules' && ((lyr.rules && lyr.rules.length) || lyr.rulesElse);
+  if(!hasRules) return mergedStyle(lyr, null, defaults);
+  const props = (feature && feature.properties) || {};
+  const zoom = map.getZoom();
+  const cacheKey = (lyr.rulesVersion||0)+'|'+zoom+'|'+JSON.stringify(props);
+  if(feature && feature.__styleCacheKey===cacheKey) return feature.__styleCacheVal;
+  const r = matchRule(lyr, props, zoom);
+  const st = mergedStyle(lyr, r ? r.style : (lyr.rulesElse && lyr.rulesElse.style), defaults);
+  if(feature){ feature.__styleCacheKey = cacheKey; feature.__styleCacheVal = st; }
+  return st;
+}
+function pointMarker(latlng, lyr, feature){
+  const st = styleFor(lyr, feature, {fillOpacity:1});
+  return L.circleMarker(latlng, { radius: st.radius, color:'#fff', weight:2, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
+}
+/* reaplica o estilo corrente (regras ou único) numa feição já em tela —
+   chamar sempre que atributos, cor ou regras mudarem */
+function refreshFeatureStyle(l, lyr){
+  if(!l || !l.setStyle) return;
+  if(l instanceof L.CircleMarker){
+    const st = styleFor(lyr, l.feature, {fillOpacity:1});
+    l.setStyle({ color:'#fff', weight:2, fillColor:st.fillColor, fillOpacity:st.fillOpacity });
+    if(l.setRadius) l.setRadius(st.radius);
+  } else {
+    l.setStyle(styleFor(lyr, l.feature));
+  }
+}
+function refreshLayerStyles(lyr){
+  lyr.group.eachLayer(l=>refreshFeatureStyle(l, lyr));
+}
+function bumpRulesVersion(lyr){ lyr.rulesVersion = (lyr.rulesVersion||0)+1; }
+map.on('zoomend', ()=>{
+  vectorLayers.forEach(lyr=>{
+    if(lyr.styleMode==='rules' && (lyr.rules||[]).some(r=>r.zoomMin!=null || r.zoomMax!=null)) refreshLayerStyles(lyr);
+  });
+});
 
 /* ---------- Grupos (pastas de camadas) ---------- */
 const groups = []; // {id, name, color, collapsed, editing}
 let groupSeq = 0;
-const GRP_PALETTE = ['#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#37c2a0','#e5673f','#f08a3c'];
+const GRP_PALETTE = ['#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#6C5CE7','#e5673f','#f08a3c'];
 function groupById(id){ return groups.find(g=>g.id===id) || null; }
 
 /* cria grupo com edição do nome inline (sem popup) */
@@ -1992,9 +2182,22 @@ function buildDetail(item, kind){
   } else {
     const cls = item.geomType==='point' ? 'border-radius:50%; width:12px; height:12px' :
                 item.geomType==='line' ? 'width:22px; height:3px' : 'width:16px; height:12px; opacity:.85';
-    html += `<span style="display:inline-flex; align-items:center; gap:8px">
-      <span style="display:inline-block; background:${item.color}; border:1px solid rgba(255,255,255,.4); ${cls}"></span>
-      ${item.name} — ${GEOM_LABEL[item.geomType]?.toLowerCase()||''}</span>`;
+    if(item.styleMode==='rules' && ((item.rules||[]).length || item.rulesElse)){
+      html += '<div style="display:flex; flex-direction:column; gap:4px">';
+      (item.rules||[]).forEach(r=>{
+        html += `<span style="display:inline-flex; align-items:center; gap:8px">
+          <span style="display:inline-block; background:${r.style.color}; border:1px solid rgba(255,255,255,.4); ${cls}"></span>
+          ${r.label || (r.field+' '+(OP_LABEL[r.op]||r.op)+' '+r.value)}</span>`;
+      });
+      if(item.rulesElse) html += `<span style="display:inline-flex; align-items:center; gap:8px">
+          <span style="display:inline-block; background:${item.rulesElse.style.color}; border:1px solid rgba(255,255,255,.4); ${cls}"></span>
+          ${item.rulesElse.label || 'Outros'}</span>`;
+      html += '</div>';
+    } else {
+      html += `<span style="display:inline-flex; align-items:center; gap:8px">
+        <span style="display:inline-block; background:${item.color}; border:1px solid rgba(255,255,255,.4); ${cls}"></span>
+        ${item.name} — ${GEOM_LABEL[item.geomType]?.toLowerCase()||''}</span>`;
+    }
   }
   html += '</div>';
   d.innerHTML = html;
@@ -2086,6 +2289,7 @@ function buildVectorRow(lyr){
      <button class="icon-btn zoom fit" title="Zoom para a camada">⌖</button>
      <button class="icon-btn zoom table" title="Tabela de atributos">▦</button>
      <button class="icon-btn zoom schema" title="Atributos da camada">☰</button>
+     <button class="icon-btn zoom style" title="Simbologia da camada">🎨</button>
      <button class="icon-btn zoom verify" title="Verificar camada">✓</button>
      <button class="icon-btn" title="Remover">✕</button>`;
   const [chk, colorIn] = [row.children[0], row.children[1]];
@@ -2100,9 +2304,7 @@ function buildVectorRow(lyr){
   });
   colorIn.addEventListener('input', ()=>{
     lyr.color = colorIn.value;
-    lyr.group.eachLayer(l=>{
-      if(l.setStyle) l.setStyle(l instanceof L.CircleMarker ? {fillColor:lyr.color} : styleFor(lyr));
-    });
+    refreshLayerStyles(lyr);
     scheduleSave();
   });
   row.querySelector('.info').addEventListener('click', ()=>{ lyr.expanded = !lyr.expanded; renderVectorList(); });
@@ -2111,6 +2313,7 @@ function buildVectorRow(lyr){
     if(b.isValid()) map.fitBounds(b.pad(.2));
   });
   row.querySelector('.schema').addEventListener('click', ()=>openSchemaEditor(lyr));
+  row.querySelector('.style').addEventListener('click', ()=>openStyleEditor(lyr));
   row.querySelector('.table').addEventListener('click', ()=>openAttrTable(lyr));
   row.querySelector('.verify').addEventListener('click', ()=>openVerifyPanel(lyr));
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
@@ -2292,6 +2495,198 @@ document.getElementById('fldAdd').addEventListener('click', ()=>{
   renderSchemaList();
 });
 
+/* ---------- Simbologia por regras (modal mStyle) ---------- */
+const CATEGORY_PALETTE = ['#6C5CE7','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c','#3ea8ff','#ff6f91','#a3d94a','#ffb454','#7fd4d4','#d47fd4'];
+let styLayer = null;
+let styWorking = null; // {styleMode, rules:[...], rulesElse:{...}|null} — cópia de trabalho, só grava na camada ao "Aplicar"
+function cloneRule(r){ return JSON.parse(JSON.stringify(r)); }
+
+function openStyleEditor(lyr){
+  styLayer = lyr;
+  styWorking = {
+    styleMode: lyr.styleMode || 'single',
+    rules: (lyr.rules||[]).map(cloneRule),
+    rulesElse: lyr.rulesElse ? cloneRule(lyr.rulesElse) : null
+  };
+  document.getElementById('styTitle').textContent = 'Simbologia — camada "'+lyr.name+'"';
+  document.getElementById('styMode').value = styWorking.styleMode;
+  document.getElementById('styRulesWrap').style.display = styWorking.styleMode==='rules' ? '' : 'none';
+  const qf = document.getElementById('styQuickField');
+  qf.innerHTML = lyr.fields.length ? lyr.fields.map(f=>`<option value="${f.name}">${f.name}</option>`).join('') : '<option value="">— sem atributos —</option>';
+  document.getElementById('styElseColor').value = (styWorking.rulesElse && styWorking.rulesElse.style && styWorking.rulesElse.style.color) || lyr.color;
+  document.getElementById('styElseLabel').value = (styWorking.rulesElse && styWorking.rulesElse.label) || '';
+  renderStyleRuleList();
+  open('mStyle');
+}
+document.getElementById('styMode').addEventListener('change', e=>{
+  styWorking.styleMode = e.target.value;
+  document.getElementById('styRulesWrap').style.display = styWorking.styleMode==='rules' ? '' : 'none';
+});
+
+function ruleRowHtml(r, i){
+  const fieldOpts = styLayer.fields.map(f=>`<option value="${f.name}" ${f.name===r.field?'selected':''}>${f.name}</option>`).join('');
+  const opOpts = RULE_OPS.map(op=>`<option value="${op}" ${op===r.op?'selected':''}>${OP_LABEL[op]}</option>`).join('');
+  const val = r.value!=null ? String(r.value).replace(/"/g,'&quot;') : '';
+  const lbl = r.label ? String(r.label).replace(/"/g,'&quot;') : '';
+  return `<div class="fld-row" data-ri="${i}" style="flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:6px">
+    <select class="sr-field" style="max-width:130px">${fieldOpts}</select>
+    <select class="sr-op" style="max-width:110px">${opOpts}</select>
+    <input type="text" class="sr-value" placeholder="valor" value="${val}" style="max-width:100px" ${r.op==='empty'?'disabled':''}>
+    <input type="color" class="sr-color" value="${r.style.color||styLayer.color}" title="Cor">
+    <input type="number" class="sr-weight" min="1" max="12" step="1" value="${r.style.weight??3}" title="Espessura" style="width:56px">
+    <input type="number" class="sr-fillop" min="0" max="1" step=".05" value="${r.style.fillOpacity??.25}" title="Opacidade de preenchimento" style="width:56px">
+    ${styLayer.geomType==='point' ? `<input type="number" class="sr-radius" min="2" max="30" step="1" value="${r.style.radius??7}" title="Raio (pontos)" style="width:56px">` : ''}
+    <input type="number" class="sr-zmin" min="0" max="24" placeholder="zoom mín" value="${r.zoomMin??''}" style="width:76px">
+    <input type="number" class="sr-zmax" min="0" max="24" placeholder="zoom máx" value="${r.zoomMax??''}" style="width:76px">
+    <input type="text" class="sr-label" placeholder="Rótulo na legenda" value="${lbl}" style="max-width:150px">
+    <button class="icon-btn sr-del" title="Remover regra">✕</button>
+  </div>`;
+}
+function readRuleRow(row){
+  const g = sel=>row.querySelector(sel);
+  const op = g('.sr-op').value;
+  const radiusEl = g('.sr-radius');
+  return {
+    field: g('.sr-field').value,
+    op,
+    value: op==='empty' ? '' : g('.sr-value').value,
+    zoomMin: g('.sr-zmin').value===''?null:+g('.sr-zmin').value,
+    zoomMax: g('.sr-zmax').value===''?null:+g('.sr-zmax').value,
+    label: g('.sr-label').value,
+    style: {
+      color: g('.sr-color').value,
+      weight: +g('.sr-weight').value,
+      fillOpacity: +g('.sr-fillop').value,
+      radius: radiusEl ? +radiusEl.value : undefined
+    }
+  };
+}
+function renderStyleRuleList(){
+  const el = document.getElementById('styRuleList');
+  if(!styLayer.fields.length){
+    el.innerHTML = '<div class="empty-hint">Esta camada não tem atributos. Defina atributos em "Atributos da camada" (☰) antes de criar regras.</div>';
+    return;
+  }
+  el.innerHTML = styWorking.rules.length
+    ? styWorking.rules.map((r,i)=>ruleRowHtml(r,i)).join('')
+    : '<div class="empty-hint">Nenhuma regra ainda. Avaliadas em ordem — a primeira que casar vence.</div>';
+  el.querySelectorAll('[data-ri]').forEach(row=>{
+    const i = +row.dataset.ri;
+    row.querySelectorAll('input,select').forEach(inp=>inp.addEventListener('input', ()=>{
+      styWorking.rules[i] = readRuleRow(row);
+      const valEl = row.querySelector('.sr-value');
+      if(valEl) valEl.disabled = row.querySelector('.sr-op').value==='empty';
+    }));
+    row.querySelector('.sr-del').addEventListener('click', ()=>{ styWorking.rules.splice(i,1); renderStyleRuleList(); });
+  });
+}
+document.getElementById('styRuleAdd').addEventListener('click', ()=>{
+  if(!styLayer.fields.length){ alert('Defina atributos na camada antes de criar regras.'); return; }
+  const color = CATEGORY_PALETTE[styWorking.rules.length % CATEGORY_PALETTE.length];
+  styWorking.rules.push({ field: styLayer.fields[0].name, op:'=', value:'', zoomMin:null, zoomMax:null, label:'',
+    style:{ color, weight:3, fillOpacity:.25, radius:7 } });
+  renderStyleRuleList();
+});
+
+/* Modo rápido: categorizar por campo — uma regra por valor único, cores da paleta harmônica */
+document.getElementById('styQuickCategorize').addEventListener('click', ()=>{
+  const field = document.getElementById('styQuickField').value;
+  if(!field){ alert('Esta camada não tem atributos para categorizar.'); return; }
+  const values = new Set();
+  styLayer.group.eachLayer(l=>{
+    const v = l.feature && l.feature.properties && l.feature.properties[field];
+    if(v!=null && v!=='') values.add(String(v));
+  });
+  if(!values.size){ alert('Nenhum valor encontrado para o campo "'+field+'" nas feições existentes.'); return; }
+  const list = [...values].sort();
+  styWorking.rules = list.map((v,i)=>({
+    field, op:'=', value:v, zoomMin:null, zoomMax:null, label:v,
+    style:{ color: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length], weight:3, fillOpacity: styLayer.geomType==='point'?1:.35, radius:7 }
+  }));
+  styWorking.rulesElse = styWorking.rulesElse || { label:'Outros / vazio', style:{ color:'#8a8f98', weight:3, fillOpacity:.25, radius:6 } };
+  document.getElementById('styElseColor').value = styWorking.rulesElse.style.color;
+  document.getElementById('styElseLabel').value = styWorking.rulesElse.label;
+  renderStyleRuleList();
+  status('Categorizado por "'+field+'": '+list.length+' classe(s).');
+});
+
+document.getElementById('stySave').addEventListener('click', ()=>{
+  styWorking.rulesElse = {
+    label: document.getElementById('styElseLabel').value || 'Outros',
+    style: { color: document.getElementById('styElseColor').value, weight:3, fillOpacity:.25, radius:7 }
+  };
+  styLayer.styleMode = styWorking.styleMode;
+  styLayer.rules = styWorking.rules;
+  styLayer.rulesElse = styWorking.styleMode==='rules' ? styWorking.rulesElse : null;
+  bumpRulesVersion(styLayer);
+  refreshLayerStyles(styLayer);
+  close('mStyle');
+  renderVectorList();
+  status('Simbologia aplicada ✓');
+  scheduleSave();
+});
+
+/* ---------- Presets de simbologia: biblioteca pessoal no IndexedDB, fora do projeto ---------- */
+async function listStylePresets(){
+  const keys = await idbKeys('stylePresets');
+  const out = [];
+  for(const k of keys){ const v = await idbGet('stylePresets', k); if(v) out.push(v); }
+  return out.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+}
+document.getElementById('styPresetSave').addEventListener('click', async ()=>{
+  if(!styWorking.rules.length){ alert('Crie ao menos uma regra antes de salvar como preset.'); return; }
+  const name = prompt('Nome do preset:'); if(!name) return;
+  const preset = { name, savedAt:new Date().toISOString(),
+    rules: styWorking.rules.map(cloneRule),
+    rulesElse: styWorking.rulesElse ? cloneRule(styWorking.rulesElse) : null };
+  await idbPut('stylePresets', name, preset);
+  status('Preset "'+name+'" salvo ✓');
+});
+document.getElementById('styPresetApply').addEventListener('click', async ()=>{
+  const presets = await listStylePresets();
+  if(!presets.length){ alert('Nenhum preset salvo ainda. Configure regras e use "Salvar como preset".'); return; }
+  const names = presets.map(p=>p.name);
+  const pick = prompt('Escolha o preset (digite o nome exato):\n'+names.join('\n'), names[0]);
+  const preset = presets.find(p=>p.name===pick);
+  if(!preset) return;
+  applyStylePreset(preset);
+});
+let pendingPreset = null;
+function applyStylePreset(preset){
+  const fieldsInPreset = new Set(preset.rules.map(r=>r.field));
+  const layerFieldNames = new Set(styLayer.fields.map(f=>f.name));
+  const missing = [...fieldsInPreset].filter(f=>!layerFieldNames.has(f));
+  if(missing.length){
+    pendingPreset = preset;
+    document.getElementById('styRemapSub').textContent =
+      'O preset "'+preset.name+'" usa o campo "'+missing[0]+'", que não existe nesta camada. Escolha um atributo desta camada para usar no lugar.';
+    const sel = document.getElementById('styRemapField');
+    sel.innerHTML = styLayer.fields.length ? styLayer.fields.map(f=>`<option value="${f.name}">${f.name}</option>`).join('') : '<option value="">— sem atributos —</option>';
+    open('mStyleRemap');
+    return;
+  }
+  styWorking.rules = preset.rules.map(cloneRule);
+  styWorking.rulesElse = preset.rulesElse ? cloneRule(preset.rulesElse) : null;
+  styWorking.styleMode = 'rules';
+  document.getElementById('styMode').value = 'rules';
+  document.getElementById('styRulesWrap').style.display = '';
+  if(styWorking.rulesElse){
+    document.getElementById('styElseColor').value = styWorking.rulesElse.style.color;
+    document.getElementById('styElseLabel').value = styWorking.rulesElse.label || '';
+  }
+  renderStyleRuleList();
+  status('Preset "'+preset.name+'" aplicado — revise e clique em "Aplicar".');
+}
+document.getElementById('styRemapGo').addEventListener('click', ()=>{
+  if(!pendingPreset){ close('mStyleRemap'); return; }
+  const newField = document.getElementById('styRemapField').value;
+  if(!newField){ alert('Esta camada não tem atributos para remapear.'); return; }
+  const remapped = { ...pendingPreset, rules: pendingPreset.rules.map(r=>({ ...cloneRule(r), field:newField })) };
+  pendingPreset = null;
+  close('mStyleRemap');
+  applyStylePreset(remapped);
+});
+
 /* ---------- Nova camada vetorial (manual ou pós-desenho) ---------- */
 let nlFields = [];        // esquema em construção
 let nlPending = null;     // {layer, tool} geometria desenhada aguardando camada
@@ -2389,9 +2784,9 @@ document.getElementById('nlSave').addEventListener('click', ()=>{
   if(nlPending){
     const fl = nlPending.layer;
     map.removeLayer(fl);
-    if(fl.setStyle) fl.setStyle(fl instanceof L.CircleMarker ? {fillColor:lyr.color} : styleFor(lyr));
     registerFeature(fl, lyr);
     Object.assign(fl.feature.properties, values);
+    refreshFeatureStyle(fl, lyr);
     fl.bindPopup(featurePopup(fl, fl._measureInfo||''));
     lyr.group.addLayer(fl);
     pushAction({type:'add', layer:fl, target:lyr});
@@ -2484,6 +2879,7 @@ document.getElementById('attrSave').addEventListener('click', ()=>{
     props[f.name] = v;
   });
   if(missing){ alert('Preencha o campo obrigatório: '+missing); return; }
+  refreshFeatureStyle(reg.layer, reg.lyr);
   const base = reg.layer._measureInfo || '';
   reg.layer.bindPopup(featurePopup(reg.layer, base));
   attrTargetId = null;
@@ -3167,6 +3563,7 @@ function saveTree(){
   if(treeTrunkRef) props.foto_tronco = treeTrunkRef;
   // rótulo numérico no marcador
   applyTreeLabel(reg.layer);
+  refreshFeatureStyle(reg.layer, reg.lyr);
   reg.layer.bindPopup(treePopup(reg.layer), {maxWidth:280});
   treeTargetId = null; treePhotoDataUrl = null; treeTrunkDataUrl = null; treePhotoRef = null; treeTrunkRef = null; treeSelectedSpecies = null;
   close('mTree');
@@ -3385,6 +3782,7 @@ function renderAttrTable(){
       else v = el.value;
       if(f.required && (v==='' || v==null)){ alert('O atributo "'+f.name+'" é obrigatório.'); return; }
       reg.layer.feature.properties[f.name] = v;
+      refreshFeatureStyle(reg.layer, reg.lyr);
       reg.layer.bindPopup(featurePopup(reg.layer, reg.layer._measureInfo||''));
       status('Alteração salva ✓');
       scheduleSave();
@@ -3445,7 +3843,7 @@ function minimizeAttrTableTemporarily(ms){
 
 function currentAccentColor(){
   const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-  return v || '#37c2a0';
+  return v || '#6C5CE7';
 }
 
 /* anel pulsante temporário sobre um ponto (~2s), sem alterar o marcador da feição */
@@ -3468,11 +3866,11 @@ function pulseAtPoint(latlng, accent){
 /* realce temporário de linha/polígono: cor de destaque + peso maior, restaura o estilo original via styleFor */
 function highlightPathTemporarily(l, lyr, accent){
   if(l._gaHighlightTimer){ clearTimeout(l._gaHighlightTimer); l._gaHighlightTimer=null; }
-  const orig = styleFor(lyr);
+  const orig = styleFor(lyr, l.feature);
   l.setStyle({ color:accent, weight:(orig.weight||3)+3, opacity:1 });
   if(l.bringToFront) l.bringToFront();
   l._gaHighlightTimer = setTimeout(()=>{
-    l.setStyle(styleFor(lyr));
+    refreshFeatureStyle(l, lyr);
     l._gaHighlightTimer = null;
   }, 2000);
 }
@@ -3489,6 +3887,211 @@ function focusFeatureOnMap(l, lyr){
     map.flyTo(l.getLatLng(), z, { duration:0.9 });
     pulseAtPoint(l.getLatLng(), accent);
   }
+}
+
+/* ---------- Verificar camada (turf.js sob demanda) ---------- */
+let turfMod = null;
+async function loadTurf(){
+  if(!turfMod) turfMod = await import('https://cdn.jsdelivr.net/npm/@turf/turf@7/+esm');
+  return turfMod;
+}
+function cloneLatLngs(ll){
+  if(Array.isArray(ll)) return ll.map(cloneLatLngs);
+  return L.latLng(ll.lat, ll.lng);
+}
+function flattenCoords(coords, out){
+  out = out || [];
+  if(typeof coords[0]==='number'){ out.push(coords); return out; }
+  coords.forEach(c=>flattenCoords(c, out));
+  return out;
+}
+function firstTextAttr(l){
+  const props = (l.feature && l.feature.properties) || {};
+  const v = Object.values(props).find(x=>x!=null && x!=='' && typeof x!=='boolean');
+  return v!=null ? String(v) : null;
+}
+function featLabel(l){
+  const txt = firstTextAttr(l);
+  return '#'+l._gaid + (txt ? ' — '+txt : '');
+}
+function geojsonRingToLatLngs(ring){
+  return ring.slice(0,-1).map(([lng,lat])=>L.latLng(lat,lng));
+}
+function geojsonGeomToLatLngs(geom){
+  if(geom.type==='Polygon') return geom.coordinates.map(geojsonRingToLatLngs);
+  return geom.coordinates.map(([lng,lat])=>L.latLng(lat,lng));
+}
+
+/* Aplica uma correção de geometria in-place na feição, registrando ação reversível */
+function applyGeomEdit(l, lyr, newGeom, label){
+  const oldLatLngs = cloneLatLngs(l.getLatLngs());
+  const newLatLngs = geojsonGeomToLatLngs(newGeom);
+  l.setLatLngs(newLatLngs);
+  if(l.redraw) l.redraw();
+  pushAction({type:'geomedit', target:lyr, layer:l, oldLatLngs, newLatLngs:cloneLatLngs(newLatLngs), kind:'verify-fix', label});
+  status('Correção aplicada: '+label+' ✓');
+}
+
+function fixCleanCoords(l, lyr, turf){
+  const cleaned = turf.cleanCoords(l.toGeoJSON());
+  applyGeomEdit(l, lyr, cleaned.geometry, 'Limpeza de coordenadas duplicadas');
+}
+function fixRewind(l, lyr, turf){
+  const rewound = turf.rewind(l.toGeoJSON(), {reverse:false});
+  applyGeomEdit(l, lyr, rewound.geometry, 'Correção de orientação dos anéis');
+}
+/* Desfaz auto-interseção: turf.unkinkPolygon retorna vários polígonos simples —
+   a feição original é substituída por feições irmãs, cada uma copiando os atributos originais. */
+function fixUnkink(l, lyr, turf){
+  const unkinked = turf.unkinkPolygon(l.toGeoJSON());
+  const polys = unkinked.features;
+  if(polys.length<2){ status('Nada a corrigir: geometria já é simples.'); return; }
+  const origProps = Object.assign({}, l.feature.properties);
+  const newLayers = polys.map(f=>{
+    const latlngs = geojsonGeomToLatLngs(f.geometry);
+    const poly = L.polygon(latlngs, styleFor(lyr, {properties:origProps}));
+    poly.feature = { type:'Feature', properties: Object.assign({}, origProps) };
+    registerFeature(poly, lyr);
+    refreshFeatureStyle(poly, lyr);
+    poly.bindPopup(featurePopup(poly, ''));
+    lyr.group.addLayer(poly);
+    return poly;
+  });
+  lyr.group.removeLayer(l);
+  pushAction({type:'replace', target:lyr, oldLayers:[l], newLayers, kind:'verify-fix',
+    label:'Correção de auto-interseção (unkink)'});
+  status(`Auto-interseção corrigida: feição dividida em ${newLayers.length} polígono(s) irmão(s), atributos copiados ✓`);
+}
+
+/* Roda todas as checagens sobre uma feição; retorna lista de problemas encontrados */
+function checkFeature(l, lyr, turf){
+  const issues = [];
+  if(!l._gaid) registerFeature(l, lyr);
+  const gj = l.toGeoJSON();
+  const geom = gj.geometry;
+  if(!geom) return issues;
+  const base = { gaid:l._gaid, layer:l, lyr, label:featLabel(l) };
+
+  // (d) geometrias vazias/degeneradas
+  let degenerate = false;
+  if(geom.type==='Polygon') degenerate = geom.coordinates.some(ring=>ring.length<4);
+  else if(geom.type==='LineString') degenerate = geom.coordinates.length<2;
+  if(degenerate){
+    issues.push({...base, type:'degenerate', title:'Geometria vazia/degenerada',
+      message:'Anel com menos de 4 posições ou linha com menos de 2 pontos.', fixable:false});
+    return issues; // demais checagens exigem geometria minimamente válida
+  }
+
+  // (e) coordenadas fora de faixa
+  const flat = flattenCoords(geom.coordinates);
+  if(flat.some(([lng,lat])=>Math.abs(lat)>90 || Math.abs(lng)>180)){
+    issues.push({...base, type:'range', title:'Coordenadas fora de faixa',
+      message:'Latitude/longitude fora do intervalo válido (|lat|≤90, |lng|≤180).', fixable:false});
+  }
+
+  // (a) auto-interseção
+  if(geom.type==='Polygon' || geom.type==='LineString'){
+    try{
+      const kinks = turf.kinks(gj);
+      if(kinks.features.length){
+        const isPoly = geom.type==='Polygon';
+        issues.push({...base, type:'kinks', title:'Auto-interseção',
+          message:`Geometria se auto-intersecta em ${kinks.features.length} ponto(s).`,
+          fixable:isPoly, fixLabel:'Desfazer auto-interseção',
+          fix:isPoly ? ()=>fixUnkink(l, lyr, turf) : null});
+      }
+    }catch(e){ /* geometria inválida demais para turf.kinks — ignora esta checagem */ }
+  }
+
+  // (b) anéis não fechados / orientação incorreta (RFC 7946)
+  if(geom.type==='Polygon'){
+    const unclosed = geom.coordinates.some(ring=>{
+      const [fx,fy] = ring[0], [lx,ly] = ring[ring.length-1];
+      return fx!==lx || fy!==ly;
+    });
+    if(unclosed){
+      issues.push({...base, type:'unclosed', title:'Anel não fechado',
+        message:'O primeiro e o último ponto do anel não coincidem.', fixable:false});
+    }
+    const badOrientation = geom.coordinates.some((ring,i)=>{
+      const cw = turf.booleanClockwise({type:'LineString', coordinates:ring});
+      return i===0 ? cw : !cw; // exterior deve ser anti-horário; buracos, horário
+    });
+    if(badOrientation){
+      issues.push({...base, type:'orientation', title:'Orientação de anel incorreta',
+        message:'Anel exterior deveria ser anti-horário e buracos horários (RFC 7946).',
+        fixable:true, fixLabel:'Corrigir orientação de anéis', fix:()=>fixRewind(l, lyr, turf)});
+    }
+  }
+
+  // (c) coordenadas duplicadas consecutivas
+  try{
+    const cleaned = turf.cleanCoords(gj);
+    if(JSON.stringify(cleaned.geometry.coordinates) !== JSON.stringify(geom.coordinates)){
+      issues.push({...base, type:'dupcoords', title:'Coordenadas duplicadas consecutivas',
+        message:'Há pontos repetidos em sequência na geometria.', fixable:true,
+        fixLabel:'Limpar coordenadas duplicadas', fix:()=>fixCleanCoords(l, lyr, turf)});
+    }
+  }catch(e){ /* ignora se turf.cleanCoords não conseguir processar */ }
+
+  return issues;
+}
+
+let verifyLayerRef = null;
+async function openVerifyPanel(lyr){
+  verifyLayerRef = lyr;
+  document.getElementById('vfTitle').textContent = 'Verificar camada — "'+lyr.name+'"';
+  const listEl = document.getElementById('vfList'), sumEl = document.getElementById('vfSummary');
+  listEl.innerHTML = '<div class="vf-empty">Carregando turf.js e verificando geometrias…</div>';
+  sumEl.textContent = '';
+  open('mVerify');
+  let turf;
+  try{
+    turf = await loadTurf();
+  }catch(e){
+    listEl.innerHTML = '<div class="vf-empty">Não foi possível carregar a biblioteca de verificação (turf.js) — verifique a conexão com a internet.</div>';
+    return;
+  }
+  if(verifyLayerRef !== lyr) return; // usuário trocou de camada/fechou antes da lib carregar
+  runVerification(lyr, turf);
+}
+function runVerification(lyr, turf){
+  const feats = lyr.group.getLayers();
+  let issues = [];
+  feats.forEach(l=>{ issues = issues.concat(checkFeature(l, lyr, turf)); });
+  renderVerifyResults(lyr, turf, feats.length, issues);
+}
+function renderVerifyResults(lyr, turf, featCount, issues){
+  const sumEl = document.getElementById('vfSummary'), listEl = document.getElementById('vfList');
+  const fixable = issues.filter(i=>i.fixable).length;
+  sumEl.className = 'vf-summary' + (issues.length ? '' : ' vf-ok');
+  sumEl.textContent = `${featCount} feição(ões) verificada(s) · ${issues.length} problema(s) encontrado(s)` +
+    (issues.length ? ` · ${fixable} corrigível(is) automaticamente` : ' · nenhum problema encontrado ✓');
+
+  if(!issues.length){
+    listEl.innerHTML = '<div class="vf-empty">Nenhum problema geométrico encontrado nesta camada.</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  issues.forEach((iss, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'vf-item';
+    row.innerHTML = `
+      <div class="vf-head"><span class="vf-type">${iss.title}</span><span class="vf-feat">${iss.label}</span></div>
+      <div class="vf-msg">${iss.message}</div>
+      <div class="vf-actions">
+        <button class="tb-btn vf-view">Ver</button>
+        ${iss.fixable ? `<button class="tb-btn primary vf-fix">${iss.fixLabel}</button>` : ''}
+      </div>`;
+    row.querySelector('.vf-view').addEventListener('click', ()=>focusFeatureOnMap(iss.layer, lyr));
+    const fixBtn = row.querySelector('.vf-fix');
+    if(fixBtn) fixBtn.addEventListener('click', ()=>{
+      iss.fix();
+      renderVectorList();
+      runVerification(lyr, turf);
+    });
+    listEl.appendChild(row);
+  });
 }
 
 /* ---------- Histórico: desfazer / refazer ---------- */
@@ -3519,6 +4122,7 @@ function geomClassOfLayer(l){
 function descreveAcao(rec){
   const layerName = (rec.target && rec.target.name) || 'camada desconhecida';
   if(rec.type==='import') return `Importação ${rec.format||''} — ${rec.count||0} feição(ões)`.trim();
+  if(rec.kind==='verify-fix') return `${rec.label} — ${layerName}`;
   const geom = geomClassOfLayer(rec.layer);
   const geomLabel = GEOM_LABEL[geom] || 'Geometria';
   const desenhadoAdj = geom==='line' ? 'desenhada' : 'desenhado';
@@ -3684,14 +4288,26 @@ function doUndo(){
   }
   const a = undoStack.pop(); if(!a){ updHistory(); return; }
   if(a.type==='add') a.target.group.removeLayer(a.layer);
-  else a.target.group.addLayer(a.layer);
+  else if(a.type==='del') a.target.group.addLayer(a.layer);
+  else if(a.type==='geomedit'){ a.layer.setLatLngs(cloneLatLngs(a.oldLatLngs)); if(a.layer.redraw) a.layer.redraw(); }
+  else if(a.type==='replace'){
+    a.newLayers.forEach(nl=>a.target.group.removeLayer(nl));
+    a.oldLayers.forEach(ol=>a.target.group.addLayer(ol));
+  }
   redoStack.push(a); renderVectorList(); updHistory();
-  status(a.type==='add' ? 'Desfeito: geometria removida.' : 'Desfeito: geometria restaurada.');
+  status(a.type==='add' ? 'Desfeito: geometria removida.'
+    : a.type==='del' ? 'Desfeito: geometria restaurada.'
+    : 'Desfeito: '+(a.label||'correção')+'.');
 }
 function doRedo(){
   const a = redoStack.pop(); if(!a){ updHistory(); return; }
   if(a.type==='add') a.target.group.addLayer(a.layer);
-  else a.target.group.removeLayer(a.layer);
+  else if(a.type==='del') a.target.group.removeLayer(a.layer);
+  else if(a.type==='geomedit'){ a.layer.setLatLngs(cloneLatLngs(a.newLatLngs)); if(a.layer.redraw) a.layer.redraw(); }
+  else if(a.type==='replace'){
+    a.oldLayers.forEach(ol=>a.target.group.removeLayer(ol));
+    a.newLayers.forEach(nl=>a.target.group.addLayer(nl));
+  }
   undoStack.push(a); renderVectorList(); updHistory();
 }
 btnUndo.addEventListener('click', doUndo);
@@ -3721,12 +4337,13 @@ function deactivate(){
   if(typeof updHistory==='function') updHistory();
   const db = document.getElementById('drawBar'); if(db) db.style.display='none';
   const gb = document.getElementById('gpsDrawBar'); if(gb) gb.style.display='none';
+  const w3d = document.getElementById('db3dWrap'); if(w3d) w3d.style.display='none';
 }
 
 /* estilo do desenho em curso: cor da camada compatível ou neutro */
 function drawStyle(tool, dashed){
   const t = targetLayerFor(tool);
-  const base = t ? styleFor(t) : { color:'#37c2a0', weight:3, fillColor:'#37c2a0', fillOpacity:.25 };
+  const base = t ? styleFor(t) : { color:'#6C5CE7', weight:3, fillColor:'#6C5CE7', fillOpacity:.25 };
   return dashed ? {...base, dashArray:'4 6'} : base;
 }
 const measureStyle = { color:'#f2d24b', weight:3, dashArray:'6 6', fillColor:'#f2d24b', fillOpacity:.12 };
@@ -3805,6 +4422,14 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
         measureMode='line';
         activeDrawer = new L.Draw.Polyline(map, { shapeOptions: measureStyle });
         showHint('Medição de distância: clique os pontos e use "✓ Concluir geometria".');
+        { const w = document.getElementById('db3dWrap'), cb = document.getElementById('db3d');
+          const hasDem = demLayers().length>0;
+          w.style.display = 'flex';
+          cb.disabled = !hasDem;
+          cb.checked = false;
+          w.title = hasDem ? '' : 'Carregue um raster DEM (elevação) para habilitar a medição 3D.';
+          w.style.opacity = hasDem ? '1' : '.5';
+        }
         break;
       case 'marea':
         measureMode='area';
@@ -4106,6 +4731,7 @@ function trackStop(save){
   props.num_pontos = rec.points.length;
   props.accuracy_media_m = +accMedia.toFixed(1);
   props.metodo_registro = 'GPS';
+  refreshFeatureStyle(finalLine, lyr);
   finalLine.bindPopup(featurePopup(finalLine, `Trilha GPS<br>Comprimento: <b>${fmtDist(distancia)}</b>`));
   lyr.group.addLayer(finalLine);
   pushAction({type:'add', layer:finalLine, target:lyr, kind:'track'});
@@ -4194,8 +4820,8 @@ function gpsDrawFinish(){
 
   const target = targetLayerFor(geomType);
   const finalLayer = geomType==='polygon'
-    ? L.polygon(verts, target ? styleFor(target) : {color:'#37c2a0', weight:3, fillColor:'#37c2a0', fillOpacity:.25})
-    : L.polyline(verts, target ? styleFor(target) : {color:'#37c2a0', weight:3});
+    ? L.polygon(verts, target ? styleFor(target) : {color:'#6C5CE7', weight:3, fillColor:'#6C5CE7', fillOpacity:.25})
+    : L.polyline(verts, target ? styleFor(target) : {color:'#6C5CE7', weight:3});
   finalLayer.feature = { type:'Feature', properties:{ metodo_registro:'GPS' } };
 
   let info;
@@ -4214,6 +4840,7 @@ function gpsDrawFinish(){
   }
 
   const gaid = registerFeature(finalLayer, target);
+  refreshFeatureStyle(finalLayer, target);
   finalLayer.bindPopup(featurePopup(finalLayer, info));
   target.group.addLayer(finalLayer);
   pushAction({type:'add', layer:finalLayer, target, kind:'draw'});
@@ -4240,6 +4867,118 @@ document.getElementById('gpsDrawCancelStart').addEventListener('click', ()=>{
   deactivate();
 });
 
+/* ---------- Medição 3D (terreno), a partir de um DEM carregado ---------- */
+function fillGaps(samples, maxGap){
+  maxGap = maxGap || 10;
+  let i=0;
+  while(i<samples.length){
+    if(samples[i].elev!=null){ i++; continue; }
+    let j=i; while(j<samples.length && samples[j].elev==null) j++;
+    const prev = i>0 ? samples[i-1] : null;
+    const next = j<samples.length ? samples[j] : null;
+    if(prev && prev.elev!=null && next && next.elev!=null && (j-i)<=maxGap){
+      for(let k=i;k<j;k++){ const t=(k-i+1)/(j-i+1); samples[k].elev = prev.elev + (next.elev-prev.elev)*t; }
+    }
+    i=j;
+  }
+}
+
+async function run3DMeasure(lyr, latlngs){
+  const dem = findCoveringDem(latlngs);
+  if(!dem){
+    status('Medição 3D: a linha sai da cobertura do DEM carregado — mantendo apenas a distância plana.');
+    return;
+  }
+  status('Calculando perfil de elevação (DEM)…');
+  try{
+    const { samples, coverage } = await dem.sampleElevations(latlngs, 2000);
+    if(coverage < 1){
+      fillGaps(samples);
+    }
+    const stillMissing = samples.some(s=>s.elev==null);
+    if(coverage < 0.98){
+      status(stillMissing
+        ? 'Medição 3D: parte da linha sai da cobertura do DEM — trechos sem dado foram ignorados na distância de superfície.'
+        : 'Medição 3D: pequenas falhas de dado no DEM foram interpoladas.');
+    }
+    const valid = samples.filter(s=>s.elev!=null);
+    if(valid.length<2){
+      status('Medição 3D: amostras insuficientes dentro da cobertura do DEM.');
+      return;
+    }
+    let surfaceDist=0, minE=Infinity, maxE=-Infinity, maxSlope=0, sumAbsDz=0, sumHoriz=0;
+    for(let i=1;i<samples.length;i++){
+      const a=samples[i-1], b=samples[i];
+      if(a.elev==null || b.elev==null) continue;
+      const dh = distM(a,b);
+      const dz = b.elev - a.elev;
+      surfaceDist += Math.sqrt(dh*dh + dz*dz);
+      sumAbsDz += Math.abs(dz);
+      sumHoriz += dh;
+      if(dh>0){ const sl = Math.abs(dz)/dh*100; if(sl>maxSlope) maxSlope = sl; }
+      if(a.elev<minE) minE=a.elev; if(a.elev>maxE) maxE=a.elev;
+    }
+    const lastValid = valid[valid.length-1];
+    if(lastValid.elev<minE) minE=lastValid.elev; if(lastValid.elev>maxE) maxE=lastValid.elev;
+    const flatDist = pathLength(latlngs);
+    const deltaH = maxE - minE;
+    const avgSlope = sumHoriz>0 ? (sumAbsDz/sumHoriz*100) : 0;
+
+    const label = `${fmtDist(flatDist)} (plana) · ${fmtDist(surfaceDist)} (superfície)<br>Δh ${deltaH.toFixed(1)} m · declive méd. ${avgSlope.toFixed(1)}% · máx. ${maxSlope.toFixed(1)}%`;
+    if(lyr.setTooltipContent) lyr.setTooltipContent(label);
+    else lyr.bindTooltip(label, {permanent:true, className:'measure-label', direction:'top'});
+    lyr._measureInfo = label;
+
+    drawElevProfile(samples, { flatDist, surfaceDist, deltaH, avgSlope, maxSlope });
+    status('Medição 3D concluída: '+fmtDist(surfaceDist)+' de superfície ('+fmtDist(flatDist)+' plana).');
+  } catch(err){
+    console.error(err);
+    status('Falha na medição 3D: '+err.message);
+  }
+}
+
+function drawElevProfile(samples, stats){
+  const panel = document.getElementById('elevPanel');
+  const canvas = document.getElementById('elevCanvas');
+  const statsEl = document.getElementById('elevStats');
+  panel.style.display = 'block';
+  statsEl.innerHTML = `Plana: <b>${fmtDist(stats.flatDist)}</b> · Superfície: <b>${fmtDist(stats.surfaceDist)}</b><br>`
+    + `Δh: <b>${stats.deltaH.toFixed(1)} m</b> · Declive médio: <b>${stats.avgSlope.toFixed(1)}%</b> · máx.: <b>${stats.maxSlope.toFixed(1)}%</b>`;
+
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 340, h = 140;
+  canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const pts = samples.filter(s=>s.elev!=null);
+  if(pts.length<2) return;
+  const minE = Math.min(...pts.map(p=>p.elev)), maxE = Math.max(...pts.map(p=>p.elev));
+  const padL=44, padB=20, padT=10, padR=8;
+  const plotW = Math.max(1, w-padL-padR), plotH = Math.max(1, h-padT-padB);
+  const maxDist = pts[pts.length-1].dist || 1;
+  const eRange = (maxE-minE) || 1;
+  const X = d => padL + (d/maxDist)*plotW;
+  const Y = el => padT + plotH - ((el-minE)/eRange)*plotH;
+
+  const muted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#888';
+  ctx.strokeStyle = muted; ctx.fillStyle = muted; ctx.font = '10px sans-serif'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+plotH); ctx.lineTo(padL+plotW, padT+plotH);
+  ctx.stroke();
+  ctx.fillText(maxE.toFixed(0)+' m', 2, padT+8);
+  ctx.fillText(minE.toFixed(0)+' m', 2, padT+plotH);
+  ctx.fillText('0', padL-2, padT+plotH+14);
+  ctx.fillText(fmtDist(maxDist), padL+plotW-28, padT+plotH+14);
+
+  ctx.strokeStyle = '#37c2a0'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((p,i)=>{ const x=X(p.dist), y=Y(p.elev); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.stroke();
+}
+document.getElementById('elevClose').addEventListener('click', ()=>{ document.getElementById('elevPanel').style.display='none'; });
+
 /* criação de geometrias */
 map.on(L.Draw.Event.CREATED, e=>{
   const lyr = e.layer;
@@ -4260,6 +4999,8 @@ map.on(L.Draw.Event.CREATED, e=>{
     if(measureMode==='line'){
       const ll = lyr.getLatLngs();
       label = fmtDist(pathLength(ll)); pos = ll[ll.length-1];
+      const cb = document.getElementById('db3d');
+      if(cb && cb.checked && !cb.disabled) run3DMeasure(lyr, ll);
     } else {
       const ring = lyr.getLatLngs()[0];
       label = fmtArea(ringArea(ring)) + '  ·  perím. ' + fmtDist(pathLength([...ring, ring[0]]));
@@ -4281,9 +5022,9 @@ map.on(L.Draw.Event.CREATED, e=>{
   let finalLayer = lyr;
 
   if(lyr instanceof L.Marker){
-    finalLayer = pointMarker(lyr.getLatLng(), target || {color:'#37c2a0'});
+    finalLayer = pointMarker(lyr.getLatLng(), target || {color:'#6C5CE7'});
   } else if(curveMode && lyr instanceof L.Polyline && !(lyr instanceof L.Polygon)){
-    finalLayer = L.polyline(smoothCurve(lyr.getLatLngs()), target ? styleFor(target) : {color:'#37c2a0', weight:3});
+    finalLayer = L.polyline(smoothCurve(lyr.getLatLngs()), target ? styleFor(target) : {color:'#6C5CE7', weight:3});
   } else if(target && lyr.setStyle){
     lyr.setStyle(styleFor(target));
   }
@@ -4311,6 +5052,7 @@ map.on(L.Draw.Event.CREATED, e=>{
   }
 
   const gaid = registerFeature(finalLayer, target);
+  refreshFeatureStyle(finalLayer, target);
   finalLayer.bindPopup(featurePopup(finalLayer, info));
   target.group.addLayer(finalLayer);
   pushAction({type:'add', layer:finalLayer, target, kind: activeTool==='tree' ? 'tree' : 'draw'});
@@ -4540,8 +5282,8 @@ function importCollections(collections, fallbackName, groupId){
       made.push(lyr);
       if(groupId) lyr.groupId = groupId;
       const gl = L.geoJSON({type:'FeatureCollection', features:fs}, {
-        style: ()=>styleFor(lyr),
-        pointToLayer: (f, latlng)=>pointMarker(latlng, lyr)
+        style: f=>styleFor(lyr, f),
+        pointToLayer: (f, latlng)=>pointMarker(latlng, lyr, f)
       });
       gl.eachLayer(l=>{
         l.feature = l.feature || {type:'Feature', properties:{}};
@@ -4618,7 +5360,7 @@ function coordsToKml(c, depth){ // recursivo
 }
 function featureToKml(f){
   const name = (f.properties && (f.properties.name||f.properties.camada)) || 'Feição';
-  const color = ((f.properties&&f.properties.cor)||'#37c2a0').replace('#','');
+  const color = ((f.properties&&f.properties.cor)||'#6C5CE7').replace('#','');
   const abgr = 'cc' + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
   const style = `<Style><LineStyle><color>${abgr}</color><width>3</width></LineStyle><PolyStyle><color>${'66'+abgr.slice(2)}</color></PolyStyle><IconStyle><color>${abgr}</color></IconStyle></Style>`;
   const g = f.geometry; let geo='';
@@ -4822,6 +5564,227 @@ function cogSource(def){
   throw new Error('Definição de COG sem origem (asset ou url).');
 }
 
+/* =========================================================
+   PASSO 3 — DEM (Modelo Digital de Elevação)
+   ---------------------------------------------------------
+   Reaproveita a abertura/georreferenciamento do GridLayer.COG
+   (mesmo contrato RasterSource, mesma resolução de CRS via
+   geokeys + proj4). Especializa apenas a renderização do tile
+   (hillshade / rampa de cinza, banda única) e adiciona um
+   amostrador de elevação em lote para a medição 3D.
+   ========================================================= */
+async function sampleDemMinMax(info){
+  // amostra o overview mais grosseiro (rápido) para estimar min/max de elevação
+  const img = info.imgs[info.imgs.length-1];
+  const w = Math.min(img.getWidth(), 256), h = Math.min(img.getHeight(), 256);
+  const data = await img.readRasters({ width:w, height:h, resampleMethod:'nearest' });
+  const band = data[0];
+  const nod = img.getGDALNoData();
+  let min=Infinity, max=-Infinity;
+  for(let i=0;i<band.length;i++){
+    const v = band[i];
+    if(nod!=null && v===nod) continue;
+    if(!isFinite(v)) continue;
+    if(v<min) min=v;
+    if(v>max) max=v;
+  }
+  if(!isFinite(min)||!isFinite(max)) { min=0; max=1; }
+  return {min, max};
+}
+
+L.GridLayer.DEM = L.GridLayer.COG.extend({
+  initialize: function(src, opts){
+    L.GridLayer.COG.prototype.initialize.call(this, src, opts);
+    this._demRender = (opts && opts.demRender) || 'hillshade';
+  },
+  _openDem: function(){
+    if(this._readyDem) return this._readyDem;
+    this._readyDem = this._open().then(async info=>{
+      if(!info.demStats) info.demStats = await sampleDemMinMax(info);
+      return info;
+    });
+    return this._readyDem;
+  },
+  getLatLngBounds: async function(){ const i = await this._openDem(); return i.latLngBounds; },
+
+  createTile: function(coords, done){
+    const size = this.getTileSize();
+    const tile = document.createElement('canvas');
+    tile.width = size.x; tile.height = size.y;
+    const self = this;
+    (async ()=>{
+      const info = await self._openDem();
+      const nw = self._map.unproject(coords.scaleBy(size), coords.z);
+      const se = self._map.unproject(coords.scaleBy(size).add(size), coords.z);
+      const p1 = info.fromWGS([nw.lng, nw.lat]);
+      const p2 = info.fromWGS([se.lng, se.lat]);
+      const minX = Math.min(p1[0],p2[0]), maxX = Math.max(p1[0],p2[0]);
+      const minY = Math.min(p1[1],p2[1]), maxY = Math.max(p1[1],p2[1]);
+      const [bx0,by0,bx1,by1] = info.bbox;
+      if(maxX<=bx0 || minX>=bx1 || maxY<=by0 || minY>=by1){ done(null, tile); return; }
+
+      const needRes = (maxX-minX)/size.x;
+      let img = info.imgs[info.imgs.length-1];
+      for(const im of info.imgs){ const r=(bx1-bx0)/im.getWidth(); if(r<=needRes*1.3){ img = im; break; } }
+
+      const W = img.getWidth(), H = img.getHeight();
+      const px = x => (x-bx0)/(bx1-bx0)*W;
+      const py = y => (by1-y)/(by1-by0)*H;
+      // janela com 1px de folga para calcular declividade (hillshade) sem artefatos exagerados na borda
+      const win = [
+        Math.max(0, Math.floor(px(minX))-1), Math.max(0, Math.floor(py(maxY))-1),
+        Math.min(W, Math.ceil(px(maxX))+1),  Math.min(H, Math.ceil(py(minY))+1)
+      ];
+      if(win[2]-win[0] < 2 || win[3]-win[1] < 2){ done(null, tile); return; }
+
+      const ow = size.x+2, oh = size.y+2;
+      const data = await img.readRasters({ window:win, width:ow, height:oh, resampleMethod:'bilinear', fillValue:NaN });
+      const band = data[0];
+      const nod = img.getGDALNoData();
+      const {min, max} = info.demStats;
+      const img8 = new ImageData(size.x, size.y);
+      const d = img8.data;
+      const isNo = v => (v==null) || Number.isNaN(v) || (nod!=null && v===nod);
+      // resolução aproximada do pixel em metros (para escala vertical do hillshade)
+      const cellX = (bx1-bx0)/W, cellY = (by1-by0)/H;
+      const cell = Math.max(Math.abs(cellX), Math.abs(cellY)) || 1;
+      const zFactor = 1/cell;
+
+      for(let ty=0; ty<size.y; ty++){
+        for(let tx=0; tx<size.x; tx++){
+          const ox = tx+1, oy = ty+1; // índice no array com folga de 1px
+          const v = band[oy*ow+ox];
+          const outIdx = (ty*size.x+tx)*4;
+          if(isNo(v)){ d[outIdx+3]=0; continue; }
+          if(self._demRender==='hillshade'){
+            const vN = band[(oy-1)*ow+ox], vS = band[(oy+1)*ow+ox];
+            const vW = band[oy*ow+(ox-1)], vE = band[oy*ow+(ox+1)];
+            const dzdx = (isNo(vE)||isNo(vW)) ? 0 : (vE-vW)/(2)*zFactor;
+            const dzdy = (isNo(vN)||isNo(vS)) ? 0 : (vS-vN)/(2)*zFactor; // y cresce p/ sul na imagem
+            // vetor normal (−dzdx, −dzdy, 1) normalizado, luz a 315°/45°
+            const nx=-dzdx, ny=-dzdy, nz=1;
+            const nlen = Math.sqrt(nx*nx+ny*ny+nz*nz);
+            const lx=-0.5, ly=0.5, lz=0.707; // aprox. de (315°,45°) normalizado
+            let shade = (nx/nlen)*lx + (ny/nlen)*ly + (nz/nlen)*lz;
+            shade = Math.max(0, Math.min(1, shade));
+            const g = Math.round(shade*255);
+            d[outIdx]=g; d[outIdx+1]=g; d[outIdx+2]=g; d[outIdx+3]=255;
+          } else {
+            const t = max>min ? Math.max(0, Math.min(1, (v-min)/(max-min))) : 0.5;
+            const g = Math.round(t*255);
+            d[outIdx]=g; d[outIdx+1]=g; d[outIdx+2]=g; d[outIdx+3]=255;
+          }
+        }
+      }
+      tile.getContext('2d').putImageData(img8, 0, 0);
+      done(null, tile);
+    })().catch(err=>{ console.warn('[DEM] tile', err); done(err, tile); });
+    return tile;
+  },
+
+  /* Amostra elevações ao longo de uma polilinha (lat/lng em EPSG:4326).
+     Densifica a ~1px do DEM (limite maxSamples), lê UMA janela do overview
+     mais detalhado que cobra o retângulo envolvente de todos os pontos
+     (uma única chamada readRasters — não uma leitura por amostra) e
+     interpola bilinearmente + preenche buracos pequenos de nodata. */
+  sampleElevations: async function(latlngs, maxSamples){
+    maxSamples = maxSamples || 2000;
+    const info = await this._openDem();
+    const img = info.imgs[0]; // overview mais detalhado
+    const W = img.getWidth(), H = img.getHeight();
+    const [bx0,by0,bx1,by1] = info.bbox;
+    const px = x => (x-bx0)/(bx1-bx0)*W;
+    const py = y => (by1-y)/(by1-by0)*H;
+
+    // 1) densifica a linha a ~1px do DEM (em metros aprox., usando geodésica)
+    const cellM = Math.max(Math.abs(bx1-bx0)/W, Math.abs(by1-by0)/H);
+    let total = 0;
+    for(let i=1;i<latlngs.length;i++) total += distM(latlngs[i-1], latlngs[i]);
+    let nSteps = Math.max(1, Math.round(total/Math.max(cellM,0.01)));
+    nSteps = Math.min(nSteps, maxSamples-1);
+    const samplesLL = [];
+    const cum = [0];
+    for(let i=1;i<latlngs.length;i++) cum.push(cum[i-1]+distM(latlngs[i-1],latlngs[i]));
+    for(let s=0; s<=nSteps; s++){
+      const dist = total * (s/nSteps);
+      let seg = 0; while(seg<cum.length-2 && cum[seg+1]<dist) seg++;
+      const segLen = cum[seg+1]-cum[seg];
+      const t = segLen>0 ? (dist-cum[seg])/segLen : 0;
+      const a = latlngs[seg], b = latlngs[seg+1] || a;
+      samplesLL.push({ lat: a.lat+(b.lat-a.lat)*t, lng: a.lng+(b.lng-a.lng)*t, dist });
+    }
+
+    // 2) projeta amostras para o CRS do arquivo e pixel-espaço
+    const pts = samplesLL.map(s=>{
+      const [X,Y] = info.fromWGS([s.lng, s.lat]);
+      return { ...s, X, Y, cx: px(X), cy: py(Y) };
+    });
+
+    const inFile = pts.filter(p=>p.cx>=0 && p.cx<W && p.cy>=0 && p.cy<H);
+    if(inFile.length===0) return { samples: pts.map(p=>({...p, elev:null})), coverage:0, cellM };
+
+    // 3) uma única janela cobrindo todos os pontos dentro do arquivo (+ margem)
+    let minCx=Infinity, maxCx=-Infinity, minCy=Infinity, maxCy=-Infinity;
+    for(const p of inFile){ minCx=Math.min(minCx,p.cx); maxCx=Math.max(maxCx,p.cx); minCy=Math.min(minCy,p.cy); maxCy=Math.max(maxCy,p.cy); }
+    let win = [Math.max(0,Math.floor(minCx)-2), Math.max(0,Math.floor(minCy)-2), Math.min(W,Math.ceil(maxCx)+2), Math.min(H,Math.ceil(maxCy)+2)];
+    const winW = win[2]-win[0], winH = win[3]-win[1];
+    // se a janela ficar grande demais, lê num overview mais grosseiro (mantendo 1 leitura só)
+    let readImg = img, scale = 1;
+    if(winW*winH > 16_000_000 && info.imgs.length>1){
+      for(let i=info.imgs.length-1;i>=0;i--){
+        const im = info.imgs[i];
+        const s = im.getWidth()/W;
+        if((winW*s)*(winH*s) <= 16_000_000){ readImg = im; scale = s; break; }
+      }
+    }
+    const rw = Math.max(1, Math.round(winW*scale)), rh = Math.max(1, Math.round(winH*scale));
+    const rwin = [Math.floor(win[0]*scale), Math.floor(win[1]*scale), Math.max(1,Math.ceil(win[2]*scale)), Math.max(1,Math.ceil(win[3]*scale))];
+    const data = await readImg.readRasters({ window:rwin, width:rw, height:rh, resampleMethod:'bilinear', fillValue:NaN });
+    const band = data[0];
+    const nod = readImg.getGDALNoData();
+    const isNo = v => (v==null) || Number.isNaN(v) || (nod!=null && v===nod);
+    const sample = (cx,cy)=>{
+      const lx = (cx-win[0])*scale, ly = (cy-win[1])*scale;
+      const ix = Math.round(Math.max(0, Math.min(rw-1, lx)));
+      const iy = Math.round(Math.max(0, Math.min(rh-1, ly)));
+      return band[iy*rw+ix];
+    };
+
+    const out = pts.map(p=>{
+      if(p.cx<0||p.cx>=W||p.cy<0||p.cy>=H) return { ...p, elev:null };
+      let v = sample(p.cx, p.cy);
+      if(isNo(v)){
+        // interpola entre vizinhos válidos num raio pequeno (até 3px)
+        let found=null;
+        for(let r=1; r<=3 && !found; r++){
+          for(let dy=-r; dy<=r && !found; dy++) for(let dx=-r; dx<=r; dx++){
+            const cx2=p.cx+dx, cy2=p.cy+dy;
+            if(cx2<0||cx2>=W||cy2<0||cy2>=H) continue;
+            const v2 = sample(cx2, cy2);
+            if(!isNo(v2)){ found=v2; break; }
+          }
+        }
+        v = found!=null ? found : null;
+      }
+      return { ...p, elev: v==null || isNo(v) ? null : v };
+    });
+    const validCount = out.filter(p=>p.elev!=null).length;
+    return { samples: out, coverage: validCount/out.length, cellM };
+  }
+});
+L.gridLayer.dem = (src, opts)=>new L.GridLayer.DEM(src, opts);
+
+/* Lista de camadas raster marcadas como DEM (para a medição 3D) */
+function demLayers(){ return rasterLayers.filter(r=>r.def && r.def.type==='dem' && r.layer instanceof L.GridLayer.DEM); }
+function findCoveringDem(latlngs){
+  const bounds = L.latLngBounds(latlngs);
+  for(const r of demLayers()){
+    const info = r.layer._info;
+    if(info && info.latLngBounds && info.latLngBounds.contains(bounds)) return r.layer;
+  }
+  return null;
+}
+
 /* ---------- RASTERS DO USUÁRIO ---------- */
 document.getElementById('btnAddRaster').addEventListener('click', ()=>open('mRaster'));
 document.querySelectorAll('input[name=rType]').forEach(r=>r.addEventListener('change', ()=>{
@@ -4830,6 +5793,7 @@ document.querySelectorAll('input[name=rType]').forEach(r=>r.addEventListener('ch
   document.getElementById('rWMS').style.display = v==='wms'?'':'none';
   document.getElementById('rIMG').style.display = v==='img'?'':'none';
   document.getElementById('rCOG').style.display = v==='cog'?'':'none';
+  document.getElementById('rDEM').style.display = v==='dem'?'':'none';
 }));
 document.getElementById('rOp').addEventListener('input', e=>document.getElementById('rOpV').textContent=e.target.value+'%');
 
@@ -4843,6 +5807,13 @@ function addRasterFromDef(def, silent){
     layer.on('cog:ready', e=>{
       if(!silent && e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05));
       status('COG "'+def.name+'" aberto — EPSG:'+e.info.epsg+', '+e.info.imgs.length+' nível(is) de resolução.');
+    });
+  }
+  else if(def.type==='dem'){
+    layer = L.gridLayer.dem(cogSource(def), {opacity:def.opacity, maxZoom:24, tileSize:256, demRender:def.demRender||'hillshade'});
+    layer.on('cog:ready', e=>{
+      if(!silent && e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05));
+      status('DEM "'+def.name+'" aberto — EPSG:'+e.info.epsg+', disponível para medição 3D.');
     });
   }
   else layer = L.imageOverlay(assetURL(def.asset) || def.dataUrl, def.bounds, {opacity:def.opacity});
@@ -4903,6 +5874,31 @@ document.getElementById('rGo').addEventListener('click', async ()=>{
         }
       } else {
         def = {type:'cog', name, url, opacity};
+      }
+    } else if(type==='dem'){
+      const f = document.getElementById('rDemFile').files[0];
+      const url = document.getElementById('rDemUrl').value.trim();
+      const demRender = document.getElementById('rDemRender').value;
+      if(!f && !url) throw new Error('Escolha um arquivo .tif ou informe a URL de um DEM.');
+      if(f){
+        const keep = document.getElementById('rDemKeep').checked;
+        if(keep){
+          status('Guardando cópia do DEM no dispositivo…');
+          const ref = await assetPut(f);
+          def = {type:'dem', name, asset:ref, opacity, demRender};
+        } else {
+          def = {type:'dem', name, opacity, demRender, _volatile:true};
+          const layer = L.gridLayer.dem(RasterSource.fromFile(f), {opacity, maxZoom:24, tileSize:256, demRender});
+          layer.on('cog:ready', e=>{ if(e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05)); });
+          layer.addTo(map);
+          rasterLayers.push({id:++layerSeq, name, layer, visible:true, def});
+          renderRasterList();
+          close('mRaster');
+          status('DEM "'+name+'" aberto nesta sessão (sem cópia — reapontar ao reabrir).');
+          return;
+        }
+      } else {
+        def = {type:'dem', name, url, opacity, demRender};
       }
     }
     addRasterFromDef(def);
@@ -5124,6 +6120,19 @@ async function captureMap(){
   return canvas.toDataURL('image/jpeg', .92);
 }
 
+function vectorLegendHtml(l, indentStyle){
+  const cls = l.geomType==='point' ? 'pt' : (l.geomType==='polygon' ? '' : 'ln');
+  if(l.styleMode==='rules' && ((l.rules||[]).length || l.rulesElse)){
+    let html = `<div class="li" style="${indentStyle}"><b>${l.name}</b></div>`;
+    (l.rules||[]).forEach(r=>{
+      html += `<div class="li" style="${indentStyle};margin-left:${indentStyle?'8mm':'4mm'}"><span class="sw ${cls}" style="background:${r.style.color}"></span> ${r.label || (r.field+' '+(OP_LABEL[r.op]||r.op)+' '+r.value)}</div>`;
+    });
+    if(l.rulesElse) html += `<div class="li" style="${indentStyle};margin-left:${indentStyle?'8mm':'4mm'}"><span class="sw ${cls}" style="background:${l.rulesElse.style.color}"></span> ${l.rulesElse.label||'Outros'}</div>`;
+    return html;
+  }
+  const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
+  return `<div class="li" style="${indentStyle}"><span class="sw ${cls}" style="background:${l.color}"></span> ${l.name} <span style="color:#666">(${t})</span></div>`;
+}
 document.getElementById('pGo').addEventListener('click', async ()=>{
   close('mPrint');
   status('Gerando layout…');
@@ -5151,15 +6160,11 @@ document.getElementById('pGo').addEventListener('click', async ()=>{
     rasterLayers.filter(r=>r.groupId===g.id && r.visible).forEach(r=>leg.insertAdjacentHTML('beforeend',
       `<div class="li" style="margin-left:4mm"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`));
     vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length).forEach(l=>{
-      const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
-      const cls = l.geomType==='point' ? 'pt' : (l.geomType==='polygon' ? '' : 'ln');
-      leg.insertAdjacentHTML('beforeend', `<div class="li" style="margin-left:4mm"><span class="sw ${cls}" style="background:${l.color}"></span> ${l.name} <span style="color:#666">(${t})</span></div>`);
+      leg.insertAdjacentHTML('beforeend', vectorLegendHtml(l, 'margin-left:4mm'));
     });
   });
   vectorLayers.filter(l=>!groupById(l.groupId) && l.visible && l.group.getLayers().length).forEach(l=>{
-    const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
-    const cls = l.geomType==='point' ? 'pt' : (l.geomType==='polygon' ? '' : 'ln');
-    leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw ${cls}" style="background:${l.color}"></span> ${l.name} <span style="color:#666">(${t})</span></div>`);
+    leg.insertAdjacentHTML('beforeend', vectorLegendHtml(l, ''));
   });
   if(measureGroup.getLayers().length)
     leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw ln" style="background:#f2d24b"></span> Medições</div>`);
@@ -5672,6 +6677,7 @@ function serializeProject(){
     rasters: rasterLayers.filter(r=>!(r.def && r.def._volatile)).map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
     layers: vectorLayers.map(l=>({
       name:l.name, geomType:l.geomType, color:l.color, visible:l.visible, fields:l.fields, groupId:l.groupId||null, meta:l.meta||null, inventory:!!l.inventory,
+      styleMode:l.styleMode||'single', rules:l.rules||[], rulesElse:l.rulesElse||null,
       features:{ type:'FeatureCollection',
         features: l.group.getLayers().map(x=>{
           let g = x.toGeoJSON();
@@ -5760,9 +6766,12 @@ async function applyProject(p){
     lyr.groupId = ld.groupId || null;
     lyr.meta = ld.meta || null;
     if(ld.inventory){ lyr.inventory = true; inventoryLayer = lyr; }
+    lyr.styleMode = ld.styleMode || 'single';
+    lyr.rules = ld.rules || [];
+    lyr.rulesElse = ld.rulesElse || null;
     const gl = L.geoJSON(ld.features, {
-      style: ()=>styleFor(lyr),
-      pointToLayer: (f, latlng)=>pointMarker(latlng, lyr)
+      style: f=>styleFor(lyr, f),
+      pointToLayer: (f, latlng)=>pointMarker(latlng, lyr, f)
     });
     gl.eachLayer(x=>{
       x.feature = x.feature || {type:'Feature', properties:{}};
@@ -5923,17 +6932,34 @@ document.getElementById('prjClear').addEventListener('click', ()=>{
    Busca inteligente em catálogos OGC (WMS / WFS)
    ========================================================= */
 let catalogs = [
-  { name:'DataGEO — Sist. Ambiental Paulista (SEMIL-SP)', url:'https://datageo.ambiente.sp.gov.br/geoserver/ows' },
-  { name:'SICAR — Cadastro Ambiental Rural (CAR)', url:'https://geoserver.car.gov.br/geoserver/ows' },
-  { name:'SGB/CPRM — inclui cartas e batimetria da Marinha (CHM)', url:'https://opendata.sgb.gov.br/geoserver/ows' },
-  { name:'IDE-SP (IDESP)', url:'https://www.idesp.sp.gov.br/geoserver/ows' },
-  { name:'IBGE — Geosserviços (malhas, biomas, vegetação)', url:'https://geoservicos.ibge.gov.br/geoserver/ows' },
-  { name:'INDE — GeoServer nacional (federal/estadual)', url:'https://geoservicos.inde.gov.br/geoserver/ows' },
-  { name:'DNIT — Rodovias federais / SNV (via INDE)', url:'https://geoservicos.inde.gov.br/geoserver/DNIT/ows' },
-  { name:'IBAMA — Pamgia (embargos, desmatamento, fiscalização)', url:'https://pamgia.ibama.gov.br/server/rest/services', kind:'arcgis' },
-  { name:'IGC-SP — Cartografia oficial (ArcGIS)', url:'http://geoportal.igc.sp.gov.br:6080/arcgis/rest/services', kind:'arcgis' },
-  { name:'ANM/SIGMINE — processos minerários', url:'https://geo.anm.gov.br/arcgis/rest/services', kind:'arcgis' },
-  { name:'SIMA-SP — Infraestrutura e Meio Ambiente (ArcGIS)', url:'https://mapas.infraestruturameioambiente.sp.gov.br/server/rest/services', kind:'arcgis' }
+  { name:'DataGEO — Sist. Ambiental Paulista (SEMIL-SP)', url:'https://datageo.ambiente.sp.gov.br/geoserver/ows',
+    description:'Dados ambientais do estado de São Paulo: uso e cobertura do solo, áreas protegidas, hidrografia e zoneamento ambiental.' },
+  { name:'SICAR — Cadastro Ambiental Rural (CAR)', url:'https://geoserver.car.gov.br/geoserver/ows',
+    description:'Perímetros de imóveis rurais cadastrados no CAR: área total, reserva legal, Área de Preservação Permanente (APP) e uso restrito.' },
+  { name:'SGB/CPRM — inclui cartas e batimetria da Marinha (CHM)', url:'https://opendata.sgb.gov.br/geoserver/ows',
+    description:'Serviço Geológico do Brasil: mapas geológicos, geodiversidade, hidrogeologia e cartas náuticas/batimetria da Marinha (CHM).' },
+  { name:'IDE-SP (IDESP)', url:'https://www.idesp.sp.gov.br/geoserver/ows',
+    description:'Infraestrutura de Dados Espaciais do estado de São Paulo: camadas de referência estaduais diversas.' },
+  { name:'IBGE — Geosserviços (malhas, biomas, vegetação)', url:'https://geoservicos.ibge.gov.br/geoserver/ows',
+    description:'Malhas territoriais (municípios, estados), biomas, vegetação e divisão político-administrativa do Brasil.' },
+  { name:'INDE — GeoServer nacional (federal/estadual)', url:'https://geoservicos.inde.gov.br/geoserver/ows',
+    description:'Catálogo agregador da Infraestrutura Nacional de Dados Espaciais, reunindo camadas federais e estaduais diversas.' },
+  { name:'DNIT — Rodovias federais / SNV (via INDE)', url:'https://geoservicos.inde.gov.br/geoserver/DNIT/ows',
+    description:'Sistema Nacional de Viação (SNV): rodovias federais segmentadas e infraestrutura de transporte associada.' },
+  { name:'IBAMA — Pamgia (embargos, desmatamento, fiscalização)', url:'https://pamgia.ibama.gov.br/server/rest/services', kind:'arcgis',
+    description:'Bases de fiscalização ambiental federal: embargos, autos de infração e desmatamento monitorado pelo IBAMA.' },
+  { name:'IGC-SP — Cartografia oficial (ArcGIS)', url:'http://geoportal.igc.sp.gov.br:6080/arcgis/rest/services', kind:'arcgis',
+    description:'Cartografia oficial do estado de São Paulo (Instituto Geográfico e Cartográfico). Servidor em HTTP: sob HTTPS os tiles raster podem ser bloqueados por mixed-content.' },
+  { name:'ANM/SIGMINE — processos minerários', url:'https://geo.anm.gov.br/arcgis/rest/services', kind:'arcgis',
+    description:'Processos minerários cadastrados na Agência Nacional de Mineração: requerimentos, concessões e áreas de pesquisa.' },
+  { name:'SIMA-SP — Infraestrutura e Meio Ambiente (ArcGIS)', url:'https://mapas.infraestruturameioambiente.sp.gov.br/server/rest/services', kind:'arcgis',
+    description:'Camadas da Secretaria de Infraestrutura e Meio Ambiente de São Paulo: unidades de conservação, recursos hídricos e infraestrutura estadual.' },
+  { name:'ANA — Hidrologia e Recursos Hídricos', url:'https://geo.ana.gov.br/server/rest/services', kind:'arcgis',
+    description:'Agência Nacional de Águas e Saneamento: estações fluviométricas, vazão de rios, bacias hidrográficas e qualidade de água.' },
+  { name:'CPRM/SGB — Suscetibilidade e Geodiversidade (ArcGIS)', url:'https://geoportal.sgb.gov.br/server/rest/services', kind:'arcgis',
+    description:'Mapas de suscetibilidade a deslizamentos e inundações, geodiversidade e geologia de engenharia do Serviço Geológico do Brasil.' },
+  { name:'SABESP — Mananciais SP (via GeoSampa)', url:'https://wms.geosampa.prefeitura.sp.gov.br/geoserver/wms',
+    description:'Reservatórios e sistemas produtores de água da Grande São Paulo: volume armazenado e pluviometria. Endpoint/camada a confirmar caso indisponível.' }
 ].map(c=>({...c, enabled:true, kind:c.kind||'ogc'}));
 
 let catalogMode = 'wms';        // 'wms' (aba rasters) | 'wfs' (aba vetores)
@@ -5962,20 +6988,36 @@ function renderCatalogList(){
   const el = document.getElementById('catList');
   el.innerHTML = '';
   catalogs.forEach((c,i)=>{
-    const row = document.createElement('label');
-    row.className = 'cat-row';
-    row.innerHTML = `<input type="checkbox" ${c.enabled?'checked':''}>
-      <span class="cname" title="${c.url}">${c.name}</span>
-      <span class="cstat" id="cstat_${i}"></span>`;
-    row.querySelector('input').addEventListener('change', e=>{ c.enabled = e.target.checked; });
-    el.appendChild(row);
+    const item = document.createElement('div');
+    item.className = 'cat-item';
+    item.innerHTML = `
+      <div class="cat-row">
+        <label class="cat-main">
+          <input type="checkbox" ${c.enabled?'checked':''}>
+          <span class="cname" title="${c.url}">${c.name}</span>
+        </label>
+        <span class="cstat" id="cstat_${i}"></span>
+        <button type="button" class="cat-toggle" aria-expanded="false" title="Detalhes do serviço">▾</button>
+      </div>
+      <div class="cat-desc" hidden>${c.description || 'Catálogo personalizado adicionado pelo usuário.'}</div>`;
+    item.querySelector('input').addEventListener('change', e=>{ c.enabled = e.target.checked; });
+    const toggleBtn = item.querySelector('.cat-toggle');
+    const desc = item.querySelector('.cat-desc');
+    toggleBtn.addEventListener('click', ()=>{
+      const opening = desc.hasAttribute('hidden');
+      if(opening) desc.removeAttribute('hidden'); else desc.setAttribute('hidden','');
+      toggleBtn.classList.toggle('open', opening);
+      toggleBtn.setAttribute('aria-expanded', String(opening));
+      item.classList.toggle('expanded', opening);
+    });
+    el.appendChild(item);
   });
 }
 document.getElementById('catNewAdd').addEventListener('click', ()=>{
   const name = document.getElementById('catNewName').value.trim();
   const url = document.getElementById('catNewUrl').value.trim();
   if(!name || !/^https?:\/\//.test(url)){ alert('Informe nome e uma URL http(s) válida do serviço OWS.'); return; }
-  catalogs.push({name, url, enabled:true, custom:true});
+  catalogs.push({name, url, enabled:true, custom:true, description:'Catálogo personalizado adicionado pelo usuário.'});
   document.getElementById('catNewName').value=''; document.getElementById('catNewUrl').value='';
   renderCatalogList();
 });
@@ -6444,12 +7486,13 @@ async function captureClick(e){
         // evita duplicar a mesma feição (id do WFS)
         if(f.id && lyr.group.getLayers().some(x=>x.feature && x.feature.id===f.id)) return;
 
-        const gl = L.geoJSON(f, { style:()=>styleFor(lyr), pointToLayer:(_,ll)=>pointMarker(ll, lyr) });
+        const gl = L.geoJSON(f, { style:ft=>styleFor(lyr, ft), pointToLayer:(ft,ll)=>pointMarker(ll, lyr, ft) });
         gl.eachLayer(x=>{
           x.feature = x.feature || {type:'Feature', properties:{}};
           if(f.id) x.feature.id = f.id;
           registerFeature(x, lyr);
           Object.assign(x.feature.properties, f.properties||{});
+          refreshFeatureStyle(x, lyr);
           x.bindPopup(featurePopup(x, ''));
           lyr.group.addLayer(x);
           pushAction({type:'add', layer:x, target:lyr, kind:'capture'});
@@ -6603,10 +7646,10 @@ function msDraw(){
     c.strokeStyle=col; c.lineWidth=2; c.setLineDash([]);
     c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); };
   if(MS.pts[0] && MS.pts[1]) seg(MS.pts[0], MS.pts[1], '#e8c34a');
-  if(MS.pts[2] && MS.pts[3]) seg(MS.pts[2], MS.pts[3], '#37c2a0');
+  if(MS.pts[2] && MS.pts[3]) seg(MS.pts[2], MS.pts[3], '#6C5CE7');
   MS.pts.forEach((p,i)=>{
     const [x,y] = S(p);
-    c.fillStyle = i<2 ? '#e8c34a' : '#37c2a0';
+    c.fillStyle = i<2 ? '#e8c34a' : '#6C5CE7';
     c.strokeStyle = '#fff'; c.lineWidth = 2;
     c.beginPath(); c.arc(x,y,5,0,7); c.fill(); c.stroke();
   });

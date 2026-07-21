@@ -241,20 +241,20 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* Barra de finalização do desenho */
-#drawBar{
+#drawBar, #gpsDrawBar{
   position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:1300;
   display:none; align-items:center; gap:8px; padding:8px 10px;
   background:var(--panel); border:1px solid var(--accent); border-radius:999px;
   box-shadow:0 8px 30px var(--shadow-strong);
 }
-#drawBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
-#drawBar button{height:32px; border-radius:999px}
+#drawBar .db-msg, #gpsDrawBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
+#drawBar button, #gpsDrawBar button{height:32px; border-radius:999px}
 @media (max-width:760px){
-  #drawBar{
+  #drawBar, #gpsDrawBar{
     bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom));
     left:8px; right:8px; width:auto; transform:none; justify-content:center;
   }
-  #drawBar .db-msg{display:none}
+  #drawBar .db-msg, #gpsDrawBar .db-msg{display:none}
 }
 .layer-row{
   display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:4px;
@@ -289,6 +289,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .tool.active{background:var(--accent); color:var(--on-accent)}
 #btnLocate.active{background:#4f9cf0; color:#fff}
 #btnLocate.locating, #btnTreeGps.locating{color:#4f9cf0; animation:gpsPulse 1s ease-in-out infinite}
+#btnTrackRec.active{background:var(--danger); color:#fff; animation:gpsPulse 1s ease-in-out infinite}
 @keyframes gpsPulse{0%,100%{opacity:1}50%{opacity:.35}}
 #stGps b{color:#4f9cf0}
 /* position:fixed escapa do overflow da barra (que recorta em X por causa do
@@ -463,6 +464,17 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #atWrap{overflow:auto; max-height:60vh; border:1px solid var(--line); border-radius:10px; -webkit-overflow-scrolling:touch}
 @supports (max-height:60dvh){ #atWrap{max-height:60dvh} }
 #atTable{border-collapse:collapse; width:100%; font-size:12.5px; min-width:520px}
+#atTable tbody tr{cursor:pointer}
+#atTable tbody tr.row-selected td{background:var(--accent-soft)}
+#atTable tbody tr.row-selected td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+/* Painel minimizado: ao localizar uma feição no mapa (mobile), reduz a tabela para revelar o mapa por trás */
+.modal-back.at-mini{background:transparent; pointer-events:none; transition:background .25s}
+.modal-back.at-mini .modal{pointer-events:auto}
+@media (max-width:760px){
+  .modal-back.at-mini{align-items:flex-end}
+  .modal-back.at-mini .modal.wide{max-height:32vh; transition:max-height .25s}
+  .modal-back.at-mini #atWrap{max-height:16vh}
+}
 #atTable th{
   position:sticky; top:0; background:var(--panel2); color:var(--muted); text-align:left;
   padding:8px 10px; font-size:11px; letter-spacing:.8px; text-transform:uppercase;
@@ -481,6 +493,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #atTable td.num{color:var(--muted); font-variant-numeric:tabular-nums}
 #atTable td.geo{color:var(--muted); font-size:11.5px}
 #atStats{font-size:12px; color:var(--muted); margin:10px 2px 0}
+#histList{overflow:auto; max-height:60vh; -webkit-overflow-scrolling:touch}
+@supports (max-height:60dvh){ #histList{max-height:60dvh} }
+.hist-item{display:flex; flex-direction:column; gap:2px; padding:9px 10px; border-bottom:1px solid var(--line)}
+.hist-item:last-child{border-bottom:none}
+.hist-item .hist-label{font-size:13px; color:var(--text)}
+.hist-item .hist-meta{font-size:11px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap}
+.hist-item .hist-time{font-variant-numeric:tabular-nums}
+.hist-item.hist-del .hist-label{color:var(--danger)}
 
 /* ---------- Responsivo ---------- */
 #panelToggle{display:flex}
@@ -525,6 +545,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   #north{bottom:auto; top:60px; right:12px; transform:scale(.8); z-index:1099}
   #statusbar{gap:10px; font-size:11px; padding-bottom:env(safe-area-inset-bottom); height:calc(30px + env(safe-area-inset-bottom))}
   #stScale{display:none}
+  /* a toolbar vira faixa no rodapé neste breakpoint — a bolinha da cortina sobe para não ficar atrás dela */
+  #cmpDivider.active .cmp-grip{bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom))}
 }
 
 /* ===== Celular estreito (≤380px): compacta ainda mais ===== */
@@ -550,9 +572,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   .tool-sep{width:1px; height:24px; margin:4px 2px}
   #panel{top:56px; bottom:auto; max-height:calc(100vh - 150px); width:260px}
   #north{display:none}
-  #drawBar{bottom:calc(var(--tbH, 56px) + 42px + env(safe-area-inset-bottom))}
+  #drawBar, #gpsDrawBar{bottom:calc(var(--tbH, 56px) + 42px + env(safe-area-inset-bottom))}
   #topbar{height:46px}
   #statusbar{height:calc(26px + env(safe-area-inset-bottom)); font-size:10.5px}
+  #cmpDivider.active .cmp-grip{bottom:calc(var(--tbH, 56px) + 42px + env(safe-area-inset-bottom))}
 }
 
 /* ---------- Print layout ---------- */
@@ -643,6 +666,38 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .ms-res{font-size:13px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:var(--panel2); line-height:1.6}
 .ms-res .ms-h{font-size:22px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums}
 .ms-res small{color:var(--muted)}
+
+/* ---------- Comparar (cortina/swipe) ---------- */
+#cmpDivider{
+  position:absolute; top:0; bottom:0; left:50%; width:44px; margin-left:-22px;
+  z-index:1000; cursor:ew-resize; touch-action:none; display:none;
+}
+#cmpDivider.active{display:block}
+#cmpDivider::before{
+  content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; margin-left:-1px;
+  background:var(--accent); box-shadow:0 0 6px var(--shadow-strong);
+}
+#cmpDivider .cmp-grip{
+  position:absolute; left:50%; bottom:40px; top:auto; width:24px; height:24px; margin:0 0 0 -12px;
+  background:none; color:#fff; opacity:.6;
+  display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700;
+  text-shadow:0 1px 3px var(--shadow-strong), 0 0 4px var(--shadow-strong);
+  user-select:none; transition:opacity .15s;
+}
+#cmpDivider:hover .cmp-grip, #cmpDivider:active .cmp-grip{ opacity:1 }
+/* deslocadas do controle de zoom (esq.) e da bússola/toolbar (dir.), que
+   ocupam essas mesmas quinas em todas as larguras de tela */
+.cmp-tag{
+  position:absolute; top:58px; z-index:999;
+  font-size:11px; color:var(--text); background:rgba(12,17,22,.38); backdrop-filter:blur(2px);
+  border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:3px 10px;
+  display:none; pointer-events:none; white-space:nowrap; max-width:40vw; overflow:hidden;
+  text-overflow:ellipsis; opacity:.8; letter-spacing:.2px;
+}
+:root[data-theme="light"] .cmp-tag{ background:rgba(255,255,255,.5); border-color:rgba(0,0,0,.08) }
+.cmp-tag.active{display:block}
+#cmpLabelL{left:50px}
+#cmpLabelR{right:90px; text-align:right}
 
 /* ---------- Módulo de inventário arbóreo ---------- */
 .tree-photo-box{border:2px dashed var(--line); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:.15s; background:var(--panel2)}
@@ -743,6 +798,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.5"/></svg>
     <span class="lbl">Atributos</span>
   </button>
+    <button class="menu-item tb-btn" id="btnHistory" title="Histórico de ações da sessão">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/><polyline points="12 7 12 12 16 14"/></svg>
+    <span class="lbl">Histórico</span>
+  </button>
     <button class="menu-item tb-btn" id="btnImport" title="Importar dados">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     <span class="lbl">Importar</span>
@@ -792,25 +851,27 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg><span class="tip">Recolher barra</span>
   </button>
   <div class="tool-sep"></div>
+  <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 9.9a.6.6 0 0 0 .05 1.13l7.3 2.82 2.82 7.3a.6.6 0 0 0 1.13.05z"/><path d="M21.5 2.5 10.15 13.85"/></svg><span class="tip">Onde estou (GPS)</span></button>
   <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
   <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
   <button class="tool" data-tool="tree"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><path d="M9 10.5l3 3 3-3"/></svg><span class="tip">Árvore — registrar por toque no mapa</span></button>
   <button class="tool" id="btnTreeGps"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><circle cx="12" cy="10.2" r="1.6" fill="currentColor" stroke="none"/></svg><span class="tip">Árvore — registrar na minha posição (GPS)</span></button>
   <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
+  <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster</span></button>
   <div class="tool-sep"></div>
+  <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
   <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
   <button class="tool" data-tool="curve"><svg viewBox="0 0 24 24"><path d="M3 20c6 0 4-14 10-14 4 0 5 5 8 5"/><circle cx="3" cy="20" r="1.6"/><circle cx="21" cy="11" r="1.6"/></svg><span class="tip">Curva suavizada</span></button>
   <button class="tool" data-tool="polygon"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/><circle cx="21" cy="9" r="1.4" fill="currentColor"/><circle cx="3" cy="9" r="1.4" fill="currentColor"/></svg><span class="tip">Polígono (ponto a ponto)</span></button>
+  <button class="tool" data-tool="gpsdraw"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4c0 3.2 4 7.5 4 7.5s4-4.3 4-7.5a4 4 0 0 0-4-4z"/><circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none"/><path d="M4 20 12 14.5 20 20" stroke-dasharray="2 3"/></svg><span class="tip">Desenhar por GPS (vértices pela posição atual)</span></button>
   <div class="tool-sep"></div>
   <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><path d="M3 17 21 7"/><path d="M5 14v4M9 12v4M13 10v4M17 8v4"/></svg><span class="tip">Medir distância</span></button>
   <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/><path d="M8 6v3M12 6v3M16 6v3"/></svg><span class="tip">Medir área</span></button>
   <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
-  <div class="tool-sep"></div>
-  <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 9.9a.6.6 0 0 0 .05 1.13l7.3 2.82 2.82 7.3a.6.6 0 0 0 1.13.05z"/><path d="M21.5 2.5 10.15 13.85"/></svg><span class="tip">Onde estou (GPS)</span></button>
-  <div class="tool-sep"></div>
-  <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="erase"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span class="tip">Apagar / limpar medições</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" id="btnTrackRec" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></svg><span class="tip">Gravar trilha GPS</span></button>
   <div class="tool-sep"></div>
   <button class="tool" id="btnUndo" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v1"/></svg><span class="tip">Desfazer (Ctrl+Z)</span></button>
   <button class="tool" id="btnRedo" disabled><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0-6 6v1"/></svg><span class="tip">Refazer (Ctrl+Y)</span></button>
@@ -824,6 +885,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tb-btn" id="dbVertex">↩ Vértice</button>
   <button class="tb-btn" id="dbCancel">Cancelar</button>
   <button class="tb-btn primary" id="dbFinish">✓ Concluir geometria</button>
+</div>
+
+<!-- ===== Barra: digitalização por GPS ===== -->
+<div id="gpsDrawBar">
+  <span class="db-msg" id="gdMsg">Vértices: <b id="gdCount">0</b> · Precisão: <b id="gdAcc">—</b></span>
+  <button class="tb-btn" id="gdCancel">Cancelar</button>
+  <button class="tb-btn" id="gdFinish">✓ Concluir</button>
+  <button class="tb-btn primary" id="gdVertex">+ Vértice</button>
 </div>
 
 <!-- ===== Modal: nova camada vetorial ===== -->
@@ -876,6 +945,22 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div class="actions">
       <button class="tb-btn" id="nlCancel">Cancelar</button>
       <button class="tb-btn primary" id="nlSave">Salvar camada</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: escolher tipo de geometria para digitalização por GPS ===== -->
+<div class="modal-back" id="mGpsDrawType">
+  <div class="modal">
+    <h3>Desenhar por GPS</h3>
+    <p class="sub">Escolha o tipo de geometria. A cada toque em "+ Vértice", sua posição GPS atual vira um vértice.</p>
+    <div class="radio-line">
+      <label><input type="radio" name="gpsDrawGeom" value="line" checked> Linha</label>
+      <label><input type="radio" name="gpsDrawGeom" value="polygon"> Polígono</label>
+    </div>
+    <div class="actions">
+      <button class="tb-btn" id="gpsDrawCancelStart">Cancelar</button>
+      <button class="tb-btn primary" id="gpsDrawStart">Iniciar</button>
     </div>
   </div>
 </div>
@@ -1198,6 +1283,16 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
 </div>
 
+<!-- ===== Modal: comparar (cortina/swipe) ===== -->
+<div class="modal-back" id="mCompare">
+  <div class="modal">
+    <h3>Comparar camadas</h3>
+    <p class="sub">Escolha a camada raster que ficará <b>do lado direito</b> da cortina. As demais camadas permanecem ao fundo, visíveis do lado esquerdo.</p>
+    <div id="cmpList"></div>
+    <div class="actions"><button class="tb-btn" id="cmpCancel">Cancelar</button></div>
+  </div>
+</div>
+
 <!-- ===== Modal: busca em catálogos ===== -->
 <div class="modal-back" id="mCatalog">
   <button class="tb-btn" style="position:absolute;right:15px;top:15px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;z-index:2001" data-close title="Fechar">✕</button>
@@ -1279,6 +1374,19 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div id="atStats"></div>
     <div class="actions">
       <button class="tb-btn" id="atSchema">☰ Editar atributos da camada</button>
+      <button class="tb-btn primary" data-close>Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: histórico de ações da sessão ===== -->
+<div class="modal-back" id="mHistory">
+  <div class="modal wide">
+    <h3>Histórico da sessão</h3>
+    <p class="sub">Registro cronológico das ações realizadas nesta sessão (desenho, exclusão e importação de feições). Serve como rastreabilidade — não permite reexecutar ações; use "Desfazer/Refazer" para isso.</p>
+    <div id="histList"><div class="empty-hint">Nenhuma ação registrada nesta sessão ainda.</div></div>
+    <div class="actions">
+      <button class="tb-btn" id="histExport">⬇ Exportar histórico (.json)</button>
       <button class="tb-btn primary" data-close>Fechar</button>
     </div>
   </div>
@@ -1970,11 +2078,13 @@ function buildRasterRow(r){
      <button class="icon-btn" title="Remover">✕</button>`;
   row.children[0].addEventListener('change', e=>{
     r.visible = e.target.checked;
+    if(!r.visible && CMP.active && CMP.layerRef===r) deactivate();
     r.visible ? map.addLayer(r.layer) : map.removeLayer(r.layer);
     scheduleSave();
   });
   row.querySelector('.info').addEventListener('click', ()=>{ r.expanded = !r.expanded; renderRasterList(); });
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
+    if(CMP.active && CMP.layerRef===r) deactivate();
     map.removeLayer(r.layer);
     rasterLayers.splice(rasterLayers.indexOf(r),1);
     renderRasterList();
@@ -2723,7 +2833,7 @@ document.getElementById('segConfirm').addEventListener('click', ()=>{
   poly.feature.properties.confianca_iou = +(segLastMask.score||0).toFixed(3);
   poly.bindPopup(featurePopup(poly));
   target.group.addLayer(poly);
-  pushAction({type:'add', layer:poly, target});
+  pushAction({type:'add', layer:poly, target, kind:'segment'});
   renderVectorList();
   status('Polígono da Segmentação IA salvo — confirme o tipo de objeto no formulário.');
   map.off('click', segMapClick);
@@ -3231,6 +3341,17 @@ function renderAttrTable(){
     renderVectorList();
   }));
 
+  // clique na linha (fora dos campos editáveis) -> localizar e destacar a feição no mapa
+  tbl.querySelectorAll('tbody tr[data-gaid]').forEach(tr=>{
+    tr.addEventListener('click', e=>{
+      if(e.target.closest('input,select,button,textarea,option,a')) return;
+      const reg = featReg.get(+tr.dataset.gaid); if(!reg) return;
+      tbl.querySelectorAll('tr.row-selected').forEach(x=>x.classList.remove('row-selected'));
+      tr.classList.add('row-selected');
+      focusFeatureOnMap(reg.layer, lyr);
+    });
+  });
+
   // estatísticas do rodapé
   let stats = feats.length + (feats.length===1?' feição':' feições');
   if(lyr.geomType==='polygon'){
@@ -3243,6 +3364,67 @@ function renderAttrTable(){
   document.getElementById('atStats').textContent = stats;
 }
 
+/* ---------- Clique na linha da tabela: localizar + destacar feição no mapa ---------- */
+function isMobileViewport(){ return window.matchMedia('(max-width:760px)').matches; }
+
+let atMiniTimer = null;
+function minimizeAttrTableTemporarily(ms){
+  if(!isMobileViewport()) return;
+  const back = document.getElementById('mTable');
+  if(!back.classList.contains('open')) return;
+  back.classList.add('at-mini');
+  clearTimeout(atMiniTimer);
+  atMiniTimer = setTimeout(()=>{ back.classList.remove('at-mini'); atMiniTimer=null; }, ms);
+}
+
+function currentAccentColor(){
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  return v || '#37c2a0';
+}
+
+/* anel pulsante temporário sobre um ponto (~2s), sem alterar o marcador da feição */
+function pulseAtPoint(latlng, accent){
+  const ring = L.circleMarker(latlng, {
+    radius:9, color:accent, weight:3, fillColor:accent, fillOpacity:.35, opacity:1, interactive:false
+  }).addTo(map);
+  const dur = 2000, t0 = performance.now();
+  function step(ts){
+    const el = ts - t0;
+    const p = (el % 500) / 500;
+    ring.setRadius(9 + p*13);
+    ring.setStyle({ opacity:1-p, fillOpacity:(1-p)*0.35 });
+    if(el < dur) requestAnimationFrame(step);
+    else map.removeLayer(ring);
+  }
+  requestAnimationFrame(step);
+}
+
+/* realce temporário de linha/polígono: cor de destaque + peso maior, restaura o estilo original via styleFor */
+function highlightPathTemporarily(l, lyr, accent){
+  if(l._gaHighlightTimer){ clearTimeout(l._gaHighlightTimer); l._gaHighlightTimer=null; }
+  const orig = styleFor(lyr);
+  l.setStyle({ color:accent, weight:(orig.weight||3)+3, opacity:1 });
+  if(l.bringToFront) l.bringToFront();
+  l._gaHighlightTimer = setTimeout(()=>{
+    l.setStyle(styleFor(lyr));
+    l._gaHighlightTimer = null;
+  }, 2000);
+}
+
+function focusFeatureOnMap(l, lyr){
+  if(!lyr.visible){ lyr.visible=true; map.addLayer(lyr.group); renderVectorList(); }
+  minimizeAttrTableTemporarily(2400);
+  const accent = currentAccentColor();
+  if(l.getBounds){
+    map.flyToBounds(l.getBounds().pad(.3), { duration:0.9, maxZoom:18 });
+    highlightPathTemporarily(l, lyr, accent);
+  } else if(l.getLatLng){
+    const z = Math.max(map.getZoom(), 17);
+    map.flyTo(l.getLatLng(), z, { duration:0.9 });
+    pulseAtPoint(l.getLatLng(), accent);
+  }
+}
+
 /* ---------- Histórico: desfazer / refazer ---------- */
 const undoStack = [], redoStack = [];
 const btnUndo = document.getElementById('btnUndo'), btnRedo = document.getElementById('btnRedo');
@@ -3251,7 +3433,69 @@ function updHistory(){
   btnUndo.disabled = !undoStack.length && !drawing;
   btnRedo.disabled = !redoStack.length;
 }
-function pushAction(a){ undoStack.push(a); redoStack.length = 0; updHistory(); }
+function pushAction(a){
+  // campos extras (ts, kind) só alimentam o painel de histórico — desfazer/refazer
+  // continuam lendo apenas a.type / a.layer / a.target, formato inalterado.
+  a.ts = a.ts || new Date().toISOString();
+  undoStack.push(a); redoStack.length = 0; updHistory();
+  logHistoryEntry(a);
+}
+
+/* ---------- Histórico da sessão: painel de rastreabilidade (não reexecuta ações) ---------- */
+const actionHistory = [];
+function geomClassOfLayer(l){
+  if(!l) return null;
+  if(l instanceof L.Polygon) return 'polygon';
+  if(l instanceof L.Polyline) return 'line';
+  if(l instanceof L.CircleMarker || l instanceof L.Marker) return 'point';
+  return null;
+}
+function descreveAcao(rec){
+  const layerName = (rec.target && rec.target.name) || 'camada desconhecida';
+  if(rec.type==='import') return `Importação ${rec.format||''} — ${rec.count||0} feição(ões)`.trim();
+  const geom = geomClassOfLayer(rec.layer);
+  const geomLabel = GEOM_LABEL[geom] || 'Geometria';
+  const desenhadoAdj = geom==='line' ? 'desenhada' : 'desenhado';
+  if(rec.type==='del') return `Feição excluída — ${layerName}`;
+  switch(rec.kind){
+    case 'tree': return `Árvore registrada — ${layerName}`;
+    case 'track': return `Trilha GPS registrada — ${layerName}`;
+    case 'capture': return `Feição capturada (WFS) — ${layerName}`;
+    case 'segment': return `Polígono de segmentação IA — ${layerName}`;
+    default: return `${geomLabel} ${desenhadoAdj} — ${layerName}`;
+  }
+}
+function logHistoryEntry(rec){
+  const layerName = (rec.target && rec.target.name) || (rec.type==='import' ? '—' : 'camada desconhecida');
+  actionHistory.push({
+    ts: rec.ts || new Date().toISOString(),
+    type: rec.type,
+    layerName,
+    label: descreveAcao(rec)
+  });
+  renderHistoryPanel();
+}
+function renderHistoryPanel(){
+  const el = document.getElementById('histList');
+  if(!el) return;
+  if(!actionHistory.length){
+    el.innerHTML = '<div class="empty-hint">Nenhuma ação registrada nesta sessão ainda.</div>';
+    return;
+  }
+  el.innerHTML = actionHistory.slice().reverse().map(h=>{
+    const time = new Date(h.ts).toLocaleString('pt-BR');
+    return `<div class="hist-item${h.type==='del'?' hist-del':''}">
+      <span class="hist-label">${h.label}</span>
+      <span class="hist-meta"><span class="hist-time">${time}</span><span>${h.layerName}</span></span>
+    </div>`;
+  }).join('');
+}
+function exportHistory(){
+  const blob = new Blob([JSON.stringify(actionHistory, null, 2)], {type:'application/json'});
+  download(blob, 'geomatias_historico_'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');
+}
+document.getElementById('btnHistory').addEventListener('click', ()=>{ renderHistoryPanel(); open('mHistory'); });
+document.getElementById('histExport').addEventListener('click', exportHistory);
 function doUndo(){
   // durante um desenho ativo, desfaz o último vértice
   if(activeDrawer && activeDrawer.deleteLastVertex && activeDrawer._markers && activeDrawer._markers.length){
@@ -3287,12 +3531,15 @@ function deactivate(){
   if(typeof captureClick==='function') map.off('click', captureClick);
   if(typeof segMapClick==='function') map.off('click', segMapClick);
   if(typeof clearSegPreview==='function') clearSegPreview();
+  if(typeof cmpDeactivate==='function') cmpDeactivate();
   curveMode=false; measureMode=null; activeTool=null;
   if(typeof catalogRegionMode!=='undefined') catalogRegionMode=false;
+  if(typeof gpsDraw!=='undefined' && gpsDraw){ map.removeLayer(gpsDraw.liveLayer); gpsDraw=null; }
   document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.remove('active'));
   showHint('');
   if(typeof updHistory==='function') updHistory();
   const db = document.getElementById('drawBar'); if(db) db.style.display='none';
+  const gb = document.getElementById('gpsDrawBar'); if(gb) gb.style.display='none';
 }
 
 /* estilo do desenho em curso: cor da camada compatível ou neutro */
@@ -3368,6 +3615,11 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
         activeDrawer = new L.Draw.Polygon(map, { shapeOptions: drawStyle(tool), allowIntersection:true });
         showHint('Clique os vértices e use "✓ Concluir geometria" (ou clique no primeiro vértice).'+dest);
         break;
+      case 'gpsdraw':
+        document.querySelectorAll('input[name="gpsDrawGeom"]').forEach((r,i)=>r.checked=(i===0));
+        open('mGpsDrawType');
+        showHint('Escolha o tipo de geometria para iniciar a digitalização por GPS.');
+        break;
       case 'mline':
         measureMode='line';
         activeDrawer = new L.Draw.Polyline(map, { shapeOptions: measureStyle });
@@ -3400,6 +3652,10 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
         }
         openSegmentModal();
         showHint('Use o painel para carregar o modelo, analisar a imagem e depois tocar sobre o objeto no mapa.');
+        break;
+      case 'compare':
+        cmpOpenPicker();
+        showHint('Escolha a camada que ficará do lado direito da cortina. Arraste a linha para revelar/ocultar.');
         break;
       case 'edit': {
         const groups = vectorLayers.filter(l=>l.visible);
@@ -3529,6 +3785,9 @@ function gpsFix(maxAgeMs=6000){
     dot = halo = ring = null;
     btn.classList.remove('active','locating');
     document.getElementById('stGps').textContent = '';
+    if(typeof trackStop==='function') trackStop(true); // GPS desligado: salva a trilha em andamento, se houver
+    const trackBtn = document.getElementById('btnTrackRec');
+    if(trackBtn) trackBtn.style.display = 'none';
     if(msg) status(msg);
   }
 
@@ -3537,6 +3796,9 @@ function gpsFix(maxAgeMs=6000){
     const ll = L.latLng(lat, lng);
     GPS.last = {ll, acc, t:Date.now()};
     btn.classList.remove('locating'); btn.classList.add('active');
+    if(typeof trackFeed==='function') trackFeed(ll, acc);
+    const trackBtn = document.getElementById('btnTrackRec');
+    if(trackBtn) trackBtn.style.display = 'flex';
 
     if(!dot){
       halo = L.circle(ll, {radius:acc, pane:'gps', color:'#4f9cf0', weight:1, fillColor:'#4f9cf0', fillOpacity:.12, interactive:false}).addTo(map);
@@ -3594,6 +3856,87 @@ function gpsFix(maxAgeMs=6000){
   });
 })();
 
+/* =========================================================
+   Track log GPS — grava os fixes do "Onde estou" numa trilha ao vivo
+   Reaproveita GPS.last/watchPosition do módulo acima via trackFeed(),
+   chamado a cada fix; descarta ruído (baixa precisão / deslocamento mínimo).
+   ========================================================= */
+const TRACK_FIELDS = [
+  {name:'data_inicio', type:'timestamp', options:[], required:false},
+  {name:'data_fim', type:'timestamp', options:[], required:false},
+  {name:'distancia_m', type:'number', options:[], required:false},
+  {name:'num_pontos', type:'number', options:[], required:false},
+  {name:'accuracy_media_m', type:'number', options:[], required:false},
+];
+let tracksLayer = null;
+function ensureTracksLayer(){
+  if(tracksLayer && vectorLayers.includes(tracksLayer)) return tracksLayer;
+  const existing = vectorLayers.find(l=>l.tracks);
+  if(existing){ tracksLayer = existing; return existing; }
+  const lyr = newVectorLayer('Trilhas GPS', 'line', TRACK_FIELDS.map(f=>({...f})), '#4f9cf0');
+  lyr.tracks = true;
+  tracksLayer = lyr;
+  renderVectorList();
+  status('Camada "Trilhas GPS" criada.');
+  return lyr;
+}
+
+let trackRec = null; // {points:[{ll,acc}], startedAt, liveLayer}
+function trackFeed(ll, acc){
+  if(!trackRec) return;
+  if(acc > 25) return; // fix impreciso demais: descarta
+  const pts = trackRec.points;
+  const last = pts[pts.length-1];
+  if(last && distM(last.ll, ll) < 2) return; // deslocamento mínimo: descarta
+  pts.push({ll, acc});
+  trackRec.liveLayer.addLatLng(ll);
+}
+function trackStart(){
+  if(trackRec) return;
+  trackRec = {
+    points: [],
+    startedAt: new Date(),
+    liveLayer: L.polyline([], {color:'#e5673f', weight:4, pane:'gps', dashArray:'2 8'}).addTo(map)
+  };
+  const btn = document.getElementById('btnTrackRec');
+  if(btn) btn.classList.add('active');
+  status('Gravando trilha GPS…');
+}
+function trackStop(save){
+  if(!trackRec) return;
+  const rec = trackRec; trackRec = null;
+  map.removeLayer(rec.liveLayer);
+  const btn = document.getElementById('btnTrackRec');
+  if(btn) btn.classList.remove('active');
+  if(!save || rec.points.length < 2){
+    status(rec.points.length < 2 ? 'Trilha muito curta — descartada.' : 'Gravação de trilha interrompida.');
+    return;
+  }
+  const latlngs = rec.points.map(p=>p.ll);
+  const lyr = ensureTracksLayer();
+  const finalLine = L.polyline(latlngs, styleFor(lyr));
+  const gaid = registerFeature(finalLine, lyr);
+  const props = finalLine.feature.properties;
+  const distancia = pathLength(latlngs);
+  const accMedia = rec.points.reduce((s,p)=>s+p.acc, 0) / rec.points.length;
+  props.data_inicio = rec.startedAt.toISOString();
+  props.data_fim = new Date().toISOString();
+  props.distancia_m = +distancia.toFixed(1);
+  props.num_pontos = rec.points.length;
+  props.accuracy_media_m = +accMedia.toFixed(1);
+  props.metodo_registro = 'GPS';
+  finalLine.bindPopup(featurePopup(finalLine, `Trilha GPS<br>Comprimento: <b>${fmtDist(distancia)}</b>`));
+  lyr.group.addLayer(finalLine);
+  pushAction({type:'add', layer:finalLine, target:lyr, kind:'track'});
+  renderVectorList();
+  status(`Trilha salva na camada "${lyr.name}" (${fmtDist(distancia)}) ✓`);
+  openAttrForm(gaid);
+  scheduleSave();
+}
+document.getElementById('btnTrackRec').addEventListener('click', ()=>{
+  if(trackRec) trackStop(true); else trackStart();
+});
+
 /* ---------- Árvore por GPS: registra o indivíduo na posição do técnico ----------
    Não é um modo de desenho: é uma ação. Sob a copa, mirar no ortomosaico é mais
    lento e menos exato do que usar a posição de quem está com a mão na árvore. */
@@ -3614,7 +3957,7 @@ document.getElementById('btnTreeGps').addEventListener('click', async ()=>{
     stampTreeCoords(m, props, {metodo:'GPS', acc:fix.acc});
     m.bindPopup(treePopup(m), {maxWidth:280});
     inv.group.addLayer(m);
-    pushAction({type:'add', layer:m, target:inv});
+    pushAction({type:'add', layer:m, target:inv, kind:'tree'});
     renderVectorList();
     map.setView(fix.ll, Math.max(map.getZoom(), 18));
     status(fix.acc > 15
@@ -3623,6 +3966,97 @@ document.getElementById('btnTreeGps').addEventListener('click', async ()=>{
     openTreeForm(gaid);
   }catch(err){ status('⚠ '+err.message); }
   finally{ btn.classList.remove('locating'); }
+});
+
+/* =========================================================
+   Digitalização por GPS — modo de desenho onde cada vértice vem
+   da posição atual (via gpsFix), não de um clique no mapa.
+   ========================================================= */
+let gpsDraw = null; // {geomType:'line'|'polygon', verts:[LatLng], liveLayer}
+function gpsDrawBegin(geomType){
+  gpsDraw = { geomType, verts: [] };
+  gpsDraw.liveLayer = (geomType==='polygon'
+    ? L.polygon([], drawStyle('polygon', true))
+    : L.polyline([], drawStyle('line', true))
+  ).addTo(map);
+  document.getElementById('gpsDrawBar').style.display = 'flex';
+  updGpsDrawBar(null);
+  showHint('Toque em "+ Vértice" para adicionar sua posição GPS atual à '+
+    (geomType==='polygon'?'polígono':'linha')+'. Use "✓ Concluir" ao terminar.');
+}
+function updGpsDrawBar(acc){
+  document.getElementById('gdCount').textContent = gpsDraw ? gpsDraw.verts.length : 0;
+  document.getElementById('gdAcc').textContent = acc!=null ? Math.round(acc)+' m' : '—';
+}
+async function gpsDrawAddVertex(){
+  if(!gpsDraw) return;
+  const btn = document.getElementById('gdVertex');
+  btn.disabled = true;
+  status('Obtendo posição do GPS…');
+  try{
+    const fix = await gpsFix(6000);
+    gpsDraw.verts.push(fix.ll);
+    gpsDraw.liveLayer.setLatLngs(gpsDraw.verts);
+    updGpsDrawBar(fix.acc);
+    status(fix.acc > 25
+      ? '⚠ Vértice adicionado, mas a precisão está baixa (±'+Math.round(fix.acc)+' m).'
+      : 'Vértice adicionado (±'+Math.round(fix.acc)+' m).');
+  }catch(err){ status('⚠ '+err.message); }
+  finally{ btn.disabled = false; }
+}
+function gpsDrawFinish(){
+  if(!gpsDraw) return;
+  const min = gpsDraw.geomType==='polygon' ? 3 : 2;
+  if(gpsDraw.verts.length < min){ status(`Adicione pelo menos ${min} vértices para concluir.`); return; }
+  const { geomType, verts } = gpsDraw;
+  deactivate(); // remove o preview ao vivo e reseta a ferramenta
+
+  const target = targetLayerFor(geomType);
+  const finalLayer = geomType==='polygon'
+    ? L.polygon(verts, target ? styleFor(target) : {color:'#37c2a0', weight:3, fillColor:'#37c2a0', fillOpacity:.25})
+    : L.polyline(verts, target ? styleFor(target) : {color:'#37c2a0', weight:3});
+  finalLayer.feature = { type:'Feature', properties:{ metodo_registro:'GPS' } };
+
+  let info;
+  if(finalLayer instanceof L.Polygon){
+    const ring = finalLayer.getLatLngs()[0];
+    info = `Área: <b>${fmtArea(ringArea(ring))}</b><br>Perímetro: <b>${fmtDist(pathLength([...ring,ring[0]]))}</b>`;
+  } else {
+    info = `Comprimento: <b>${fmtDist(pathLength(finalLayer.getLatLngs()))}</b>`;
+  }
+  finalLayer._measureInfo = info;
+
+  if(!target){
+    finalLayer.addTo(map);
+    openNewLayerModal({ layer:finalLayer, tool:geomType });
+    return;
+  }
+
+  const gaid = registerFeature(finalLayer, target);
+  finalLayer.bindPopup(featurePopup(finalLayer, info));
+  target.group.addLayer(finalLayer);
+  pushAction({type:'add', layer:finalLayer, target, kind:'draw'});
+  renderVectorList();
+  status(`Geometria por GPS salva na camada "${target.name}" ✓`);
+  if(target.fields.length) openAttrForm(gaid);
+  scheduleSave();
+}
+function gpsDrawCancel(){
+  if(!gpsDraw) return;
+  deactivate();
+  status('Digitalização por GPS cancelada.');
+}
+document.getElementById('gdVertex').addEventListener('click', gpsDrawAddVertex);
+document.getElementById('gdFinish').addEventListener('click', gpsDrawFinish);
+document.getElementById('gdCancel').addEventListener('click', gpsDrawCancel);
+document.getElementById('gpsDrawStart').addEventListener('click', ()=>{
+  const geomType = document.querySelector('input[name="gpsDrawGeom"]:checked').value;
+  close('mGpsDrawType');
+  gpsDrawBegin(geomType);
+});
+document.getElementById('gpsDrawCancelStart').addEventListener('click', ()=>{
+  close('mGpsDrawType');
+  deactivate();
 });
 
 /* criação de geometrias */
@@ -3698,7 +4132,7 @@ map.on(L.Draw.Event.CREATED, e=>{
   const gaid = registerFeature(finalLayer, target);
   finalLayer.bindPopup(featurePopup(finalLayer, info));
   target.group.addLayer(finalLayer);
-  pushAction({type:'add', layer:finalLayer, target});
+  pushAction({type:'add', layer:finalLayer, target, kind: activeTool==='tree' ? 'tree' : 'draw'});
   renderVectorList();
   status(`Geometria salva na camada "${target.name}" ✓`);
 
@@ -3966,6 +4400,7 @@ async function handleFile(file){
     showVectorTab();
     if(bounds) map.fitBounds(bounds.pad(.15));
     status(`Importado: ${count} feições.`);
+    if(count) logHistoryEntry({type:'import', format:ext.toUpperCase(), count});
     close('mImport');
   }catch(err){
     console.error(err);
@@ -4293,6 +4728,160 @@ document.getElementById('rGo').addEventListener('click', async ()=>{
     close('mRaster');
   }catch(err){ alert(err.message); }
 });
+
+/* =========================================================
+   Comparar (cortina/swipe) — sem biblioteca externa.
+   A camada escolhida é movida para um pane dedicado, acima
+   das demais, e recortada com clip-path (polygon em px
+   absolutos, para não depender do tamanho da caixa do pane).
+   O recorte é recalculado no evento 'move' do mapa, convertendo
+   a posição da linha (em px do container) para coordenada de
+   pane via map.containerPointToLayerPoint — assim o recorte
+   acompanha corretamente o pan/zoom.
+   ========================================================= */
+const CMP = { active:false, layerRef:null, container:null, origParent:null, origNext:null, x:0 };
+const CMP_PANE = 'comparePane';
+const CMP_MARGIN = 20000; // px, folga generosa em coordenada de pane
+
+function cmpEnsurePane(){
+  if(!map.getPane(CMP_PANE)){
+    const p = map.createPane(CMP_PANE);
+    p.style.zIndex = 450; // acima de tilePane(200)/overlayPane(400), abaixo de markerPane(600)
+  }
+}
+function cmpLayerEl(r){
+  const l = r.layer;
+  if(!l) return null;
+  if(typeof l.getContainer==='function') return l.getContainer();
+  if(typeof l.getElement==='function') return l.getElement();
+  return l._container || l._image || null;
+}
+function cmpDivider(){ return document.getElementById('cmpDivider'); }
+function cmpLabelL(){ return document.getElementById('cmpLabelL'); }
+function cmpLabelR(){ return document.getElementById('cmpLabelR'); }
+/* rótulo do lado esquerdo: mapa base + demais rasters visíveis (não recortados) */
+function cmpLeftLabelText(chosen){
+  const others = rasterLayers.filter(r=>r.visible && r!==chosen).map(r=>r.name);
+  return others.length ? currentBaseName+' + '+others.join(', ') : currentBaseName;
+}
+
+function cmpUpdateClip(){
+  if(!CMP.active) return;
+  const pane = map.getPane(CMP_PANE);
+  if(!pane) return;
+  const lx = map.containerPointToLayerPoint([CMP.x, 0]).x;
+  const M = CMP_MARGIN;
+  pane.style.clipPath = `polygon(${lx}px ${-M}px, ${M}px ${-M}px, ${M}px ${M}px, ${lx}px ${M}px)`;
+}
+function cmpClampX(x){
+  const rect = map.getContainer().getBoundingClientRect();
+  return Math.max(0, Math.min(rect.width, x));
+}
+function cmpSetX(x){
+  CMP.x = cmpClampX(x);
+  cmpDivider().style.left = CMP.x + 'px';
+  cmpUpdateClip();
+}
+function cmpOnResize(){ cmpSetX(CMP.x); }
+
+function cmpActivate(r){
+  cmpEnsurePane();
+  const el = cmpLayerEl(r);
+  if(!el){ status('Não foi possível preparar esta camada para comparação.'); deactivate(); return; }
+  CMP.layerRef = r;
+  CMP.container = el;
+  CMP.origParent = el.parentNode;
+  CMP.origNext = el.nextSibling;
+  map.getPane(CMP_PANE).appendChild(el);
+  CMP.active = true;
+  const rect = map.getContainer().getBoundingClientRect();
+  cmpDivider().classList.add('active');
+  const lblL = cmpLabelL(), lblR = cmpLabelR();
+  lblL.textContent = cmpLeftLabelText(r);
+  lblR.textContent = r.name;
+  lblL.classList.add('active');
+  lblR.classList.add('active');
+  cmpSetX(rect.width/2);
+  map.on('move', cmpUpdateClip);
+  map.on('zoom', cmpUpdateClip);
+  map.on('resize', cmpOnResize);
+  status('Comparar: arraste a linha para revelar/ocultar "'+r.name+'".');
+}
+function cmpDeactivate(){
+  if(!CMP.active) return;
+  map.off('move', cmpUpdateClip);
+  map.off('zoom', cmpUpdateClip);
+  map.off('resize', cmpOnResize);
+  const el = CMP.container, parent = CMP.origParent, next = CMP.origNext;
+  if(el && parent){
+    if(next && next.parentNode===parent) parent.insertBefore(el, next);
+    else parent.appendChild(el);
+  }
+  const pane = map.getPane(CMP_PANE);
+  if(pane) pane.style.clipPath = '';
+  cmpDivider().classList.remove('active');
+  cmpLabelL().classList.remove('active');
+  cmpLabelR().classList.remove('active');
+  CMP.active=false; CMP.layerRef=null; CMP.container=null; CMP.origParent=null; CMP.origNext=null;
+}
+function cmpOpenPicker(){
+  const vis = rasterLayers.filter(r=>r.visible);
+  if(!vis.length){
+    status('Nenhuma camada raster visível para comparar.');
+    deactivate();
+    return;
+  }
+  const el = document.getElementById('cmpList');
+  el.innerHTML = '';
+  vis.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'layer-row';
+    row.style.cursor = 'pointer';
+    row.innerHTML = `<span class="name">${r.name}</span>`;
+    row.addEventListener('click', ()=>{ close('mCompare'); cmpActivate(r); });
+    el.appendChild(row);
+  });
+  open('mCompare');
+}
+document.getElementById('cmpCancel').addEventListener('click', ()=>{
+  close('mCompare');
+  if(!CMP.active) deactivate();
+});
+
+/* linha divisória: criada em JS e anexada ao container do mapa,
+   para não depender de HTML estático dentro de #map */
+(function cmpDragEngine(){
+  const dv = document.createElement('div');
+  dv.id = 'cmpDivider';
+  dv.innerHTML = '<div class="cmp-grip">⇔</div>';
+  map.getContainer().appendChild(dv);
+  L.DomEvent.disableClickPropagation(dv);
+  L.DomEvent.disableScrollPropagation(dv);
+  const lblL = document.createElement('div');
+  lblL.id = 'cmpLabelL'; lblL.className = 'cmp-tag';
+  map.getContainer().appendChild(lblL);
+  const lblR = document.createElement('div');
+  lblR.id = 'cmpLabelR'; lblR.className = 'cmp-tag';
+  map.getContainer().appendChild(lblR);
+
+  let dragging = false, pid = null;
+  dv.addEventListener('pointerdown', e=>{
+    if(!CMP.active) return;
+    dragging = true; pid = e.pointerId;
+    try{ dv.setPointerCapture(pid); }catch(err){}
+    e.preventDefault();
+  });
+  dv.addEventListener('pointermove', e=>{
+    if(!dragging || e.pointerId!==pid) return;
+    const rect = map.getContainer().getBoundingClientRect();
+    cmpSetX(e.clientX - rect.left);
+  });
+  const end = e=>{
+    if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; }
+  };
+  dv.addEventListener('pointerup', end);
+  dv.addEventListener('pointercancel', end);
+})();
 
 /* ---------- IMPRESSÃO ---------- */
 document.getElementById('btnPrint').addEventListener('click', ()=>open('mPrint'));
@@ -4951,6 +5540,7 @@ function clearProjectState(){
   measureGroup.clearLayers();
   activeLayer = null;
   undoStack.length = 0; redoStack.length = 0;
+  actionHistory.length = 0; renderHistoryPanel();
   featReg.clear();
 }
 async function applyProject(p){
@@ -5683,7 +6273,7 @@ async function captureClick(e){
           Object.assign(x.feature.properties, f.properties||{});
           x.bindPopup(featurePopup(x, ''));
           lyr.group.addLayer(x);
-          pushAction({type:'add', layer:x, target:lyr});
+          pushAction({type:'add', layer:x, target:lyr, kind:'capture'});
           totalNew++;
         });
       });

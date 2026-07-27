@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — Estudo</title>
+<title>GeoMatias — Wbgs de estudo</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -896,7 +896,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 /* .modal-x normalmente usa float:right (funciona no fluxo normal dos outros modais),
    mas float não tem efeito em itens flex — como este modal é display:flex, o botão
    precisa de posicionamento absoluto explícito para ficar ancorado no canto superior direito */
-.modal.m-designer{width:min(96vw, 1180px); max-width:96vw; height:min(92vh, 860px); display:flex; flex-direction:column; position:relative; padding-top:44px}
+.modal.m-designer{width:min(98vw, 1500px); max-width:98vw; height:min(95vh, 900px); display:flex; flex-direction:column; position:relative; padding-top:44px}
 .modal.m-designer .modal-x{position:absolute; top:10px; right:14px; float:none; margin:0}
 .pd-toolbar-toggle{
   position:absolute; top:10px; right:52px; width:30px; height:30px;
@@ -926,7 +926,24 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
    valores negativos, então a sobra do lado esquerdo ficava sempre fora de alcance. Trocado por
    margin:auto no próprio .pd-sheet-wrap (abaixo): centraliza quando cabe, mas some (sem cortar
    nada) quando a folha é maior que a área visível — a régua/canto esquerdo sempre acessível. */
-.pd-body{flex:1; overflow:auto; background:var(--panel3, var(--panel2)); border-radius:8px; padding:24px; display:flex; align-items:flex-start}
+.pd-main{flex:1; display:flex; min-height:0; gap:10px}
+.pd-body{flex:1; min-width:0; overflow:auto; background:var(--panel3, var(--panel2)); border-radius:8px; padding:16px; display:flex; align-items:flex-start; justify-content:center}
+.pd-side{width:280px; flex:none; overflow:auto; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:10px}
+.pd-side-head{display:flex; flex-direction:column; gap:2px; padding-bottom:8px; border-bottom:1px solid var(--line)}
+.pd-side-title{font-size:13px; font-weight:600; color:var(--text)}
+.pd-side-sub{font-size:11.5px; color:var(--muted)}
+.pd-side-empty{font-size:12px; color:var(--muted); line-height:1.4; padding:6px 2px}
+.pd-side-section{display:flex; flex-direction:column; gap:8px}
+.pd-side-section .field{margin:0}
+.pd-side-section .pd-north-labelopts{display:flex; flex-wrap:wrap; gap:6px 10px}
+.pd-side-section select, .pd-side-section input[type=text], .pd-side-section input[type=number]{width:100%}
+.pd-side-section .tb-btn{justify-content:flex-start}
+.pd-side-section .pd-grat-sides{grid-template-columns:1fr 1fr}
+.pd-sheet-scaler{transform-origin:top left; flex:none}
+@media (max-width: 900px){
+  .pd-main{flex-direction:column}
+  .pd-side{width:auto; max-height:38vh}
+}
 .pd-sheet-wrap{
   display:inline-grid; flex:none; margin:auto;
   grid-template-columns:14px auto 14px; grid-template-rows:14px auto 14px;
@@ -1398,23 +1415,50 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Modal: export ===== -->
 <div class="modal-back" id="mExport">
-  <div class="modal">
+  <div class="modal wide" style="width:620px">
     <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
     <h3>Exportar geometrias</h3>
-    <p class="sub">Exporta todas as camadas vetoriais visíveis do projeto.</p>
-    <div class="field">
-      <label>Formato</label>
-      <select id="expFormat">
-        <option value="kml">KML</option>
-        <option value="kmz">KMZ</option>
-        <option value="shp">Shapefile (.zip)</option>
-        <option value="geojson">GeoJSON</option>
-      </select>
+    <div class="grid2">
+      <div class="field">
+        <label>Formato</label>
+        <select id="expFormat">
+          <option value="kml">KML</option>
+          <option value="kmz">KMZ</option>
+          <option value="shp">Shapefile (.zip)</option>
+          <option value="geojson">GeoJSON</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Nome base do arquivo</label>
+        <input type="text" id="expName" value="meu_projeto">
+      </div>
     </div>
-    <div class="field">
-      <label>Nome do arquivo</label>
-      <input type="text" id="expName" value="meu_projeto">
+
+    <div class="sty-tabs">
+      <button class="sty-tab" data-exptab="layers">Camadas</button>
+      <button class="sty-tab" data-exptab="fields">Atributos</button>
+      <button class="sty-tab" data-exptab="style">Estilo e projeção</button>
     </div>
+
+    <div class="sty-pane" id="expPaneLayers">
+      <p class="sub">Escolha quais camadas incluir e o nome que cada uma recebe na exportação.</p>
+      <div id="expLayerList"></div>
+    </div>
+
+    <div class="sty-pane" id="expPaneFields">
+      <p class="sub">Escolha quais atributos exportar em cada camada incluída. Campos com mais de 10 caracteres são truncados no Shapefile (.dbf).</p>
+      <div id="expFieldList"></div>
+    </div>
+
+    <div class="sty-pane" id="expPaneStyle">
+      <label class="attr-check"><input type="checkbox" id="expPreserveStyle" checked> Preservar simbologia (cor, contorno e transparência de cada feição)</label>
+      <div class="field">
+        <label>Sistema de projeção da exportação</label>
+        <select id="expCrs"></select>
+      </div>
+      <div class="empty-hint" id="expCrsInfo" style="margin-top:6px"></div>
+    </div>
+
     <div class="actions">
       <button class="tb-btn primary" id="expGo">Exportar</button>
     </div>
@@ -1531,7 +1575,38 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
       <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
       <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
-      <div class="pd-north-panel" id="pdNorthStyleWrap" style="display:none">
+      <input type="file" id="pdImageFile" accept="image/*" style="display:none">
+      <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
+      <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
+      <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
+        <span>Colunas</span><input type="number" id="pdGridCols" min="1" max="60" value="10">
+        <span>Linhas</span><input type="number" id="pdGridRows" min="1" max="60" value="10">
+      </div>
+    </div>
+    <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
+    <div class="pd-main">
+    <div class="pd-body">
+      <div class="pd-sheet-scaler" id="pdSheetScaler">
+      <div class="pd-sheet-wrap no-rulers" id="pdSheetWrap">
+        <div class="pd-ruler-corner" id="pdRulerCornerTL"></div>
+        <div class="pd-ruler-h" id="pdRulerH"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerTR"></div>
+        <div class="pd-ruler-v" id="pdRulerV"></div>
+        <div class="pd-sheet-stack">
+          <div class="pd-sheet" id="pdSheet"></div>
+          <div class="pd-grid-overlay" id="pdGridOverlay"></div>
+        </div>
+        <div class="pd-ruler-v" id="pdRulerVRight"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerBL"></div>
+        <div class="pd-ruler-h" id="pdRulerHBottom"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerBR"></div>
+      </div>
+      </div>
+    </div>
+    <aside class="pd-side" id="pdSideProps">
+      <div class="pd-side-head"><span class="pd-side-title">Propriedades</span><span class="pd-side-sub" id="pdSideSub">Nenhum bloco selecionado</span></div>
+      <div class="pd-side-empty" id="pdSideEmpty">Selecione um bloco no layout para editar suas propriedades. Blocos de <b>Norte</b> e <b>Mapa</b> têm opções específicas.</div>
+    <div class="pd-side-section" id="pdNorthStyleWrap" style="display:none">
         <div class="field"><label>Estilo do norte</label>
           <select id="pdNorthStyle">
             <option value="chevronMark">Seta ^ (logo)</option>
@@ -1550,16 +1625,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
           <div class="pd-grid-dims"><span>Tamanho</span><input type="number" id="pdNorthLabelSize" min="8" max="30" value="16"></div>
         </div>
       </div>
-      <input type="file" id="pdImageFile" accept="image/*" style="display:none">
-      <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
-      <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
-      <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
-        <span>Colunas</span><input type="number" id="pdGridCols" min="1" max="60" value="10">
-        <span>Linhas</span><input type="number" id="pdGridRows" min="1" max="60" value="10">
-      </div>
-    </div>
-    <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
-    <div class="pd-toolbar" id="pdMapPanel" style="display:none">
+    <div class="pd-side-section" id="pdMapPanel" style="display:none">
       <button class="tb-btn" id="pdMapUseView" data-icon="target" title="Usa o centro/zoom/base atuais do mapa principal neste bloco">Fixar vista atual</button>
       <button class="tb-btn" id="pdMapSync" data-icon="refresh" title="Este bloco volta a acompanhar o mapa principal ao vivo">Sincronizar c/ mapa principal</button>
       <button class="tb-btn primary" id="pdMapRefresh" data-icon="camera" title="Recaptura a prévia deste mapa">Atualizar prévia</button>
@@ -1619,21 +1685,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
         </div>
       </div>
     </div>
-    <div class="pd-body">
-      <div class="pd-sheet-wrap no-rulers" id="pdSheetWrap">
-        <div class="pd-ruler-corner" id="pdRulerCornerTL"></div>
-        <div class="pd-ruler-h" id="pdRulerH"></div>
-        <div class="pd-ruler-corner" id="pdRulerCornerTR"></div>
-        <div class="pd-ruler-v" id="pdRulerV"></div>
-        <div class="pd-sheet-stack">
-          <div class="pd-sheet" id="pdSheet"></div>
-          <div class="pd-grid-overlay" id="pdGridOverlay"></div>
-        </div>
-        <div class="pd-ruler-v" id="pdRulerVRight"></div>
-        <div class="pd-ruler-corner" id="pdRulerCornerBL"></div>
-        <div class="pd-ruler-h" id="pdRulerHBottom"></div>
-        <div class="pd-ruler-corner" id="pdRulerCornerBR"></div>
-      </div>
+    </aside>
     </div>
   </div>
 </div>
@@ -7510,16 +7562,125 @@ async function handleFile(file){
 
 /* ---------- EXPORTAÇÃO ---------- */
 document.getElementById('btnExport').addEventListener('click', ()=>{
-  if(!vectorLayers.some(l=>l.visible && l.group.getLayers().length)){ alert('Não há camadas vetoriais visíveis para exportar.'); return; }
+  if(!vectorLayers.some(l=>l.group.getLayers().length)){ alert('Não há camadas vetoriais com feições para exportar.'); return; }
+  renderExportLayers();
+  renderExportCrs();
+  setExpTab('layers');
   open('mExport');
 });
 
-function collectGeoJSON(){
+/* Estado de seleção do modal de exportação: por camada, inclusão, nome de saída
+   e atributos marcados. Mantido entre aberturas do modal na mesma sessão. */
+const exportSel = new Map(); // lyr.id -> {include, name, fields:Set<string>}
+function expLayerState(l){
+  let st = exportSel.get(l.id);
+  if(!st){ st = { include:l.visible, name:l.name, fields:new Set((l.fields||[]).map(f=>f.name)) }; exportSel.set(l.id, st); }
+  return st;
+}
+function renderExportLayers(){
+  const box = document.getElementById('expLayerList');
+  const layers = vectorLayers.filter(l=>l.group.getLayers().length);
+  box.innerHTML = layers.map(l=>{
+    const st = expLayerState(l);
+    return `<div class="sty-bar" data-explyr="${l.id}" style="align-items:center">
+      <label class="attr-check" style="flex:0 0 auto"><input type="checkbox" class="expLyrInc" ${st.include?'checked':''}></label>
+      <div class="field" style="flex:1 1 200px; margin:0"><input type="text" class="expLyrName" value="${st.name.replace(/"/g,'&quot;')}"></div>
+      <span class="sub" style="flex:0 0 auto">${l.group.getLayers().length} feição(ões)</span>
+    </div>`;
+  }).join('') || '<p class="empty-hint">Nenhuma camada vetorial com feições.</p>';
+  box.querySelectorAll('[data-explyr]').forEach(row=>{
+    const l = layers.find(x=>x.id===Number(row.getAttribute('data-explyr')));
+    const st = expLayerState(l);
+    row.querySelector('.expLyrInc').addEventListener('change', e=>{ st.include = e.target.checked; renderExportFields(); });
+    row.querySelector('.expLyrName').addEventListener('input', e=>{ st.name = e.target.value; });
+  });
+  renderExportFields();
+}
+function renderExportFields(){
+  const box = document.getElementById('expFieldList');
+  const layers = vectorLayers.filter(l=>l.group.getLayers().length && expLayerState(l).include);
+  box.innerHTML = layers.map(l=>{
+    const st = expLayerState(l);
+    const rows = (l.fields||[]).map(f=>`<label class="attr-check"><input type="checkbox" class="expFld" data-lyr="${l.id}" data-fld="${f.name.replace(/"/g,'&quot;')}" ${st.fields.has(f.name)?'checked':''}> ${f.name}</label>`).join('');
+    return `<div class="tree-sec-title">${st.name}</div>${rows || '<p class="empty-hint">Sem atributos definidos nesta camada.</p>'}`;
+  }).join('') || '<p class="empty-hint">Nenhuma camada incluída na exportação.</p>';
+  box.querySelectorAll('.expFld').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const l = vectorLayers.find(x=>x.id===Number(cb.getAttribute('data-lyr')));
+      const st = expLayerState(l);
+      const name = cb.getAttribute('data-fld');
+      cb.checked ? st.fields.add(name) : st.fields.delete(name);
+    });
+  });
+}
+function setExpTab(tab){
+  document.querySelectorAll('#mExport .sty-tab').forEach(b=>b.classList.toggle('active', b.dataset.exptab===tab));
+  document.getElementById('expPaneLayers').classList.toggle('active', tab==='layers');
+  document.getElementById('expPaneFields').classList.toggle('active', tab==='fields');
+  document.getElementById('expPaneStyle').classList.toggle('active', tab==='style');
+}
+document.querySelectorAll('#mExport .sty-tab').forEach(b=>b.addEventListener('click', ()=>setExpTab(b.dataset.exptab)));
+
+/* CRS de exportação: escolha independente da CRS global do projeto (#mCRS/currentCRS).
+   O select é populado sob demanda (não no carregamento do script) porque CRS_LIST só
+   é declarada mais adiante no arquivo. */
+let exportCrs = null;
+function expCrsInfoText(c){
+  return c.kind==='utm'
+    ? 'Aplicado ao .prj do Shapefile exportado (coordenadas planas em metros). GeoJSON e KML/KMZ são sempre gravados em WGS 84 (EPSG:4326), conforme exigido por esses formatos.'
+    : 'Coordenadas geográficas (lon/lat), usadas em todos os formatos.';
+}
+function renderExportCrs(){
+  const sel = document.getElementById('expCrs');
+  if(!sel.options.length){
+    CRS_LIST.forEach(c=>{
+      const opt = document.createElement('option');
+      opt.value = c.epsg; opt.textContent = c.name+' (EPSG:'+c.epsg+')';
+      sel.appendChild(opt);
+    });
+  }
+  if(!exportCrs) exportCrs = currentCRS;
+  sel.value = exportCrs.epsg;
+  document.getElementById('expCrsInfo').textContent = expCrsInfoText(exportCrs);
+}
+document.getElementById('expCrs').addEventListener('change', e=>{
+  const c = CRS_LIST.find(x=>x.epsg===Number(e.target.value));
+  if(c){ exportCrs = c; document.getElementById('expCrsInfo').textContent = expCrsInfoText(c); }
+});
+
+/* Reúne as feições das camadas marcadas para exportação, já filtradas pelos atributos
+   escolhidos e, opcionalmente, com o estilo resolvido (styleFor) anexado por feição —
+   mesma função usada para renderizar o mapa, nenhum caminho de estilo paralelo. */
+function collectGeoJSON(opts){
+  opts = opts || {};
+  const preserveStyle = opts.preserveStyle !== false;
   const feats = [];
-  vectorLayers.filter(l=>l.visible).forEach(l=>{
+  vectorLayers.forEach(l=>{
+    const st = expLayerState(l);
+    if(!st.include || !l.group.getLayers().length) return;
     l.group.eachLayer(x=>{
       let g = x.toGeoJSON();
-      const push = f=>{ f.properties = {...(f.properties||{}), camada:l.name, cor:l.color}; feats.push(f); };
+      const styleVal = preserveStyle ? styleFor(l, x.feature) : null;
+      const push = f=>{
+        const orig = f.properties || {};
+        const props = { camada: st.name };
+        if(l.fields && l.fields.length){
+          l.fields.forEach(fld=>{ if(st.fields.has(fld.name) && orig[fld.name]!==undefined) props[fld.name] = orig[fld.name]; });
+        } else {
+          Object.keys(orig).forEach(k=>{ if(k!=='camada' && k!=='cor') props[k] = orig[k]; });
+        }
+        if(styleVal){
+          props.stroke = styleVal.color;
+          props['stroke-width'] = styleVal.weight;
+          props.fill = styleVal._fillPlain || styleVal.fillColor;
+          props['fill-opacity'] = styleVal.fillOpacity;
+          f.__style = styleVal;
+        } else {
+          props.cor = l.color;
+        }
+        f.properties = props;
+        feats.push(f);
+      };
       g.type==='FeatureCollection' ? g.features.forEach(push) : push(g);
     });
   });
@@ -7536,9 +7697,13 @@ function coordsToKml(c, depth){ // recursivo
 }
 function featureToKml(f){
   const name = (f.properties && (f.properties.name||f.properties.camada)) || 'Feição';
-  const color = ((f.properties&&f.properties.cor)||'#8B7DF5').replace('#','');
+  const st = f.__style;
+  const color = (st ? (st.color || st._fillPlain || '#8B7DF5') : ((f.properties&&(f.properties.stroke||f.properties.cor))||'#8B7DF5')).replace('#','');
   const abgr = 'cc' + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
-  const style = `<Style><LineStyle><color>${abgr}</color><width>3</width></LineStyle><PolyStyle><color>${'66'+abgr.slice(2)}</color></PolyStyle><IconStyle><color>${abgr}</color></IconStyle></Style>`;
+  const fillOpHex = Math.round((st && st.fillOpacity!=null ? st.fillOpacity : 0.4)*255).toString(16).padStart(2,'0');
+  const fillAbgr = fillOpHex + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
+  const width = (st && st.weight!=null) ? st.weight : 3;
+  const style = `<Style><LineStyle><color>${abgr}</color><width>${width}</width></LineStyle><PolyStyle><color>${fillAbgr}</color></PolyStyle><IconStyle><color>${abgr}</color></IconStyle></Style>`;
   const g = f.geometry; let geo='';
   const ring = r=>`<LinearRing><coordinates>${r.map(p=>p[0]+','+p[1]+',0').join(' ')}</coordinates></LinearRing>`;
   if(g.type==='Point') geo=`<Point><coordinates>${g.coordinates[0]},${g.coordinates[1]},0</coordinates></Point>`;
@@ -7547,7 +7712,8 @@ function featureToKml(f){
   else if(g.type==='MultiPolygon') geo=`<MultiGeometry>${g.coordinates.map(poly=>`<Polygon><outerBoundaryIs>${ring(poly[0])}</outerBoundaryIs></Polygon>`).join('')}</MultiGeometry>`;
   else if(g.type==='MultiLineString') geo=`<MultiGeometry>${g.coordinates.map(l=>`<LineString><coordinates>${l.map(p=>p[0]+','+p[1]+',0').join(' ')}</coordinates></LineString>`).join('')}</MultiGeometry>`;
   else if(g.type==='MultiPoint') geo=`<MultiGeometry>${g.coordinates.map(p=>`<Point><coordinates>${p[0]},${p[1]},0</coordinates></Point>`).join('')}</MultiGeometry>`;
-  const desc = f.properties ? Object.entries(f.properties).map(([k,v])=>`${k}: ${v}`).join('\n') : '';
+  const skip = new Set(['stroke','stroke-width','fill','fill-opacity','cor','camada']);
+  const desc = f.properties ? Object.entries(f.properties).filter(([k])=>!skip.has(k)).map(([k,v])=>`${k}: ${v}`).join('\n') : '';
   return `<Placemark><name>${name}</name><description><![CDATA[${desc}]]></description>${style}${geo}</Placemark>`;
 }
 function buildKml(gj, docName){
@@ -7560,10 +7726,14 @@ ${gj.features.map(featureToKml).join('\n')}
 document.getElementById('expGo').addEventListener('click', async ()=>{
   const format = document.getElementById('expFormat').value;
   const name = (document.getElementById('expName').value||'projeto').replace(/[^\w\-]+/g,'_');
-  const gj = collectGeoJSON();
+  const preserveStyle = document.getElementById('expPreserveStyle').checked;
+  const crs = exportCrs || currentCRS;
+  const gj = collectGeoJSON({preserveStyle});
+  if(!gj.features.length){ alert('Nenhuma camada incluída (ou sem feições) para exportar. Confira a aba Camadas.'); return; }
   try{
     if(format==='geojson'){
-      download(new Blob([JSON.stringify(gj,null,2)],{type:'application/geo+json'}), name+'.geojson');
+      const out = { type:'FeatureCollection', features: gj.features.map(f=>({type:'Feature', properties:f.properties, geometry:f.geometry})) };
+      download(new Blob([JSON.stringify(out,null,2)],{type:'application/geo+json'}), name+'.geojson');
     } else if(format==='kml'){
       download(new Blob([buildKml(gj,name)],{type:'application/vnd.google-earth.kml+xml'}), name+'.kml');
     } else if(format==='kmz'){
@@ -7572,21 +7742,26 @@ document.getElementById('expGo').addEventListener('click', async ()=>{
       download(await zip.generateAsync({type:'blob', compression:'DEFLATE'}), name+'.kmz');
     } else if(format==='shp'){
       const zip = new JSZip();
-      const gjOut = currentCRS.kind==='utm' ? reprojectGeoJSON(gj, currentCRS) : gj;
-      const groups = { point:[], line:[], polygon:[] };
+      const gjOut = crs.kind==='utm' ? reprojectGeoJSON(gj, crs) : gj;
+      // agrupa por camada + classe geométrica, evitando colisão de arquivo quando
+      // duas camadas exportadas têm a mesma classe (ex.: duas de ponto)
+      const groups = {};
       gjOut.features.forEach(f=>{
         const g = f.geometry; if(!g) return;
         const cls = geomClass(g.type); if(!cls) return;
+        const camada = (f.properties && f.properties.camada) || 'camada';
+        const addFeat = ft=>{ const key = camada+'|'+cls; (groups[key] = groups[key] || {cls, camada, feats:[]}).feats.push(ft); };
         if(g.type.startsWith('Multi'))
-          g.coordinates.forEach(c=>groups[cls].push({properties:f.properties, geometry:{type:g.type.replace('Multi',''), coordinates:c}}));
-        else groups[cls].push(f);
+          g.coordinates.forEach(c=>addFeat({properties:f.properties, geometry:{type:g.type.replace('Multi',''), coordinates:c}}));
+        else addFeat(f);
       });
       const suffix = { point:'_pontos', line:'_linhas', polygon:'_poligonos' };
       let wrote = false;
-      Object.entries(groups).forEach(([cls, fs])=>{
-        if(!fs.length) return;
-        const files = writeShapefile(fs, cls, currentCRS);
-        const base = name + suffix[cls];
+      Object.values(groups).forEach(({cls, camada, feats})=>{
+        if(!feats.length) return;
+        const files = writeShapefile(feats, cls, crs);
+        const safeCamada = camada.replace(/[^\w\-]+/g,'_') || 'camada';
+        const base = name + '_' + safeCamada + suffix[cls];
         zip.file(base+'.shp', files.shp);
         zip.file(base+'.shx', files.shx);
         zip.file(base+'.dbf', files.dbf);
@@ -8553,6 +8728,13 @@ function pdSelect(id){
     el.classList.toggle('sel', el.dataset.id===id);
   });
   const b = id && printLayout.blocks.find(x=>x.id===id);
+  const sub = document.getElementById('pdSideSub');
+  const empty = document.getElementById('pdSideEmpty');
+  if(sub){
+    const label = b ? ({text:'Texto', image:'Imagem', north:'Norte', scale:'Escala', legend:'Legenda', map:'Mapa'})[b.type]||b.type : 'Nenhum bloco selecionado';
+    sub.textContent = label;
+  }
+  if(empty) empty.style.display = (b && (b.type==='north' || b.type==='map')) ? 'none' : '';
   const wrap = document.getElementById('pdNorthStyleWrap');
   if(b && b.type==='north'){
     wrap.style.display = '';
@@ -8842,7 +9024,42 @@ function pdRenderAll(){
   });
   pdRenderRulers(dims);
   pdUpdateGridOverlay();
+  pdFit();
 }
+
+/* Ajusta a folha para caber sempre na área visível do editor. O scale é puramente
+   visual (as coordenadas em mm em printLayout.blocks continuam intocadas), e como os
+   deltas de arraste usam getBoundingClientRect — que já reflete o transform — o
+   arraste e o redimensionamento acompanham o cursor mesmo com scale < 1. */
+function pdFit(){
+  const wrap = document.getElementById('pdSheetWrap');
+  const scaler = document.getElementById('pdSheetScaler');
+  const body = document.querySelector('#mPrintDesigner .pd-body');
+  if(!wrap || !scaler || !body) return;
+  wrap.style.transform = '';
+  scaler.style.width = '';
+  scaler.style.height = '';
+  // dimensões reais sem scale (offsetWidth/Height ignoram transform)
+  const w = wrap.offsetWidth, h = wrap.offsetHeight;
+  if(!w || !h) return;
+  const availW = body.clientWidth - 24;   // sobra p/ padding + centro
+  const availH = body.clientHeight - 24;
+  const s = Math.min(availW/w, availH/h, 1);
+  wrap.style.transformOrigin = 'top left';
+  wrap.style.transform = `scale(${s})`;
+  scaler.style.width = (w*s)+'px';
+  scaler.style.height = (h*s)+'px';
+}
+let pdFitPending = false;
+function pdFitDeferred(){
+  if(pdFitPending) return;
+  pdFitPending = true;
+  requestAnimationFrame(()=>{ pdFitPending = false; pdFit(); });
+}
+window.addEventListener('resize', ()=>{
+  if(!document.getElementById('mPrintDesigner').classList.contains('open')) return;
+  pdFitDeferred();
+});
 
 /* réguas em mm ao redor da folha — auxílio visual do editor, nunca entra na impressão final
    (o export usa outro pipeline, que desenha só os blocos de printLayout) */
@@ -8994,6 +9211,7 @@ document.getElementById('pOpenDesigner').addEventListener('click', ()=>{
   document.getElementById('pdOrient').value = printLayout.orientation;
   pdRenderAll();
   open('mPrintDesigner');
+  requestAnimationFrame(pdFit);
 });
 document.getElementById('pdPaper').addEventListener('change', e=>{ printLayout.paperSize = e.target.value; pdRenderAll(); pdMarkDirty(); });
 document.getElementById('pdOrient').addEventListener('change', e=>{ printLayout.orientation = e.target.value; pdRenderAll(); pdMarkDirty(); });
@@ -9001,6 +9219,7 @@ document.getElementById('pdOrient').addEventListener('change', e=>{ printLayout.
 /* minimizar/expandir a barra de ferramentas do editor — dá mais altura à prévia da folha */
 document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   document.querySelector('.modal.m-designer').classList.toggle('pd-collapsed');
+  pdFitDeferred();
 });
 
 /* réguas (mm) e grade de alinhamento (colunas/linhas) — só no editor, preferência local */
@@ -9022,6 +9241,7 @@ document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   rulersChk.addEventListener('change', ()=>{
     localStorage.setItem('geomatias_pd_rulers', rulersChk.checked ? '1' : '0');
     wrap.classList.toggle('no-rulers', !rulersChk.checked);
+    pdFitDeferred();
   });
   gridChk.addEventListener('change', ()=>{
     localStorage.setItem('geomatias_pd_grid', gridChk.checked ? '1' : '0');

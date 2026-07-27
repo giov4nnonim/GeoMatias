@@ -203,6 +203,25 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .layer-detail .d-legend{margin-top:8px}
 .layer-detail .d-legend img{max-width:100%; background:#fff; border-radius:6px; padding:6px; display:block}
 .layer-detail .d-title{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin:8px 0 3px}
+/* Faixa de transparência da camada (0–100%) */
+/* grade 2×2: rótulo + valor em cima, slider + ↺ embaixo.
+   minmax(0,1fr) garante que nada estoure a caixa, por mais estreito que seja o painel. */
+.opa-row{
+  display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:10px; row-gap:2px;
+  align-items:center; margin:-2px 0 6px; padding:8px 12px;
+  background:var(--sub-bg); border:1px solid var(--line); border-radius:0 0 10px 10px;
+  font-size:12px;
+}
+.opa-row .opa-cap{
+  grid-column:1; grid-row:1; color:var(--muted); font-size:11px; text-transform:uppercase;
+  letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.opa-row input[type=range]{
+  grid-column:1; grid-row:2; width:100%; min-width:0;
+  accent-color:var(--accent); height:26px; margin:0; touch-action:none;
+}
+.opa-row .opa-val{grid-column:2; grid-row:1; text-align:right; color:var(--text); font-variant-numeric:tabular-nums; white-space:nowrap}
+.opa-row .opa-reset{grid-column:2; grid-row:2; justify-self:end}
 .layer-row.dragging{opacity:.35}
 .layer-row.drag-ghost{
   position:fixed; left:0; top:0; z-index:3000; pointer-events:none; margin:0;
@@ -278,12 +297,17 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 @media (max-width:760px){
   #elevPanel{ left:8px; right:8px; width:auto; bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)) }
 }
+/* a linha tem muitos botões para painéis estreitos (270px no tablet): em vez de
+   empurrar ✕/◐ para fora da caixa — onde ficam invisíveis, pois #panel é overflow:hidden —
+   os botões descem para uma segunda linha. */
 .layer-row{
-  display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:4px;
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 10px; margin-bottom:4px;
   background:var(--panel2); border:1px solid transparent; border-radius:8px; font-size:13px;
 }
 .layer-row:hover{border-color:var(--line)}
-.layer-row .name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+/* base de 90px: o nome encolhe até aí com reticências; abaixo disso os botões quebram a linha */
+.layer-row .name{flex:1 1 90px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.layer-row .icon-btn{flex:none}
 .layer-row input[type=checkbox], .layer-row input[type=radio]{accent-color:var(--accent); width:15px; height:15px; cursor:pointer}
 .swatch{width:14px; height:14px; border-radius:4px; border:1px solid var(--swatch-bd); flex:none; cursor:pointer; padding:0; background:none; -webkit-appearance:none; appearance:none}
 .swatch::-webkit-color-swatch-wrapper{padding:0}
@@ -292,7 +316,12 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .icon-btn:hover{color:var(--danger)}
 .icon-btn.zoom:hover{color:var(--accent)}
 .empty-hint{color:var(--muted); font-size:12px; padding:6px 8px; line-height:1.5}
-.add-raster{width:100%; margin-top:6px}
+/* botão de largura total: o texto pode ser longo demais para o painel (270–300px),
+   então quebra em várias linhas em vez de vazar a borda (.tb-btn é nowrap por padrão) */
+.add-raster{
+  width:100%; margin-top:6px; white-space:normal; text-align:left;
+  height:auto; min-height:34px; padding:8px 12px; line-height:1.3;
+}
 
 /* ---------- Toolbar (drawing) ---------- */
 #toolbar{
@@ -404,7 +433,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 }
 .drop:hover, .drop.over{border-color:var(--accent); color:var(--text)}
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
-.radio-line{display:flex; gap:14px; font-size:13px; margin-bottom:10px}
+.radio-line{display:flex; flex-wrap:wrap; gap:8px 14px; font-size:13px; margin-bottom:10px}
 .radio-line label{display:flex; gap:6px; align-items:center; cursor:pointer}
 .radio-line input{accent-color:var(--accent)}
 
@@ -824,7 +853,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <span class="lbl">Camadas</span>
   </button>
   <div id="brand">
-    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#6C5CE7" stroke-width="2"/><path d="M13 2v22M2 13h22" stroke="#6C5CE7" stroke-width="1" opacity=".5"/><circle cx="13" cy="13" r="3.5" fill="#6C5CE7"/></svg>
+    <img src="icon.png" width="62" height="62" alt="GeoMatias" style="border-radius:50%; object-fit:cover">
     <div><b>GeoMatias</b><small>WEBGIS</small></div>
   </div>
   <div class="spacer"></div>
@@ -916,7 +945,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tool" data-tool="tree"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><path d="M9 10.5l3 3 3-3"/></svg><span class="tip">Árvore — registrar por toque no mapa</span></button>
   <button class="tool" id="btnTreeGps"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><circle cx="12" cy="10.2" r="1.6" fill="currentColor" stroke="none"/></svg><span class="tip">Árvore — registrar na minha posição (GPS)</span></button>
   <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
-  <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster</span></button>
+  <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster ou mapa base</span></button>
   <div class="tool-sep"></div>
   <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
@@ -1130,6 +1159,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     </div>
     <div id="rDEM" style="display:none">
       <p class="sub" style="margin-bottom:10px">Modelo digital de elevação (MDT/MDS) em GeoTIFF de <b>banda única</b>. Usado como raster de fundo (hillshade/rampa de cinza) e como fonte de elevação para a medição de distância 3D (terreno).</p>
+      <div class="field">
+        <button type="button" class="tb-btn" id="rDemSample" style="width:100%">🇧🇷 Usar DEM de exemplo — Serra do Mar / Grande São Paulo (SRTM)</button>
+        <p class="sub" style="margin-top:6px">Preenche a URL abaixo com um recorte público (AWS Terrain Tiles, dados SRTM, ~30 m/pixel) cobrindo a escarpada da Serra do Mar — desnível de ~300 m, bom para testar a medição 3D. Servidor com CORS liberado, testado e funcional direto do navegador.</p>
+      </div>
       <div class="field"><label>Arquivo local (.tif / .tiff)</label><input type="file" id="rDemFile" accept=".tif,.tiff,image/tiff"></div>
       <div class="field"><label>…ou URL de um DEM/COG remoto (servidor precisa aceitar Range + CORS)</label><input type="text" id="rDemUrl" placeholder="https://…/mdt.tif"></div>
       <div class="field"><label>Renderização</label>
@@ -1425,7 +1458,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <div class="modal-back" id="mCompare">
   <div class="modal">
     <h3>Comparar camadas</h3>
-    <p class="sub">Escolha a camada raster que ficará <b>do lado direito</b> da cortina. As demais camadas permanecem ao fundo, visíveis do lado esquerdo.</p>
+    <p class="sub">Escolha a camada raster ou o mapa base que ficará <b>do lado direito</b> da cortina. As demais camadas permanecem ao fundo, visíveis do lado esquerdo.</p>
     <div id="cmpList"></div>
     <div class="actions"><button class="tb-btn" id="cmpCancel">Cancelar</button></div>
   </div>
@@ -1833,7 +1866,7 @@ const GEOM_LABEL = { point:'Ponto', line:'Linha', polygon:'Polígono', mixed:'Mi
 function newVectorLayer(name, geomType='mixed', fields=[], color){
   color = color || PALETTE[vectorLayers.length % PALETTE.length];
   const lyr = { id:++layerSeq, name, color, geomType, fields, group:L.featureGroup().addTo(map), visible:true,
-    styleMode:'single', rules:[], rulesElse:null, rulesVersion:0 };
+    styleMode:'single', rules:[], rulesElse:null, rulesVersion:0, opacity:1 };
   vectorLayers.push(lyr);
   return lyr;
 }
@@ -1887,18 +1920,23 @@ function matchRule(lyr, props, zoom){
   }
   return null;
 }
+/* opacidade da camada: multiplicador global 0..1 (transparência = 1 - opacidade).
+   Aplicado aqui, no fim da composição, para valer em traço e preenchimento
+   tanto no modo "cor única" quanto nas regras. */
+function layerAlpha(lyr){ const a = lyr && lyr.opacity; return (a==null || isNaN(a)) ? 1 : Math.max(0, Math.min(1, +a)); }
 function mergedStyle(lyr, ruleStyle, defaults){
   defaults = defaults || {};
   const weight = defaults.weight!=null ? defaults.weight : 3;
-  const fillOpacity = defaults.fillOpacity!=null ? defaults.fillOpacity : .25;
-  const base = { color:lyr.color, weight, fillColor:lyr.color, fillOpacity, radius:7 };
-  if(!ruleStyle) return base;
+  const baseFill = defaults.fillOpacity!=null ? defaults.fillOpacity : .25;
+  const a = layerAlpha(lyr);
+  if(!ruleStyle) return { color:lyr.color, weight, fillColor:lyr.color, fillOpacity:baseFill*a, radius:7, opacity:a };
   return {
-    color: ruleStyle.color || base.color,
-    weight: ruleStyle.weight!=null ? ruleStyle.weight : base.weight,
-    fillColor: ruleStyle.color || base.fillColor,
-    fillOpacity: ruleStyle.fillOpacity!=null ? ruleStyle.fillOpacity : base.fillOpacity,
-    radius: ruleStyle.radius!=null ? ruleStyle.radius : base.radius
+    color: ruleStyle.color || lyr.color,
+    weight: ruleStyle.weight!=null ? ruleStyle.weight : weight,
+    fillColor: ruleStyle.color || lyr.color,
+    fillOpacity: (ruleStyle.fillOpacity!=null ? ruleStyle.fillOpacity : baseFill) * a,
+    radius: ruleStyle.radius!=null ? ruleStyle.radius : 7,
+    opacity: a
   };
 }
 /* Único avaliador de estilo da aplicação. `feature` é opcional (geometrias
@@ -1910,7 +1948,7 @@ function styleFor(lyr, feature, defaults){
   if(!hasRules) return mergedStyle(lyr, null, defaults);
   const props = (feature && feature.properties) || {};
   const zoom = map.getZoom();
-  const cacheKey = (lyr.rulesVersion||0)+'|'+zoom+'|'+JSON.stringify(props);
+  const cacheKey = (lyr.rulesVersion||0)+'|'+zoom+'|'+layerAlpha(lyr)+'|'+JSON.stringify(props);
   if(feature && feature.__styleCacheKey===cacheKey) return feature.__styleCacheVal;
   const r = matchRule(lyr, props, zoom);
   const st = mergedStyle(lyr, r ? r.style : (lyr.rulesElse && lyr.rulesElse.style), defaults);
@@ -1919,7 +1957,7 @@ function styleFor(lyr, feature, defaults){
 }
 function pointMarker(latlng, lyr, feature){
   const st = styleFor(lyr, feature, {fillOpacity:1});
-  return L.circleMarker(latlng, { radius: st.radius, color:'#fff', weight:2, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
+  return L.circleMarker(latlng, { radius: st.radius, color:'#fff', weight:2, opacity: st.opacity, fillColor: st.fillColor, fillOpacity: st.fillOpacity });
 }
 /* reaplica o estilo corrente (regras ou único) numa feição já em tela —
    chamar sempre que atributos, cor ou regras mudarem */
@@ -1927,7 +1965,7 @@ function refreshFeatureStyle(l, lyr){
   if(!l || !l.setStyle) return;
   if(l instanceof L.CircleMarker){
     const st = styleFor(lyr, l.feature, {fillOpacity:1});
-    l.setStyle({ color:'#fff', weight:2, fillColor:st.fillColor, fillOpacity:st.fillOpacity });
+    l.setStyle({ color:'#fff', weight:2, opacity:st.opacity, fillColor:st.fillColor, fillOpacity:st.fillOpacity });
     if(l.setRadius) l.setRadius(st.radius);
   } else {
     l.setStyle(styleFor(lyr, l.feature));
@@ -2150,18 +2188,20 @@ function buildDetail(item, kind){
   html += '<div class="d-title">Metadados</div><table>';
   if(kind==='raster'){
     const def = item.def || {};
-    const tipo = def.type==='wms' ? 'WMS (serviço de mapa)' : def.type==='xyz' ? 'Tiles XYZ' : 'Imagem georreferenciada';
+    const tipo = def.type==='wms' ? 'WMS (serviço de mapa)' : def.type==='xyz' ? 'Tiles XYZ'
+      : def.type==='cog' ? 'COG / GeoTIFF' : def.type==='dem' ? 'DEM (elevação)' : 'Imagem georreferenciada';
     html += `<tr><td>Tipo</td><td>${tipo}</td></tr>`;
     if(def.url) html += `<tr><td>Serviço</td><td>${def.url}</td></tr>`;
     if(def.layers) html += `<tr><td>Camada</td><td>${def.layers}</td></tr>`;
     if(meta.source) html += `<tr><td>Fonte</td><td>${meta.source}</td></tr>`;
     if(meta.bbox) html += `<tr><td>Abrangência</td><td>${fmtBBox(meta.bbox)} (O, S, L, N)</td></tr>`;
     if(def.bounds) html += `<tr><td>Limites</td><td>${def.bounds.map(p=>p.map(x=>(+x).toFixed(4)).join(', ')).join(' — ')}</td></tr>`;
-    html += `<tr><td>Opacidade</td><td>${Math.round((def.opacity??1)*100)}%</td></tr>`;
+    html += `<tr><td>Transparência</td><td>${Math.round((1-(def.opacity??1))*100)}%</td></tr>`;
   } else {
     html += `<tr><td>Tipo</td><td>${GEOM_LABEL[item.geomType]||item.geomType} (vetorial)</td></tr>`;
     html += `<tr><td>Feições</td><td>${item.group.getLayers().length}</td></tr>`;
     html += `<tr><td>Atributos</td><td>${item.fields.length ? item.fields.map(f=>f.name).join(', ') : '—'}</td></tr>`;
+    html += `<tr><td>Transparência</td><td>${Math.round((1-layerAlpha(item))*100)}%</td></tr>`;
     if(meta.source) html += `<tr><td>Fonte</td><td>${meta.source}</td></tr>`;
     if(meta.typeName) html += `<tr><td>Camada WFS</td><td>${meta.typeName}</td></tr>`;
     const b = item.group.getBounds();
@@ -2210,6 +2250,43 @@ function buildDetail(item, kind){
   return d;
 }
 
+/* ---------- Transparência da camada (0–100%) ----------
+   Um só controle para vetor e raster. O slider expressa TRANSPARÊNCIA
+   (0% = opaca, 100% = invisível); internamente guardamos opacidade = 1 - t.
+   Vetor: item.opacity, consumido por styleFor. Raster: item.def.opacity + setOpacity. */
+function layerOpacityOf(item, kind){
+  const v = kind==='raster' ? (item.def && item.def.opacity) : item.opacity;
+  return (v==null || isNaN(v)) ? 1 : Math.max(0, Math.min(1, +v));
+}
+function setLayerOpacity(item, kind, op){
+  op = Math.max(0, Math.min(1, op));
+  if(kind==='raster'){
+    if(item.def) item.def.opacity = op;
+    if(item.layer && item.layer.setOpacity) item.layer.setOpacity(op);
+  } else {
+    item.opacity = op;
+    refreshLayerStyles(item);
+  }
+  scheduleSave();
+}
+function buildOpacityRow(item, kind){
+  const d = document.createElement('div');
+  d.className = 'opa-row';
+  const t = Math.round((1 - layerOpacityOf(item, kind)) * 100);
+  d.innerHTML = `<span class="opa-cap">Transparência</span>
+    <input type="range" min="0" max="100" step="1" value="${t}" title="0% = opaca, 100% = invisível">
+    <span class="opa-val">${t}%</span>
+    <button class="icon-btn opa-reset" title="Voltar a 0% (opaca)">↺</button>`;
+  const rng = d.querySelector('input'), out = d.querySelector('.opa-val');
+  const apply = v=>{ out.textContent = v+'%'; setLayerOpacity(item, kind, 1 - v/100); };
+  rng.addEventListener('input', ()=>apply(+rng.value));
+  d.querySelector('.opa-reset').addEventListener('click', ()=>{ rng.value = 0; apply(0); });
+  // o slider não deve arrastar a camada nem fechar a lista
+  ['pointerdown','touchstart','mousedown','click'].forEach(ev=>
+    d.addEventListener(ev, e=>e.stopPropagation(), {passive:true}));
+  return d;
+}
+
 /* Renderização agrupada genérica */
 function renderGrouped(el, items, buildRow, kind, emptyHtml, preHtml){
   el.innerHTML = '';
@@ -2220,6 +2297,7 @@ function renderGrouped(el, items, buildRow, kind, emptyHtml, preHtml){
     const row = buildRow(it);
     makeDraggable(row, kind, it.id);
     container.appendChild(row);
+    if(it.opacityOpen) container.appendChild(buildOpacityRow(it, kind));
     if(it.expanded) container.appendChild(buildDetail(it, kind));
   });
   const loose = items.filter(i=>!i.groupId || !groupById(i.groupId));
@@ -2291,6 +2369,7 @@ function buildVectorRow(lyr){
      <button class="icon-btn zoom schema" title="Atributos da camada">☰</button>
      <button class="icon-btn zoom style" title="Simbologia da camada">🎨</button>
      <button class="icon-btn zoom verify" title="Verificar camada">✓</button>
+     <button class="icon-btn zoom opa" title="Transparência da camada">◐</button>
      <button class="icon-btn" title="Remover">✕</button>`;
   const [chk, colorIn] = [row.children[0], row.children[1]];
   row.querySelector('.name').addEventListener('click', ()=>{
@@ -2316,6 +2395,7 @@ function buildVectorRow(lyr){
   row.querySelector('.style').addEventListener('click', ()=>openStyleEditor(lyr));
   row.querySelector('.table').addEventListener('click', ()=>openAttrTable(lyr));
   row.querySelector('.verify').addEventListener('click', ()=>openVerifyPanel(lyr));
+  row.querySelector('.opa').addEventListener('click', ()=>{ lyr.opacityOpen = !lyr.opacityOpen; renderVectorList(); });
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
     if(lyr.group.getLayers().length && !confirm(`Remover a camada "${lyr.name}" e suas ${lyr.group.getLayers().length} geometrias?`)) return;
     map.removeLayer(lyr.group);
@@ -2344,6 +2424,7 @@ function buildRasterRow(r){
     `<input type="checkbox" ${r.visible?'checked':''}>
      <span class="name" title="${r.name}">${r.name}</span>
      <button class="icon-btn zoom info" title="Legenda, descrição e metadados">${r.expanded?'▴':'ℹ'}</button>
+     <button class="icon-btn zoom opa" title="Transparência da camada">◐</button>
      <button class="icon-btn" title="Remover">✕</button>`;
   row.children[0].addEventListener('change', e=>{
     r.visible = e.target.checked;
@@ -2352,6 +2433,7 @@ function buildRasterRow(r){
     scheduleSave();
   });
   row.querySelector('.info').addEventListener('click', ()=>{ r.expanded = !r.expanded; renderRasterList(); });
+  row.querySelector('.opa').addEventListener('click', ()=>{ r.opacityOpen = !r.opacityOpen; renderRasterList(); });
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
     if(CMP.active && CMP.layerRef===r) deactivate();
     map.removeLayer(r.layer);
@@ -5502,6 +5584,7 @@ L.GridLayer.COG = L.GridLayer.extend({
       self.fire('cog:ready', {info:self._info});
       return self._info;
     })();
+    this._ready.catch(err=>{ console.error('[COG] falha ao abrir', err); self.fire('cog:error', {error:err}); });
     return this._ready;
   },
   getLatLngBounds: async function(){ const i = await this._open(); return i.latLngBounds; },
@@ -5797,6 +5880,39 @@ document.querySelectorAll('input[name=rType]').forEach(r=>r.addEventListener('ch
 }));
 document.getElementById('rOp').addEventListener('input', e=>document.getElementById('rOpV').textContent=e.target.value+'%');
 
+/* DEM de exemplo (Brasil): AWS Terrain Tiles ("elevation-tiles-prod"),
+   formato geotiff (SRTM reamostrado), tile z11/x760/y1162 — cobre a
+   Serra do Mar na divisa com a Grande São Paulo (~740–1040 m de cota,
+   desnível de ~300 m). Ao contrário de outros buckets públicos de DEM
+   (ex.: copernicus-dem-30m, que responde ao GET normal mas nega o
+   preflight OPTIONS com 403 e por isso trava no navegador por CORS),
+   este bucket publica Access-Control-Allow-Origin: * e funciona direto
+   do cliente, sem proxy. Verificado via curl -X OPTIONS antes de fixar. */
+const DEM_SAMPLE_BR = {
+  name: 'DEM exemplo — Serra do Mar/SP (SRTM, AWS Terrain Tiles)',
+  url: 'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/760/1162.tif'
+};
+document.getElementById('rDemSample').addEventListener('click', ()=>{
+  const radio = document.querySelector('input[name=rType][value=dem]');
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change'));
+  document.getElementById('rName').value = DEM_SAMPLE_BR.name;
+  document.getElementById('rDemUrl').value = DEM_SAMPLE_BR.url;
+  document.getElementById('rDemFile').value = '';
+  status('URL do DEM de exemplo preenchida — clique em "Adicionar" para carregar. Se o servidor bloquear CORS, baixe o arquivo por essa mesma URL e importe como "Arquivo local".');
+});
+
+/* Falha ao abrir COG/DEM: normalmente CORS (bucket sem cabeçalho
+   Access-Control-Allow-Origin) — sem isso, o navegador nunca completa
+   a leitura por faixa de bytes e o raster fica em branco sem aviso.
+   Torna o erro visível em vez de deixá-lo só no console. */
+function cogErrorAlert(name, err){
+  const msg = (err && err.message) || String(err);
+  const isCors = /Failed to fetch|NetworkError|CORS/i.test(msg);
+  status('Falha ao abrir "'+name+'"'+(isCors ? ' — o servidor provavelmente bloqueia CORS (não permite leitura por outros sites).' : ': '+msg));
+  console.error('[raster] falha ao abrir "'+name+'":', err);
+}
+
 /* Cria camada raster a partir de uma definição serializável */
 function addRasterFromDef(def, silent){
   let layer;
@@ -5808,6 +5924,7 @@ function addRasterFromDef(def, silent){
       if(!silent && e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05));
       status('COG "'+def.name+'" aberto — EPSG:'+e.info.epsg+', '+e.info.imgs.length+' nível(is) de resolução.');
     });
+    layer.on('cog:error', e=>cogErrorAlert(def.name, e.error));
   }
   else if(def.type==='dem'){
     layer = L.gridLayer.dem(cogSource(def), {opacity:def.opacity, maxZoom:24, tileSize:256, demRender:def.demRender||'hillshade'});
@@ -5815,6 +5932,7 @@ function addRasterFromDef(def, silent){
       if(!silent && e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05));
       status('DEM "'+def.name+'" aberto — EPSG:'+e.info.epsg+', disponível para medição 3D.');
     });
+    layer.on('cog:error', e=>cogErrorAlert(def.name, e.error));
   }
   else layer = L.imageOverlay(assetURL(def.asset) || def.dataUrl, def.bounds, {opacity:def.opacity});
   layer.addTo(map);
@@ -5865,6 +5983,7 @@ document.getElementById('rGo').addEventListener('click', async ()=>{
           def = {type:'cog', name, opacity, _volatile:true};
           const layer = L.gridLayer.cog(RasterSource.fromFile(f), {opacity, maxZoom:24, tileSize:256});
           layer.on('cog:ready', e=>{ if(e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05)); });
+          layer.on('cog:error', e=>cogErrorAlert(name, e.error));
           layer.addTo(map);
           rasterLayers.push({id:++layerSeq, name, layer, visible:true, def});
           renderRasterList();
@@ -5890,6 +6009,7 @@ document.getElementById('rGo').addEventListener('click', async ()=>{
           def = {type:'dem', name, opacity, demRender, _volatile:true};
           const layer = L.gridLayer.dem(RasterSource.fromFile(f), {opacity, maxZoom:24, tileSize:256, demRender});
           layer.on('cog:ready', e=>{ if(e.info.latLngBounds.isValid()) map.fitBounds(e.info.latLngBounds.pad(.05)); });
+          layer.on('cog:error', e=>cogErrorAlert(name, e.error));
           layer.addTo(map);
           rasterLayers.push({id:++layerSeq, name, layer, visible:true, def});
           renderRasterList();
@@ -5961,10 +6081,23 @@ function cmpSetX(x){
 }
 function cmpOnResize(){ cmpSetX(CMP.x); }
 
+/* Mapas base: clona a definição (mesma URL/opções) e a adiciona numa
+   instância própria, para não mexer na base ativa — a cópia é
+   removida do mapa por completo ao encerrar a comparação. */
+function cmpBaseClone(name){
+  const src = bases[name];
+  return L.tileLayer(src._url, src.options);
+}
+function cmpActivateBase(name){
+  cmpEnsurePane();
+  const layer = cmpBaseClone(name).addTo(map);
+  cmpActivate({ name, layer, _cmpTemp:true });
+}
+
 function cmpActivate(r){
   cmpEnsurePane();
   const el = cmpLayerEl(r);
-  if(!el){ status('Não foi possível preparar esta camada para comparação.'); deactivate(); return; }
+  if(!el){ status('Não foi possível preparar esta camada para comparação.'); if(r._cmpTemp) map.removeLayer(r.layer); deactivate(); return; }
   CMP.layerRef = r;
   CMP.container = el;
   CMP.origParent = el.parentNode;
@@ -5989,10 +6122,15 @@ function cmpDeactivate(){
   map.off('move', cmpUpdateClip);
   map.off('zoom', cmpUpdateClip);
   map.off('resize', cmpOnResize);
-  const el = CMP.container, parent = CMP.origParent, next = CMP.origNext;
-  if(el && parent){
-    if(next && next.parentNode===parent) parent.insertBefore(el, next);
-    else parent.appendChild(el);
+  if(CMP.layerRef && CMP.layerRef._cmpTemp){
+    // cópia temporária de mapa base: remove do mapa por completo (não pertence a nenhuma lista)
+    map.removeLayer(CMP.layerRef.layer);
+  } else {
+    const el = CMP.container, parent = CMP.origParent, next = CMP.origNext;
+    if(el && parent){
+      if(next && next.parentNode===parent) parent.insertBefore(el, next);
+      else parent.appendChild(el);
+    }
   }
   const pane = map.getPane(CMP_PANE);
   if(pane) pane.style.clipPath = '';
@@ -6003,21 +6141,36 @@ function cmpDeactivate(){
 }
 function cmpOpenPicker(){
   const vis = rasterLayers.filter(r=>r.visible);
-  if(!vis.length){
-    status('Nenhuma camada raster visível para comparar.');
+  const altBases = Object.keys(bases).filter(n=>n!==currentBaseName && n!=='Sem base');
+  if(!vis.length && !altBases.length){
+    status('Nenhuma camada raster visível nem outro mapa base disponível para comparar.');
     deactivate();
     return;
   }
   const el = document.getElementById('cmpList');
   el.innerHTML = '';
-  vis.forEach(r=>{
-    const row = document.createElement('div');
-    row.className = 'layer-row';
-    row.style.cursor = 'pointer';
-    row.innerHTML = `<span class="name">${r.name}</span>`;
-    row.addEventListener('click', ()=>{ close('mCompare'); cmpActivate(r); });
-    el.appendChild(row);
-  });
+  if(altBases.length){
+    el.insertAdjacentHTML('beforeend', '<div class="tree-sec-title">Mapas base</div>');
+    altBases.forEach(name=>{
+      const row = document.createElement('div');
+      row.className = 'layer-row';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `<span class="name">${name}</span>`;
+      row.addEventListener('click', ()=>{ close('mCompare'); cmpActivateBase(name); });
+      el.appendChild(row);
+    });
+  }
+  if(vis.length){
+    el.insertAdjacentHTML('beforeend', '<div class="tree-sec-title">Camadas raster</div>');
+    vis.forEach(r=>{
+      const row = document.createElement('div');
+      row.className = 'layer-row';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `<span class="name">${r.name}</span>`;
+      row.addEventListener('click', ()=>{ close('mCompare'); cmpActivate(r); });
+      el.appendChild(row);
+    });
+  }
   open('mCompare');
 }
 document.getElementById('cmpCancel').addEventListener('click', ()=>{
@@ -6063,6 +6216,19 @@ document.getElementById('cmpCancel').addEventListener('click', ()=>{
 /* ---------- IMPRESSÃO ---------- */
 document.getElementById('btnPrint').addEventListener('click', ()=>open('mPrint'));
 
+/* O Leaflet aplica setOpacity() no CONTÊINER da camada, não em cada tile —
+   para a captura respeitar a transparência, acumula a opacidade dos ancestrais. */
+function effectiveAlpha(el){
+  let a = 1, n = el, stop = map.getContainer();
+  while(n && n!==stop.parentNode){
+    const o = parseFloat(getComputedStyle(n).opacity);
+    if(!isNaN(o)) a *= o;
+    if(n===stop) break;
+    n = n.parentElement;
+  }
+  return a;
+}
+
 async function captureMap(){
   // Rasteriza tiles visíveis + vetores num canvas (sem bibliotecas externas)
   const size = map.getSize();
@@ -6079,7 +6245,7 @@ async function captureMap(){
   map.getContainer().querySelectorAll('.leaflet-tile-pane canvas.leaflet-tile').forEach(cv=>{
     const r = cv.getBoundingClientRect();
     try{
-      ctx.globalAlpha = parseFloat(getComputedStyle(cv).opacity)||1;
+      ctx.globalAlpha = effectiveAlpha(cv);
       ctx.drawImage(cv, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){}
     ctx.globalAlpha = 1;
@@ -6088,7 +6254,7 @@ async function captureMap(){
   const jobs = [...imgs].map(img=>new Promise(res=>{
     const r = img.getBoundingClientRect();
     const draw = el=>{ try{
-      ctx.globalAlpha = parseFloat(getComputedStyle(img).opacity)||1;
+      ctx.globalAlpha = effectiveAlpha(img);
       ctx.drawImage(el, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){} ctx.globalAlpha=1; res(); };
     if(img.complete && img.naturalWidth){
@@ -6282,7 +6448,7 @@ async function captureInventoryMap(feats){
   map.getContainer().querySelectorAll('.leaflet-tile-pane canvas.leaflet-tile').forEach(cv=>{
     const r = cv.getBoundingClientRect();
     try{
-      ctx.globalAlpha = parseFloat(getComputedStyle(cv).opacity)||1;
+      ctx.globalAlpha = effectiveAlpha(cv);
       ctx.drawImage(cv, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){}
     ctx.globalAlpha = 1;
@@ -6291,7 +6457,7 @@ async function captureInventoryMap(feats){
   const jobs = [...imgs].map(img=>new Promise(res=>{
     const r = img.getBoundingClientRect();
     const draw = el=>{ try{
-      ctx.globalAlpha = parseFloat(getComputedStyle(img).opacity)||1;
+      ctx.globalAlpha = effectiveAlpha(img);
       ctx.drawImage(el, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){} ctx.globalAlpha=1; res(); };
     if(img.complete && img.naturalWidth){
@@ -6677,7 +6843,7 @@ function serializeProject(){
     rasters: rasterLayers.filter(r=>!(r.def && r.def._volatile)).map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
     layers: vectorLayers.map(l=>({
       name:l.name, geomType:l.geomType, color:l.color, visible:l.visible, fields:l.fields, groupId:l.groupId||null, meta:l.meta||null, inventory:!!l.inventory,
-      styleMode:l.styleMode||'single', rules:l.rules||[], rulesElse:l.rulesElse||null,
+      styleMode:l.styleMode||'single', rules:l.rules||[], rulesElse:l.rulesElse||null, opacity:layerAlpha(l),
       features:{ type:'FeatureCollection',
         features: l.group.getLayers().map(x=>{
           let g = x.toGeoJSON();
@@ -6766,6 +6932,7 @@ async function applyProject(p){
     lyr.groupId = ld.groupId || null;
     lyr.meta = ld.meta || null;
     if(ld.inventory){ lyr.inventory = true; inventoryLayer = lyr; }
+    lyr.opacity = (ld.opacity==null || isNaN(ld.opacity)) ? 1 : +ld.opacity;
     lyr.styleMode = ld.styleMode || 'single';
     lyr.rules = ld.rules || [];
     lyr.rulesElse = ld.rulesElse || null;
@@ -6793,6 +6960,11 @@ async function applyProject(p){
     if(!lyr.visible) map.removeLayer(lyr.group);
   });
   if(p.view && p.view.center) map.setView(p.view.center, p.view.zoom||map.getZoom());
+  /* as feições foram estilizadas com o zoom anterior ao setView; se houver regras
+     com faixa de zoom, reavalia agora (o zoomend pode não disparar se o zoom não mudou) */
+  vectorLayers.forEach(l=>{
+    if(l.styleMode==='rules' && (l.rules||[]).some(r=>r.zoomMin!=null || r.zoomMax!=null)) refreshLayerStyles(l);
+  });
   renderVectorList();
   renderRasterList();
 }
@@ -6954,12 +7126,14 @@ let catalogs = [
     description:'Processos minerários cadastrados na Agência Nacional de Mineração: requerimentos, concessões e áreas de pesquisa.' },
   { name:'SIMA-SP — Infraestrutura e Meio Ambiente (ArcGIS)', url:'https://mapas.infraestruturameioambiente.sp.gov.br/server/rest/services', kind:'arcgis',
     description:'Camadas da Secretaria de Infraestrutura e Meio Ambiente de São Paulo: unidades de conservação, recursos hídricos e infraestrutura estadual.' },
-  { name:'ANA — Hidrologia e Recursos Hídricos', url:'https://geo.ana.gov.br/server/rest/services', kind:'arcgis',
-    description:'Agência Nacional de Águas e Saneamento: estações fluviométricas, vazão de rios, bacias hidrográficas e qualidade de água.' },
+  { name:'ANA/SNIRH — Hidrologia e Recursos Hídricos', url:'https://portal1.snirh.gov.br/server/rest/services', kind:'arcgis',
+    description:'Agência Nacional de Águas e Saneamento (SNIRH): estações fluviométricas e hidrometeorológicas, bacias hidrográficas, outorgas e balanço hídrico.' },
   { name:'CPRM/SGB — Suscetibilidade e Geodiversidade (ArcGIS)', url:'https://geoportal.sgb.gov.br/server/rest/services', kind:'arcgis',
     description:'Mapas de suscetibilidade a deslizamentos e inundações, geodiversidade e geologia de engenharia do Serviço Geológico do Brasil.' },
   { name:'SABESP — Mananciais SP (via GeoSampa)', url:'https://wms.geosampa.prefeitura.sp.gov.br/geoserver/wms',
-    description:'Reservatórios e sistemas produtores de água da Grande São Paulo: volume armazenado e pluviometria. Endpoint/camada a confirmar caso indisponível.' }
+    description:'Reservatórios e sistemas produtores de água da Grande São Paulo: volume armazenado e pluviometria. Endpoint/camada a confirmar caso indisponível.' },
+  { name:'GBIF — Ocorrências de espécies', url:'https://api.gbif.org/v1', kind:'gbif',
+    description:'Global Biodiversity Information Facility: ocorrências georreferenciadas de fauna e flora por nome de espécie (API pública, sem chave). Só na aba Vetores — digite o nome da espécie na busca.' }
 ].map(c=>({...c, enabled:true, kind:c.kind||'ogc'}));
 
 let catalogMode = 'wms';        // 'wms' (aba rasters) | 'wfs' (aba vetores)
@@ -7134,7 +7308,9 @@ document.getElementById('catGo').addEventListener('click', async ()=>{
     const st = document.getElementById('cstat_'+i);
     if(st){ st.textContent='consultando…'; st.className='cstat'; }
     try{
-      const layers = c.kind==='arcgis' ? await arcgisDiscover(c, service, st) : await fetchCaps(c, service);
+      const layers = c.kind==='arcgis' ? await arcgisDiscover(c, service, st)
+                   : c.kind==='gbif'   ? await gbifDiscover(c, service, st, term)
+                   : await fetchCaps(c, service);
       let hits = 0;
       layers.forEach(l=>{
         const hay = deacc(l.name+' '+l.title+' '+l.abstract);
@@ -7169,6 +7345,7 @@ document.getElementById('catGo').addEventListener('click', async ()=>{
 async function addCatalogLayer(r, btn){
   btn.disabled = true;
   if(r.cat.kind==='arcgis'){ return addArcgisLayer(r, btn); }
+  if(r.cat.kind==='gbif'){ return addGbifLayer(r, btn); }
   if(catalogMode==='wms'){
     addRasterFromDef({ type:'wms', name:r.title, url:r.cat.url, layers:r.name, opacity:1,
       abstract:r.abstract||'', source:r.cat.name, bbox:r.bbox||null });
@@ -7379,6 +7556,85 @@ async function addArcgisLayer(r, btn){
     btn.disabled = false;
     setTimeout(()=>{ btn.textContent='⬇ Baixar feições (WFS)'; }, 2500);
     status('Falha ao baixar "'+r.title+'": '+err.message);
+  }
+}
+
+
+/* =========================================================
+   Adaptador GBIF (Global Biodiversity Information Facility)
+   API pública de ocorrências (sem chave): traduz busca por
+   espécie + bbox em pontos GeoJSON. Só faz sentido na aba
+   Vetores (não há raster); precisa de um termo de busca.
+   ========================================================= */
+async function gbifDiscover(cat, service, st, term){
+  if(catalogMode==='wms'){
+    if(st){ st.textContent='sem raster (use aba Vetores)'; st.className='cstat'; }
+    return [];
+  }
+  if(!term){
+    if(st){ st.textContent='digite um nome de espécie para buscar'; st.className='cstat'; }
+    return [];
+  }
+  if(st){ st.textContent='pronto para buscar ocorrências…'; st.className='cstat ok'; }
+  const bbox = searchBBox ? [searchBBox.getWest(), searchBBox.getSouth(), searchBBox.getEast(), searchBBox.getNorth()] : null;
+  return [{
+    name: term,
+    title: 'GBIF: ocorrências de "'+term+'"',
+    abstract: 'Registros de ocorrência (com coordenadas) da API pública do GBIF'+(bbox?' na região desenhada':' — desenhe uma região para limitar a busca'),
+    bbox
+  }];
+}
+
+/* Converte um lote de ocorrências GBIF em GeoJSON de pontos */
+function gbifToGeoJSON(results){
+  const feats = (results||[])
+    .filter(o=>typeof o.decimalLatitude==='number' && typeof o.decimalLongitude==='number')
+    .map(o=>({
+      type:'Feature',
+      geometry:{ type:'Point', coordinates:[o.decimalLongitude, o.decimalLatitude] },
+      properties:{
+        especie: o.species || o.scientificName || '',
+        nome_cientifico: o.scientificName || '',
+        reino: o.kingdom || '', familia: o.family || '',
+        data_ocorrencia: o.eventDate || '',
+        pais: o.country || '', localidade: o.locality || '',
+        observador: o.recordedBy || '', instituicao: o.institutionCode || '',
+        gbif_key: o.key || '', gbif_dataset: o.datasetKey || ''
+      }
+    }));
+  return {type:'FeatureCollection', features:feats};
+}
+
+async function addGbifLayer(r, btn){
+  btn.innerHTML = '<span class="spin"></span> baixando…';
+  try{
+    const params = {
+      q: r.name, hasCoordinate:'true', hasGeospatialIssue:'false', limit:'300'
+    };
+    if(searchBBox){
+      params.geometry = 'POLYGON(('+
+        [ [r.bbox[0],r.bbox[1]], [r.bbox[2],r.bbox[1]], [r.bbox[2],r.bbox[3]], [r.bbox[0],r.bbox[3]], [r.bbox[0],r.bbox[1]] ]
+          .map(p=>p[0]+' '+p[1]).join(',') + '))';
+    }
+    const qs = p => Object.entries(p).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    const resp = await fetch('https://api.gbif.org/v1/occurrence/search?'+qs(params));
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    const gj = gbifToGeoJSON(data.results);
+    if(!gj.features.length) throw new Error('nenhuma ocorrência georreferenciada encontrada');
+
+    const {count, bounds, layers} = importCollections([{...gj, fileName:r.title}], r.title);
+    layers.forEach(l=>l.meta = { source:r.cat.name, abstract:r.abstract||'', typeName:r.name });
+    renderVectorList();
+    if(bounds) map.fitBounds(bounds.pad(.1));
+    btn.textContent = '✓ '+count+' ocorrências';
+    status(count+' ocorrências GBIF importadas para "'+r.title+'".');
+  }catch(err){
+    console.warn(err);
+    btn.textContent = '✕ falhou';
+    btn.disabled = false;
+    setTimeout(()=>{ btn.textContent='⬇ Baixar feições (WFS)'; }, 2500);
+    status('Falha ao buscar GBIF: '+err.message);
   }
 }
 

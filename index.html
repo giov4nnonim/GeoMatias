@@ -148,7 +148,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #menuDrop .menu-item{width:100%; height:40px; justify-content:flex-start; gap:10px; padding:0 12px}
 #menuDrop .menu-item .lbl{display:inline !important; font-size:13.5px}
 #menuDrop .menu-item svg{flex:none}
-#brand{display:flex; align-items:center; gap:8px; margin-right:6px; user-select:none}
+#brand{display:flex; align-items:center; gap:4px; margin-right:6px; user-select:none}
 #brand svg{flex:none}
 #brand b{font-size:15px; letter-spacing:.4px}
 #brand small{color:var(--muted); font-size:10px; display:block; margin-top:-2px; letter-spacing:.6px; font-weight:500}
@@ -164,12 +164,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* ---------- Side panel ---------- */
 #panel{
-  position:absolute; top:60px; left:10px; bottom:64px; width:300px; z-index:1100;
+  position:absolute; top:60px; left:10px; width:300px; z-index:1100;
+  max-height:calc(100vh - 124px);
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
   display:flex; flex-direction:column; overflow:hidden;
   transition:transform .25s ease, opacity .25s ease;
   box-shadow:0 8px 30px var(--shadow);
 }
+@supports (height:100dvh){ #panel{max-height:calc(100dvh - 124px)} }
 #panel.hidden{transform:translateX(-115%); opacity:0; pointer-events:none}
 #panel header{padding:12px 14px 8px; font-size:12px; letter-spacing:.6px; font-weight:500; color:var(--muted)}
 #panel .scroll{flex:1; overflow-y:auto; padding:0 10px 12px}
@@ -247,6 +249,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .layer-row[data-drag-kind]{cursor:grab; touch-action:pan-y}
 .grp-head.dropover, .grp-body.dropover{outline:2px dashed var(--accent); outline-offset:-2px; border-radius:8px}
 #vectorList.dropover, #rasterList.dropover{outline:2px dashed var(--muted); outline-offset:-2px; border-radius:8px}
+#baseList, #rasterList, #vectorList{margin-top:8px}
 .grp-head .gname-input{
   flex:1; background:var(--field); border:1px solid var(--accent); color:var(--text);
   border-radius:6px; padding:4px 8px; font-size:12.5px; font-family:inherit; min-width:60px;
@@ -317,7 +320,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
    empurrar os botões de ação para fora da caixa — onde ficam invisíveis, pois #panel é overflow:hidden —
    os botões descem para uma segunda linha. */
 .layer-row{
-  display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 10px; margin-bottom:4px;
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 10px; margin-bottom:8px;
   background:var(--panel2); border:1px solid transparent; border-radius:8px; font-size:13px;
 }
 .layer-row:hover{border-color:var(--line)}
@@ -335,9 +338,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 /* botão de largura total: o texto pode ser longo demais para o painel (270–300px),
    então quebra em várias linhas em vez de vazar a borda (.tb-btn é nowrap por padrão) */
 .add-raster{
-  width:100%; margin-top:6px; white-space:normal; text-align:left;
+  width:100%; margin:8px 0 0; white-space:normal; text-align:left;
   height:auto; min-height:34px; padding:8px 12px; line-height:1.3;
 }
+.add-raster:first-child{margin-top:0}
 
 /* ---------- Toolbar (drawing) ---------- */
 #toolbar{
@@ -476,7 +480,31 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .leaflet-control-zoom{border:1px solid var(--line)!important; border-radius:10px!important; overflow:hidden; margin-top:64px!important}
 .leaflet-control-zoom a{background:var(--panel)!important; color:var(--text)!important; border-color:var(--line)!important}
 .leaflet-control-zoom a:hover{background:var(--panel2)!important; color:var(--accent)!important}
-.leaflet-control-scale-line{background:var(--scale-bg); color:var(--text); border-color:var(--muted)}
+/* Escala gráfica customizada (substitui o L.control.scale padrão) */
+.gm-scale{
+  background:var(--scale-bg); border:1px solid var(--line); border-radius:8px;
+  padding:6px 9px 7px; box-shadow:0 4px 14px var(--shadow); font-family:inherit;
+  -webkit-user-select:none; user-select:none;
+}
+.gm-scale-bar{display:block; margin-bottom:3px}
+.gm-scale-row{display:flex; align-items:center; justify-content:center; gap:5px}
+.gm-scale-ratio{
+  font-size:11px; color:var(--text); font-weight:600; letter-spacing:.2px;
+  cursor:text; border-radius:4px; padding:1px 4px; text-align:center; white-space:nowrap;
+}
+.gm-scale-ratio:hover{background:var(--panel2)}
+.gm-scale-input{
+  width:84px; font-size:11px; font-weight:600; text-align:center; color:var(--text);
+  background:var(--field); border:1px solid var(--accent); border-radius:4px; padding:1px 4px;
+}
+.gm-scale-precision{
+  width:18px; height:18px; flex:none; display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; border-radius:4px; color:var(--muted); cursor:pointer; padding:0;
+}
+.gm-scale-precision:hover{color:var(--accent); background:var(--panel2)}
+.gm-scale-precision.on{color:var(--accent)}
+.gm-scale-precision svg{width:12px; height:12px}
+.gm-scale-dist{font-size:10px; color:var(--muted); text-align:center; margin-top:1px}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .measure-label{
   background:linear-gradient(135deg, #8B7DF5 0%, #5a4bd6 100%); 
@@ -821,6 +849,58 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   #inventorySheet .iv-attrs .warn{color:#b26a00; font-size:7.5pt}
   #inventorySheet .iv-foot{margin-top:3mm; font-size:8pt; color:#333; border-top:1px solid #000; padding-top:2mm; display:flex; justify-content:space-between}
 }
+
+/* ---------- Editor de layout de impressão ---------- */
+/* .modal-x normalmente usa float:right (funciona no fluxo normal dos outros modais),
+   mas float não tem efeito em itens flex — como este modal é display:flex, o botão
+   precisa de posicionamento absoluto explícito para ficar ancorado no canto superior direito */
+.modal.m-designer{width:min(96vw, 1180px); max-width:96vw; height:min(92vh, 860px); display:flex; flex-direction:column; position:relative; padding-top:44px}
+.modal.m-designer .modal-x{position:absolute; top:10px; right:14px; float:none; margin:0}
+.pd-toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); margin-bottom:10px}
+.pd-toolbar .field{margin:0}
+.pd-toolbar select{padding:4px 6px}
+.pd-body{flex:1; overflow:auto; background:var(--panel3, var(--panel2)); border-radius:8px; padding:24px; display:flex; align-items:flex-start; justify-content:center}
+.pd-sheet{position:relative; background:#fff; box-shadow:0 2px 18px rgba(0,0,0,.45); flex:none; overflow:hidden}
+.pd-block{position:absolute; box-sizing:border-box; border:1px dashed transparent; cursor:move; user-select:none}
+.pd-block:hover, .pd-block.sel{border-color:var(--accent)}
+.pd-block.sel{box-shadow:0 0 0 2px var(--accent-ring, var(--accent))}
+.pd-block .pd-inner{width:100%; height:100%; overflow:hidden; pointer-events:none}
+.pd-block.type-text .pd-inner{padding:2mm; font-family:Arial, sans-serif; color:#000; font-size:11pt; line-height:1.35; pointer-events:auto; overflow:auto}
+.pd-block.type-image .pd-inner img{width:100%; height:100%; object-fit:contain; display:block}
+.pd-block.type-map .pd-inner img{width:100%; height:100%; object-fit:contain; display:block; background:#fff}
+.pd-block.grid-edit{cursor:default}
+.pd-grid-drag-overlay{position:absolute; inset:0; cursor:move; touch-action:none}
+.pd-grid-drag-overlay img{width:100%; height:100%; object-fit:contain; opacity:.75; display:block; pointer-events:none}
+.pd-grid-drag-hint{position:absolute; left:4px; bottom:4px; background:rgba(0,0,0,.65); color:#fff; font-size:9px; padding:2px 5px; border-radius:4px; pointer-events:none}
+/* painel de grade de coordenadas — grid em vez de flex-wrap, pra não empilhar em várias
+   linhas curtas quando os textos dos <select> são longos */
+.pd-grat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:6px; margin-bottom:8px; align-items:center}
+.pd-grat-grid select, .pd-grat-grid button{width:100%; margin:0}
+.pd-grat-check{display:flex; align-items:center; gap:6px; cursor:pointer; margin:0; font-size:12.5px; white-space:nowrap}
+.pd-grat-sides{display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:6px 10px}
+.pd-grat-sides label{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--muted); margin:0}
+.pd-grat-sides select{width:100%}
+.pd-block .pd-bar{position:absolute; top:-27px; left:0; display:none; gap:4px; z-index:5}
+.pd-block.sel .pd-bar{display:flex}
+.pd-block .pd-bar button{width:22px; height:22px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:5px; background:var(--panel2); border:1px solid var(--line); color:var(--text); cursor:pointer}
+.pd-block .pd-bar button:hover{border-color:var(--accent); color:var(--accent)}
+.pd-block .pd-bar .pd-move{cursor:grab; touch-action:none}
+.pd-block .pd-bar .pd-move:active{cursor:grabbing}
+.pd-block .pd-bar .pd-del:hover{border-color:#c0392b; color:#c0392b}
+.pd-handle{position:absolute; width:11px; height:11px; background:var(--accent); border:1px solid #fff; border-radius:2px; display:none}
+.pd-block.sel .pd-handle{display:block}
+.pd-handle.nw{left:-5px; top:-5px; cursor:nwse-resize}
+.pd-handle.ne{right:-5px; top:-5px; cursor:nesw-resize}
+.pd-handle.sw{left:-5px; bottom:-5px; cursor:nesw-resize}
+.pd-handle.se{right:-5px; bottom:-5px; cursor:nwse-resize}
+/* miniaturas de legenda (mesmas classes .li/.sw usadas na folha de impressão) também
+   fora do @media print, para o bloco de legenda ficar legível dentro do editor */
+.pd-block.type-legend .pd-inner{overflow:auto}
+.pd-block .li{display:flex; align-items:center; gap:2mm; margin-bottom:1mm}
+.pd-block .sw{width:6mm; height:4mm; border:1px solid #000; flex:none; display:inline-block}
+.pd-block .sw.pt{width:4mm; height:4mm; border-radius:50%}
+.pd-block .sw.ln{height:1mm; border:none}
+.pd-block .sty-preview{background:#fff; border:1px solid #bbb; flex:none}
 /* ---------- Medição por escala fotográfica ---------- */
 .ms-stage{position:relative; width:100%; height:44vh; min-height:240px; background:#000; border:1px solid var(--line); border-radius:10px; overflow:hidden; touch-action:none}
 @supports (height:44dvh){ .ms-stage{height:44dvh} }
@@ -944,11 +1024,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <span class="lbl">Camadas</span>
   </button>
   <div id="brand">
-    <img src="icon.png" width="62" height="62" alt="GeoMatias" style="border-radius:50%; object-fit:cover">
+    <img src="icon.png" width="44" height="44" alt="GeoMatias" style="border-radius:50%; object-fit:cover">
     <div><b>GeoMatias</b><small>WEBGIS</small></div>
   </div>
   <div class="spacer"></div>
   <div id="tbActions">
+  <button class="tb-btn icon-only" id="btnPrintQuick" title="Layout de impressão">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  </button>
   <button class="tb-btn" id="btnInventory" title="Saídas do inventário arbóreo">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/></svg>
     <span class="lbl">Inventário</span>
@@ -1305,7 +1388,110 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div class="field"><label>Descrição / observações</label><textarea id="pDesc" placeholder="Texto livre que aparecerá abaixo do mapa."></textarea></div>
     <div class="field"><label>Autor / responsável (opcional)</label><input type="text" id="pAuthor"></div>
     <div class="actions">
+      <button class="tb-btn" id="pOpenDesigner" data-icon="layout" title="Editor de layout">Editor de layout avançado</button>
       <button class="tb-btn primary" id="pGo">Gerar e imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: editor de layout de impressão ===== -->
+<div class="modal-back" id="mPrintDesigner">
+  <div class="modal m-designer">
+    <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
+    <h3>Editor de layout de impressão</h3>
+    <div class="pd-toolbar">
+      <div class="field"><label>Papel</label>
+        <select id="pdPaper">
+          <option value="A4">A4</option>
+          <option value="A3">A3</option>
+        </select>
+      </div>
+      <div class="field"><label>Orientação</label>
+        <select id="pdOrient">
+          <option value="landscape">Paisagem</option>
+          <option value="portrait">Retrato</option>
+        </select>
+      </div>
+      <button class="tb-btn" id="pdAddText" data-icon="textBox">Texto</button>
+      <button class="tb-btn" id="pdAddImage" data-icon="image">Imagem</button>
+      <button class="tb-btn" id="pdAddNorth" data-icon="northArrow">Norte</button>
+      <button class="tb-btn" id="pdAddScale" data-icon="ruler">Escala</button>
+      <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
+      <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
+      <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
+      <div class="field" id="pdNorthStyleWrap" style="display:none"><label>Estilo do norte</label>
+        <select id="pdNorthStyle">
+          <option value="arrow">Seta simples</option>
+          <option value="splitArrow">Seta dividida</option>
+          <option value="roseSimple">Rosa dos ventos simples</option>
+          <option value="roseFull">Rosa dos ventos completa</option>
+        </select>
+      </div>
+      <input type="file" id="pdImageFile" accept="image/*" style="display:none">
+      <span class="sub" style="margin-left:auto">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</span>
+    </div>
+    <div class="pd-toolbar" id="pdMapPanel" style="display:none">
+      <button class="tb-btn" id="pdMapUseView" data-icon="target" title="Usa o centro/zoom/base atuais do mapa principal neste bloco">Fixar vista atual</button>
+      <button class="tb-btn" id="pdMapSync" data-icon="refresh" title="Este bloco volta a acompanhar o mapa principal ao vivo">Sincronizar c/ mapa principal</button>
+      <button class="tb-btn primary" id="pdMapRefresh" data-icon="camera" title="Recaptura a prévia deste mapa">Atualizar prévia</button>
+      <div class="field" style="flex-basis:100%; margin-top:4px">
+        <label>Camadas neste mapa (vazio = mostra todas as visíveis)</label>
+        <div id="pdMapLayers" style="display:flex; flex-wrap:wrap; gap:8px 14px; font-size:12.5px"></div>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Retângulo de contexto (mostra a extensão de outro mapa)</label>
+        <select id="pdMapContext"><option value="">Nenhum</option></select>
+      </div>
+      <div class="field pd-grat-panel" style="flex-basis:100%; margin-top:4px">
+        <div class="pd-grat-grid">
+          <label class="pd-grat-check">
+            <input type="checkbox" id="pdMapGratOn" style="accent-color:var(--text2); width:15px; height:15px">
+            Grade de coordenadas
+          </label>
+          <select id="pdMapGratCrs" title="Sistema de referência da grade">
+            <option value="geo">Graus (geográfica)</option>
+            <option value="utm">UTM SIRGAS 2000 (fuso automático)</option>
+          </select>
+          <select id="pdMapGratPos" title="Posição dos rótulos em relação à moldura do mapa">
+            <option value="inside">Rótulos dentro do quadro</option>
+            <option value="outside">Rótulos fora do quadro</option>
+          </select>
+          <button class="tb-btn" id="pdMapGridLock" data-icon="lock" title="Travar o mapa para arrastar e reposicionar as linhas da grade">Editar posição</button>
+        </div>
+        <div class="pd-grat-sides">
+          <label>Topo
+            <select class="pd-grat-dir" data-side="top">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical-up">Vertical ↑</option>
+              <option value="vertical-down">Vertical ↓</option>
+            </select>
+          </label>
+          <label>Base
+            <select class="pd-grat-dir" data-side="bottom">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical-up">Vertical ↑</option>
+              <option value="vertical-down">Vertical ↓</option>
+            </select>
+          </label>
+          <label>Esquerda
+            <select class="pd-grat-dir" data-side="left">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical-up">Vertical ↑</option>
+              <option value="vertical-down">Vertical ↓</option>
+            </select>
+          </label>
+          <label>Direita
+            <select class="pd-grat-dir" data-side="right">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical-up">Vertical ↑</option>
+              <option value="vertical-down">Vertical ↓</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="pd-body">
+      <div class="pd-sheet" id="pdSheet"></div>
     </div>
   </div>
 </div>
@@ -1869,7 +2055,18 @@ const ICONS = {
   plus:'<path d="M12 5v14M5 12h14"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
-  crop:'<path d="M6 2v16h16M2 6h16v16"/>'
+  crop:'<path d="M6 2v16h16M2 6h16v16"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 15l-5-5-9 9"/>',
+  textBox:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 8h10M7 12h10M7 16h6"/>',
+  northArrow:'<path d="M12 2l5 18-5-3-5 3 5-18Z" fill="currentColor" stroke="none"/>',
+  layout:'<rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M9 9v12"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/>',
+  move:'<path d="M12 2v20M2 12h20"/><path d="M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/>',
+  rotate:'<path d="M4 12a8 8 0 1 1 2.6 5.9"/><path d="M4 21v-5h5"/>',
+  flipH:'<path d="M12 3v18"/><path d="M7 7l-3 5 3 5"/><path d="M17 7l3 5-3 5"/>',
+  flipV:'<path d="M3 12h18"/><path d="M7 7l5-3 5 3"/><path d="M7 17l5 3 5-3"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.5-2.2"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -2040,6 +2237,9 @@ function collectAssetRefs(p){
     const pr = ft.properties||{};
     PHOTO_KEYS.forEach(k=>{ if(isAssetRef(pr[k])) set.add(pr[k]); });
   }));
+  ((p.printLayout && p.printLayout.blocks) || []).forEach(b=>{
+    if(b.type==='image' && isAssetRef(b.props && b.props.asset)) set.add(b.props.asset);
+  });
   return set;
 }
 
@@ -2109,7 +2309,105 @@ document.head.appendChild(style);
 /* ---------- Mapa ---------- */
 const map = L.map('map', { zoomControl:true, attributionControl:true, preferCanvas:false })
   .setView([-14.2, -51.9], 5);
-L.control.scale({ imperial:false, position:'bottomright' }).addTo(map);
+/* ---------- Escala gráfica + textual (com edição manual e precisão) ---------- */
+const GmScale = L.Control.extend({
+  options:{ position:'bottomright', maxWidth:110 },
+  onAdd(m){
+    this._map = m;
+    this._precise = (localStorage.getItem('geomatias_scale_precise')==='1');
+    const box = L.DomUtil.create('div', 'gm-scale');
+    box.innerHTML =
+      `<svg class="gm-scale-bar" width="${this.options.maxWidth}" height="10"></svg>`+
+      `<div class="gm-scale-row">`+
+        `<button type="button" class="gm-scale-precision" title="Alternar precisão (casas decimais)">${icon('target',12)}</button>`+
+        `<span class="gm-scale-ratio" title="Toque para digitar a escala (ex.: 1:5000)">1 : —</span>`+
+      `</div>`+
+      `<div class="gm-scale-dist"></div>`;
+    L.DomEvent.disableClickPropagation(box);
+    this._bar = box.querySelector('.gm-scale-bar');
+    this._ratioEl = box.querySelector('.gm-scale-ratio');
+    this._distEl = box.querySelector('.gm-scale-dist');
+    this._precBtn = box.querySelector('.gm-scale-precision');
+    this._precBtn.classList.toggle('on', this._precise);
+    this._precBtn.addEventListener('click', ()=>{
+      this._precise = !this._precise;
+      localStorage.setItem('geomatias_scale_precise', this._precise ? '1' : '0');
+      this._precBtn.classList.toggle('on', this._precise);
+      this._update();
+    });
+    this._ratioEl.addEventListener('click', ()=>this._editStart());
+    m.on('move zoom zoomend moveend', this._update, this);
+    this._update();
+    return box;
+  },
+  onRemove(m){ m.off('move zoom zoomend moveend', this._update, this); },
+  _niceMeters(x){
+    if(x<=0) return 1;
+    const pow10 = Math.pow(10, Math.floor(Math.log10(x)));
+    const r = x/pow10;
+    const n = r>=5 ? 5 : (r>=2 ? 2 : 1);
+    return n*pow10;
+  },
+  _fmtDist(m2){
+    return m2>=1000
+      ? (m2/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' km'
+      : Math.round(m2).toLocaleString('pt-BR')+' m';
+  },
+  _denom(){ return 591657550.5 / Math.pow(2, this._map.getZoom()-1) / 2; },
+  _update(){
+    if(this._editing) return;
+    const map = this._map, w = this.options.maxWidth;
+    const y = map.getSize().y / 2;
+    const left = map.containerPointToLatLng([0, y]);
+    const right = map.containerPointToLatLng([w, y]);
+    const maxMeters = left.distanceTo(right);
+    const niceMeters = this._niceMeters(maxMeters);
+    const barW = Math.round(w * (niceMeters / maxMeters));
+    const segs = 4, segW = barW/segs;
+    let rects = '';
+    for(let i=0;i<segs;i++){
+      rects += `<rect x="${i*segW}" y="0" width="${segW}" height="6" fill="${i%2===0?'var(--text)':'transparent'}" stroke="var(--muted)" stroke-width="1"/>`;
+    }
+    this._bar.setAttribute('width', barW);
+    this._bar.innerHTML = rects;
+    this._distEl.textContent = this._fmtDist(niceMeters);
+    const denom = this._denom();
+    const ratioTxt = this._precise
+      ? denom.toLocaleString('pt-BR',{minimumFractionDigits:1, maximumFractionDigits:1})
+      : Math.round(denom).toLocaleString('pt-BR');
+    this._ratioEl.textContent = '1 : '+ratioTxt;
+  },
+  _editStart(){
+    if(this._editing) return;
+    this._editing = true;
+    const denom = Math.round(this._denom());
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'gm-scale-input'; input.value = '1:'+denom;
+    this._ratioEl.replaceWith(input);
+    input.focus(); input.select();
+    const finish = (apply)=>{
+      this._editing = false;
+      if(apply) this._applyManual(input.value);
+      input.replaceWith(this._ratioEl);
+      this._update();
+    };
+    input.addEventListener('keydown', e=>{
+      if(e.key==='Enter') finish(true);
+      else if(e.key==='Escape') finish(false);
+    });
+    input.addEventListener('blur', ()=>finish(true));
+  },
+  _applyManual(raw){
+    let s = String(raw).trim();
+    if(/[:\/]/.test(s)) s = s.split(/[:\/]/).pop(); // "1:10000" ou "1/10000" -> fica só o denominador
+    s = s.replace(/[^\d.,]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.');
+    const denom = parseFloat(s);
+    if(!denom || denom<=0) return;
+    const zoom = 1 + Math.log2(591657550.5/(2*denom));
+    this._map.setZoom(zoom);
+  }
+});
+new GmScale().addTo(map);
 
 /* ---------- Bases ---------- */
 const bases = {
@@ -8001,11 +8299,765 @@ document.getElementById('cmpCloseX').addEventListener('click', ()=>{
 
 /* ---------- IMPRESSÃO ---------- */
 document.getElementById('btnPrint').addEventListener('click', ()=>open('mPrint'));
+document.getElementById('btnPrintQuick').addEventListener('click', ()=>open('mPrint'));
+
+/* =========================================================
+   Editor de layout de impressão — motor de blocos
+   Modelo: printLayout = {paperSize, orientation, blocks:[{id,type,x,y,w,h,z,props}]}
+   x/y/w/h em mm, relativos ao canto superior esquerdo da folha.
+   Persistido dentro do projeto (serializeProject/applyProject).
+   ========================================================= */
+let printLayout = { paperSize:'A4', orientation:'landscape', blocks:[] };
+let pdSelId = null, pdSeq = 1;
+
+const PAPER_MM = { A4:{w:297,h:210}, A3:{w:420,h:297} }; // dimensões em paisagem
+function paperDims(size, orientation){
+  const base = PAPER_MM[size] || PAPER_MM.A4;
+  return orientation==='portrait' ? {w:base.h, h:base.w} : {w:base.w, h:base.h};
+}
+
+function pdMarkDirty(){ scheduleSave(); }
+
+function pdAddBlock(type, extra){
+  const dims = paperDims(printLayout.paperSize, printLayout.orientation);
+  const defaults = {
+    text:{w:80, h:30, props:{html:'Texto'}},
+    image:{w:40, h:40, props:{asset:null}},
+    north:{w:16, h:24, props:{style:'arrow'}},
+    scale:{w:55, h:18, props:{showBar:true, showText:true}},
+    legend:{w:70, h:90, props:{}},
+    map:{w:110, h:80, props:{center:null, zoom:null, base:null, layers:null, preview:null, contextOf:null,
+      graticule:{on:false, crs:'geo', position:'inside',
+        dirs:{top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
+        offsetXmm:0, offsetYmm:0}}}
+  }[type] || {w:40, h:40, props:{}};
+  if(type==='map' && printLayout.blocks.filter(x=>x.type==='map').length>=5){
+    status('Máximo de 5 blocos de mapa por layout.');
+    return null;
+  }
+  const b = {
+    id:'pb'+(pdSeq++), type,
+    x: Math.max(4, (dims.w-defaults.w)/2), y: Math.max(4, (dims.h-defaults.h)/2),
+    w: defaults.w, h: defaults.h,
+    z: printLayout.blocks.length+1,
+    rot: 0, flipH: false, flipV: false,
+    props: Object.assign({}, defaults.props, extra||{})
+  };
+  printLayout.blocks.push(b);
+  pdRenderAll();
+  pdSelect(b.id);
+  pdMarkDirty();
+  return b;
+}
+
+function pdDeleteBlock(id){
+  printLayout.blocks = printLayout.blocks.filter(b=>b.id!==id);
+  // limpa referências de retângulo de contexto que apontavam para o bloco removido
+  printLayout.blocks.forEach(b=>{ if(b.type==='map' && b.props.contextOf===id) b.props.contextOf = null; });
+  if(pdSelId===id) pdSelId=null;
+  pdRenderAll();
+  pdMarkDirty();
+}
+
+function pdSelect(id){
+  pdSelId = id;
+  document.querySelectorAll('#pdSheet .pd-block').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.id===id);
+  });
+  const b = id && printLayout.blocks.find(x=>x.id===id);
+  const wrap = document.getElementById('pdNorthStyleWrap');
+  if(b && b.type==='north'){
+    wrap.style.display = '';
+    document.getElementById('pdNorthStyle').value = b.props.style || 'arrow';
+  } else {
+    wrap.style.display = 'none';
+  }
+  const mapPanel = document.getElementById('pdMapPanel');
+  if(b && b.type==='map'){
+    mapPanel.style.display = '';
+    pdRenderMapLayerList(b);
+    pdRenderMapContextSelect(b);
+    const defDirs = {top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'};
+    const grat = b.props.graticule || {on:false, crs:'geo', position:'inside', dirs:defDirs};
+    const dirs = grat.dirs || defDirs;
+    document.getElementById('pdMapGratOn').checked = !!grat.on;
+    document.getElementById('pdMapGratCrs').value = grat.crs || 'geo';
+    document.getElementById('pdMapGratPos').value = grat.position || 'inside';
+    document.querySelectorAll('.pd-grat-dir').forEach(sel=>{
+      sel.value = dirs[sel.getAttribute('data-side')] || 'horizontal';
+    });
+    pdUpdateGridLockButton(b);
+  } else {
+    mapPanel.style.display = 'none';
+  }
+}
+function pdUpdateGridLockButton(b){
+  const btn = document.getElementById('pdMapGridLock');
+  const on = !!b._gridEdit;
+  btn.classList.toggle('primary', on);
+  btn.innerHTML = '';
+  btn.insertAdjacentHTML('afterbegin', icon(on?'unlock':'lock', 13));
+  btn.appendChild(document.createTextNode(on ? 'Concluir edição da grade' : 'Editar posição da grade'));
+}
+
+/* rótulo estável "Mapa N" pela ordem de criação entre os blocos de mapa do layout */
+function pdMapLabel(blockId){
+  const maps = printLayout.blocks.filter(x=>x.type==='map');
+  const i = maps.findIndex(x=>x.id===blockId);
+  return 'Mapa '+(i+1);
+}
+function pdRenderMapContextSelect(b){
+  const sel = document.getElementById('pdMapContext');
+  const others = printLayout.blocks.filter(x=>x.type==='map' && x.id!==b.id);
+  sel.innerHTML = '<option value="">Nenhum</option>' +
+    others.map(o=>`<option value="${o.id}">${pdMapLabel(o.id)}</option>`).join('');
+  sel.value = b.props.contextOf || '';
+}
+
+/* lista de checkboxes de camadas para o bloco de mapa selecionado — vazio (null) significa
+   "espelha as camadas visíveis do mapa principal"; o primeiro toggle grava um snapshot explícito */
+/* recaptura automaticamente a prévia deste bloco quando um controle muda (camadas, retângulo
+   de contexto, grade) — evita o caso de a prévia mostrada ficar dessincronizada dos controles
+   (ex.: usuário troca o CRS da grade mas esquece de clicar em "Atualizar prévia" de novo) */
+async function pdAutoRefreshMap(b){
+  if(!b.props.preview) return; // ainda sem prévia gerada: nada a re-sincronizar
+  try{ await pdRefreshMapPreview(b); pdRenderAll(); pdSelect(b.id); }
+  catch(e){ console.error(e); status('Falha ao atualizar prévia do mapa.'); }
+}
+function pdRenderMapLayerList(b){
+  const box = document.getElementById('pdMapLayers');
+  const allNames = vectorLayers.map(l=>l.name);
+  const included = name => b.props.layers===null ? vectorLayers.find(l=>l.name===name && l.visible) : b.props.layers.includes(name);
+  box.innerHTML = allNames.map(name=>{
+    const checked = included(name) ? 'checked' : '';
+    return `<label style="display:flex; align-items:center; gap:5px; cursor:pointer"><input type="checkbox" data-layer="${name}" ${checked} style="accent-color:var(--text2); width:15px; height:15px"> ${name}</label>`;
+  }).join('') || '<span class="sub">Nenhuma camada vetorial no projeto.</span>';
+  box.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if(b.props.layers===null) b.props.layers = allNames.filter(n=>included(n));
+      const name = cb.getAttribute('data-layer');
+      if(cb.checked){ if(!b.props.layers.includes(name)) b.props.layers.push(name); }
+      else b.props.layers = b.props.layers.filter(n=>n!==name);
+      pdMarkDirty();
+      pdAutoRefreshMap(b);
+    });
+  });
+}
+
+/* denominador de escala do mapa principal, mesma fórmula usada em #psScaleTxt (~L8318) */
+function pdScaleDenom(){
+  return 591657550.5 / Math.pow(2, map.getZoom()-1) / 2;
+}
+/* arredonda para 1/2/5 x 10^n — números "redondos" de escala gráfica */
+function pdNiceNumber(x){
+  if(x<=0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(x)));
+  const r = x/mag;
+  const n = r>=5 ? 5 : (r>=2 ? 2 : 1);
+  return n*mag;
+}
+function pdNorthArrowSvg(){
+  return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    <text x="20" y="15" text-anchor="middle" font-size="16" font-weight="700" fill="#c0392b" font-family="Arial, sans-serif">N</text>
+    <polygon points="20,19 30,56 20,46 10,56" fill="#111"/>
+  </svg>`;
+}
+/* seta dividida: metade preenchida, metade em contorno — convenção comum em plantas técnicas */
+function pdSplitArrowSvg(){
+  return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    <text x="20" y="15" text-anchor="middle" font-size="16" font-weight="700" fill="#c0392b" font-family="Arial, sans-serif">N</text>
+    <polygon points="20,19 10,56 20,46" fill="#111"/>
+    <polygon points="20,19 30,56 20,46" fill="#fff" stroke="#111" stroke-width="1"/>
+  </svg>`;
+}
+/* rosa dos ventos genérica: n pontas alternando preenchimento, com rótulos cardeais/colaterais */
+function pdRoseSvg(n){
+  const cx=60, cy=60, rOuter = n>4?55:50, rInner = n>4?14:10;
+  const cardinal = ['N','NE','E','SE','S','SW','W','NW'];
+  const step = 8/n;
+  let polys='', labels='';
+  for(let i=0;i<n;i++){
+    const ang = i*(360/n), half=(360/n)/2;
+    const a0=(ang-90)*Math.PI/180, aL=(ang-90-half)*Math.PI/180, aR=(ang-90+half)*Math.PI/180;
+    const tip=[cx+rOuter*Math.cos(a0), cy+rOuter*Math.sin(a0)];
+    const left=[cx+rInner*Math.cos(aL), cy+rInner*Math.sin(aL)];
+    const right=[cx+rInner*Math.cos(aR), cy+rInner*Math.sin(aR)];
+    polys += `<polygon points="${tip.join(',')} ${left.join(',')} ${right.join(',')}" fill="${i%2===0?'#111':'#fff'}" stroke="#111" stroke-width="1"/>`;
+    const lab = cardinal[i*step];
+    const isN = lab==='N';
+    const rLab = rOuter+10;
+    const lx=cx+rLab*Math.cos(a0), ly=cy+rLab*Math.sin(a0)+3;
+    labels += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="${isN?12:9}" font-weight="${isN?700:400}" fill="${isN?'#c0392b':'#111'}" font-family="Arial, sans-serif">${lab}</text>`;
+  }
+  return `<svg viewBox="0 0 120 120" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    <circle cx="60" cy="60" r="${rOuter+2}" fill="none" stroke="#111" stroke-width="0.8"/>
+    ${polys}${labels}
+  </svg>`;
+}
+function pdNorthSvg(style){
+  if(style==='splitArrow') return pdSplitArrowSvg();
+  if(style==='roseSimple') return pdRoseSvg(4);
+  if(style==='roseFull') return pdRoseSvg(8);
+  return pdNorthArrowSvg(); // 'arrow' (padrão)
+}
+function pdScaleHtml(b){
+  const denom = pdScaleDenom();
+  const groundMPerMm = denom/1000; // metros de terreno por mm de papel
+  const maxGroundM = b.w * groundMPerMm;
+  const niceTotalM = pdNiceNumber(maxGroundM);
+  const segments = 4;
+  const segM = niceTotalM/segments;
+  const barWidthMm = niceTotalM/groundMPerMm;
+  const segWidthMm = barWidthMm/segments;
+  const fmt = m=> m>=1000 ? (m/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' km' : Math.round(m).toLocaleString('pt-BR')+' m';
+  let bar = '';
+  if(b.props.showBar!==false){
+    let rects = '';
+    for(let i=0;i<segments;i++){
+      const x = i*segWidthMm;
+      rects += `<rect x="${x}mm" y="0" width="${segWidthMm}mm" height="3mm" fill="${i%2===0?'#111':'#fff'}" stroke="#111" stroke-width="0.3mm"/>`;
+    }
+    // só rotula início e fim (padrão de escala gráfica) — rótulos em cada segmento
+    // sobrepunham em barras estreitas
+    let labels = `<text x="0" y="7mm" font-size="2.6mm" text-anchor="start" font-family="Arial, sans-serif" fill="#111">0</text>`
+      + `<text x="${barWidthMm}mm" y="7mm" font-size="2.6mm" text-anchor="end" font-family="Arial, sans-serif" fill="#111">${fmt(niceTotalM)}</text>`;
+    bar = `<svg width="${barWidthMm}mm" height="9mm" style="display:block">${rects}${labels}</svg>`;
+  }
+  const text = b.props.showText!==false
+    ? `<div style="font-size:8pt;font-family:Arial, sans-serif;color:#111;margin-top:1mm">Escala aprox. 1:${Math.round(denom).toLocaleString('pt-BR')}</div>`
+    : '';
+  return `<div class="pd-inner" style="pointer-events:none">${bar}${text}</div>`;
+}
+function pdBlockHtml(b){
+  if(b.type==='text'){
+    return `<div class="pd-inner" contenteditable="true" spellcheck="false">${b.props.html||''}</div>`;
+  }
+  if(b.type==='image'){
+    const src = b.props.asset ? assetURL(b.props.asset) : '';
+    return `<div class="pd-inner">${src?`<img src="${src}">`:''}</div>`;
+  }
+  if(b.type==='north'){
+    return `<div class="pd-inner">${pdNorthSvg(b.props.style)}</div>`;
+  }
+  if(b.type==='scale'){
+    return pdScaleHtml(b);
+  }
+  if(b.type==='map'){
+    if(b.props.preview){
+      return `<div class="pd-inner"><img src="${b.props.preview}" style="width:100%; height:100%; object-fit:cover; display:block"></div>`;
+    }
+    return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Mapa sem prévia — selecione e clique em "Atualizar prévia"</div>`;
+  }
+  if(b.type==='legend'){
+    return `<div class="pd-inner" style="background:#fff; color:#000; padding:2mm; font-family:Arial, sans-serif; font-size:8pt">
+      <b style="display:block; border-bottom:1px solid #000; padding-bottom:1mm; margin-bottom:1mm; letter-spacing:1px">LEGENDA</b>
+      ${buildLegendHtml()}
+    </div>`;
+  }
+  return '<div class="pd-inner"></div>';
+}
+
+function pdRenderAll(){
+  const sheet = document.getElementById('pdSheet');
+  if(!sheet) return;
+  const dims = paperDims(printLayout.paperSize, printLayout.orientation);
+  sheet.style.width = dims.w+'mm';
+  sheet.style.height = dims.h+'mm';
+  sheet.innerHTML = '';
+  printLayout.blocks.slice().sort((a,b)=>a.z-b.z).forEach(b=>{
+    const el = document.createElement('div');
+    el.className = 'pd-block type-'+b.type;
+    el.dataset.id = b.id;
+    el.style.left = b.x+'mm'; el.style.top = b.y+'mm';
+    el.style.width = b.w+'mm'; el.style.height = b.h+'mm';
+    el.style.zIndex = b.z;
+    el.style.transform = `rotate(${b.rot||0}deg) scale(${b.flipH?-1:1}, ${b.flipV?-1:1})`;
+    el.style.transformOrigin = 'center center';
+    el.innerHTML = pdBlockHtml(b) +
+      `<div class="pd-bar">
+        <button type="button" class="pd-move" data-icon="move" title="Segure e arraste para mover"></button>
+        <button type="button" class="pd-rotate" data-icon="rotate" title="Girar 90°"></button>
+        <button type="button" class="pd-fliph" data-icon="flipH" title="Espelhar horizontal"></button>
+        <button type="button" class="pd-flipv" data-icon="flipV" title="Espelhar vertical"></button>
+        <button type="button" class="pd-del" data-icon="trash" title="Excluir"></button>
+      </div>` +
+      `<div class="pd-handle nw"></div><div class="pd-handle ne"></div><div class="pd-handle sw"></div><div class="pd-handle se"></div>`;
+    if(b.type==='map' && b._gridEdit){
+      el.classList.add('grid-edit', 'sel');
+      el.insertAdjacentHTML('beforeend',
+        `<div class="pd-grid-drag-overlay">${b.props.preview?`<img src="${b.props.preview}">`:''}<div class="pd-grid-drag-hint">Arraste para reposicionar a grade</div></div>`);
+    }
+    sheet.appendChild(el);
+    pdWireBlock(el, b);
+    if(b.id===pdSelId) el.classList.add('sel');
+  });
+  // aplica ícones SVG nos botões recém-criados (o mesmo helper usado no resto do app)
+  sheet.querySelectorAll('[data-icon]').forEach(n=>{
+    if(n.querySelector('svg')) return;
+    n.insertAdjacentHTML('afterbegin', icon(n.getAttribute('data-icon'), 13));
+  });
+}
+
+/* arrastar (pelo corpo do bloco ou pela alça dedicada "mover") — mesma lógica para os dois gatilhos */
+function pdStartMove(e, target, el, b){
+  pdSelect(b.id);
+  const startX = e.clientX, startY = e.clientY, ox = b.x, oy = b.y;
+  const mmPerPx = 1 / (el.getBoundingClientRect().width / b.w);
+  target.setPointerCapture(e.pointerId);
+  const move = ev=>{
+    b.x = ox + (ev.clientX-startX)*mmPerPx;
+    b.y = oy + (ev.clientY-startY)*mmPerPx;
+    el.style.left = b.x+'mm'; el.style.top = b.y+'mm';
+  };
+  const up = ev=>{ target.releasePointerCapture(e.pointerId); target.removeEventListener('pointermove',move); target.removeEventListener('pointerup',up); pdMarkDirty(); };
+  target.addEventListener('pointermove', move);
+  target.addEventListener('pointerup', up);
+}
+function pdWireBlock(el, b){
+  el.addEventListener('pointerdown', e=>{
+    if(e.target.closest('.pd-handle') || e.target.closest('.pd-bar') || e.target.isContentEditable) return;
+    pdStartMove(e, el, el, b);
+  });
+  el.querySelector('.pd-move').addEventListener('pointerdown', e=>{ e.stopPropagation(); pdStartMove(e, e.currentTarget, el, b); });
+  el.querySelector('.pd-del').addEventListener('click', ev=>{ ev.stopPropagation(); pdDeleteBlock(b.id); });
+  el.querySelector('.pd-rotate').addEventListener('click', ev=>{
+    ev.stopPropagation();
+    b.rot = ((b.rot||0)+90)%360;
+    el.style.transform = `rotate(${b.rot}deg) scale(${b.flipH?-1:1}, ${b.flipV?-1:1})`;
+    pdMarkDirty();
+  });
+  el.querySelector('.pd-fliph').addEventListener('click', ev=>{
+    ev.stopPropagation();
+    b.flipH = !b.flipH;
+    el.style.transform = `rotate(${b.rot||0}deg) scale(${b.flipH?-1:1}, ${b.flipV?-1:1})`;
+    pdMarkDirty();
+  });
+  el.querySelector('.pd-flipv').addEventListener('click', ev=>{
+    ev.stopPropagation();
+    b.flipV = !b.flipV;
+    el.style.transform = `rotate(${b.rot||0}deg) scale(${b.flipH?-1:1}, ${b.flipV?-1:1})`;
+    pdMarkDirty();
+  });
+  if(b.type==='map' && b._gridEdit){
+    const overlay = el.querySelector('.pd-grid-drag-overlay');
+    if(overlay) pdWireGridDrag(overlay, el, b);
+  }
+  el.querySelectorAll('.pd-handle').forEach(h=>{
+    h.addEventListener('pointerdown', e=>{
+      e.stopPropagation();
+      pdSelect(b.id);
+      const dir = [...h.classList].find(c=>c!=='pd-handle');
+      const startX = e.clientX, startY = e.clientY;
+      const ow = b.w, oh = b.h, ox = b.x, oy = b.y;
+      const rect = el.getBoundingClientRect();
+      const mmPerPxX = b.w/rect.width, mmPerPxY = b.h/rect.height;
+      h.setPointerCapture(e.pointerId);
+      const move = ev=>{
+        const dx = (ev.clientX-startX)*mmPerPxX, dy = (ev.clientY-startY)*mmPerPxY;
+        if(dir.includes('e')) b.w = Math.max(10, ow+dx);
+        if(dir.includes('s')) b.h = Math.max(10, oh+dy);
+        if(dir.includes('w')){ b.w = Math.max(10, ow-dx); b.x = ox+(ow-b.w); }
+        if(dir.includes('n')){ b.h = Math.max(10, oh-dy); b.y = oy+(oh-b.h); }
+        el.style.left=b.x+'mm'; el.style.top=b.y+'mm'; el.style.width=b.w+'mm'; el.style.height=b.h+'mm';
+      };
+      const up = ev=>{ h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); pdMarkDirty(); };
+      h.addEventListener('pointermove', move);
+      h.addEventListener('pointerup', up);
+    });
+  });
+  if(b.type==='text'){
+    el.querySelector('.pd-inner').addEventListener('input', e=>{ b.props.html = e.target.innerHTML; pdMarkDirty(); });
+  }
+}
+
+/* arrastar dentro do bloco de mapa TRAVADO (modo "editar grade") reposiciona as linhas da
+   grade em vez de mover o bloco — arrasta uma cópia semitransparente da prévia como feedback
+   instantâneo (sem recapturar Leaflet a cada pixel) e só recaptura de fato ao soltar */
+function pdWireGridDrag(overlay, el, b){
+  overlay.addEventListener('pointerdown', e=>{
+    e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY;
+    const mmPerPx = b.w / el.getBoundingClientRect().width;
+    overlay.setPointerCapture(e.pointerId);
+    const move = ev=>{
+      overlay.style.transform = `translate(${ev.clientX-startX}px, ${ev.clientY-startY}px)`;
+    };
+    const up = async ev=>{
+      overlay.releasePointerCapture(e.pointerId);
+      overlay.removeEventListener('pointermove', move);
+      overlay.removeEventListener('pointerup', up);
+      const dxmm = (ev.clientX-startX)*mmPerPx, dymm = (ev.clientY-startY)*mmPerPx;
+      overlay.style.transform = '';
+      if(Math.abs(dxmm)<0.3 && Math.abs(dymm)<0.3) return; // sem arraste de verdade, só um clique
+      b.props.graticule = b.props.graticule || {on:true, crs:'geo'};
+      b.props.graticule.offsetXmm = (b.props.graticule.offsetXmm||0) + dxmm;
+      b.props.graticule.offsetYmm = (b.props.graticule.offsetYmm||0) + dymm;
+      pdMarkDirty();
+      status('Atualizando posição da grade…');
+      await pdAutoRefreshMap(b);
+      status('');
+    };
+    overlay.addEventListener('pointermove', move);
+    overlay.addEventListener('pointerup', up);
+  });
+}
+
+document.getElementById('pOpenDesigner').addEventListener('click', ()=>{
+  close('mPrint');
+  document.getElementById('pdPaper').value = printLayout.paperSize;
+  document.getElementById('pdOrient').value = printLayout.orientation;
+  pdRenderAll();
+  open('mPrintDesigner');
+});
+document.getElementById('pdPaper').addEventListener('change', e=>{ printLayout.paperSize = e.target.value; pdRenderAll(); pdMarkDirty(); });
+document.getElementById('pdOrient').addEventListener('change', e=>{ printLayout.orientation = e.target.value; pdRenderAll(); pdMarkDirty(); });
+document.getElementById('pdAddText').addEventListener('click', ()=>pdAddBlock('text'));
+document.getElementById('pdAddNorth').addEventListener('click', ()=>pdAddBlock('north'));
+document.getElementById('pdNorthStyle').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.style = e.target.value;
+  pdRenderAll();
+  pdSelect(b.id);
+  pdMarkDirty();
+});
+document.getElementById('pdAddScale').addEventListener('click', ()=>pdAddBlock('scale'));
+document.getElementById('pdAddLegend').addEventListener('click', ()=>pdAddBlock('legend'));
+document.getElementById('pdAddMap').addEventListener('click', ()=>pdAddBlock('map'));
+document.getElementById('pdMapUseView').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const c = map.getCenter();
+  b.props.center = [c.lat, c.lng]; b.props.zoom = map.getZoom(); b.props.base = currentBaseName;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.getElementById('pdMapSync').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b.props.center = null; b.props.zoom = null; b.props.base = null;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.getElementById('pdMapContext').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b.props.contextOf = e.target.value || null;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.getElementById('pdMapGratOn').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b.props.graticule = b.props.graticule || {crs:'geo'};
+  b.props.graticule.on = e.target.checked;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.getElementById('pdMapGratCrs').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b.props.graticule = b.props.graticule || {on:false};
+  b.props.graticule.crs = e.target.value;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.getElementById('pdMapGratPos').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b.props.graticule = b.props.graticule || {on:false, crs:'geo'};
+  b.props.graticule.position = e.target.value;
+  pdMarkDirty();
+  pdAutoRefreshMap(b);
+});
+document.querySelectorAll('.pd-grat-dir').forEach(sel=>{
+  sel.addEventListener('change', e=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+    b.props.graticule = b.props.graticule || {on:false, crs:'geo'};
+    b.props.graticule.dirs = b.props.graticule.dirs || {top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'};
+    b.props.graticule.dirs[e.target.getAttribute('data-side')] = e.target.value;
+    pdMarkDirty();
+    pdAutoRefreshMap(b);
+  });
+});
+document.getElementById('pdMapGridLock').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  b._gridEdit = !b._gridEdit;
+  pdUpdateGridLockButton(b);
+  pdRenderAll();
+  pdSelect(b.id);
+  status(b._gridEdit ? 'Arraste dentro do mapa para reposicionar a grade. Clique de novo em "Concluir" quando terminar.' : '');
+});
+document.getElementById('pdMapRefresh').addEventListener('click', async ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  status('Capturando prévia do mapa…');
+  try{ await pdRefreshMapPreview(b); pdRenderAll(); pdSelect(b.id); pdMarkDirty(); status(''); }
+  catch(e){ console.error(e); status('Falha ao capturar prévia do mapa.'); }
+});
+
+/* captura sequencial: cria uma instância Leaflet desanexada (fora da tela), reproduz o
+   centro/zoom/base do bloco (ou os do mapa principal, se não houver override) mais as
+   camadas vetoriais selecionadas, rasteriza via captureMapInstance() e destrói a instância.
+   Sequencial e sob demanda (um bloco por vez) para não estourar memória/limites de tile server
+   com várias instâncias Leaflet simultâneas. */
+async function pdRefreshMapPreview(b){
+  const center = b.props.center || [map.getCenter().lat, map.getCenter().lng];
+  const zoom = b.props.zoom!=null ? b.props.zoom : map.getZoom();
+  const baseName = b.props.base || currentBaseName;
+
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed; left:-10000px; top:0; width:640px; height:'+Math.round(640*b.h/b.w)+'px';
+  document.body.appendChild(div);
+
+  const hm = L.map(div, {attributionControl:false, zoomControl:false, fadeAnimation:false, preferCanvas:false});
+  try{
+    hm.setView(center, zoom);
+    let tileLayer = null;
+    if(bases[baseName]){
+      tileLayer = L.tileLayer(bases[baseName]._url, bases[baseName].options).addTo(hm);
+    }
+    const names = b.props.layers===null ? vectorLayers.filter(l=>l.visible).map(l=>l.name) : b.props.layers;
+    vectorLayers.filter(l=>names.includes(l.name)).forEach(l=>{
+      const fc = { type:'FeatureCollection', features: l.group.getLayers().map(x=>{
+        let g = x.toGeoJSON(); if(g.type==='FeatureCollection') g = g.features[0];
+        g.properties = (x.feature && x.feature.properties) || {};
+        return g;
+      })};
+      L.geoJSON(fc, { style:f=>styleFor(l,f), pointToLayer:(f,ll)=>pointMarker(ll,l,f) }).addTo(hm);
+    });
+    // aguarda o carregamento dos tiles (ou um teto de tempo, caso algum tile falhe)
+    await new Promise(res=>{
+      if(!tileLayer){ setTimeout(res, 150); return; }
+      let done = false;
+      tileLayer.once('load', ()=>{ if(!done){ done=true; res(); } });
+      setTimeout(()=>{ if(!done){ done=true; res(); } }, 4000);
+    });
+    // retângulo de contexto: desenha a extensão de outro bloco de mapa sobre este,
+    // como o "você está aqui" de mapas de localização encadeados (país→estado→propriedade).
+    // Desenhado direto no canvas (via latLngToContainerPoint do próprio hm), não como
+    // L.rectangle+captura de SVG — esse caminho introduzia um deslocamento no resultado final.
+    const drawFns = [];
+    if(b.props.contextOf){
+      const ot = printLayout.blocks.find(x=>x.id===b.props.contextOf && x.type==='map');
+      if(ot){
+        const otBounds = await pdBlockBounds(ot);
+        if(otBounds){
+          drawFns.push(ctx=>{
+            const nw = hm.latLngToContainerPoint(otBounds.getNorthWest());
+            const se = hm.latLngToContainerPoint(otBounds.getSouthEast());
+            const x0 = Math.min(nw.x,se.x), y0 = Math.min(nw.y,se.y);
+            const w = Math.abs(se.x-nw.x), h = Math.abs(se.y-nw.y);
+            ctx.save();
+            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2;
+            ctx.strokeRect(x0, y0, w, h);
+            ctx.restore();
+          });
+        }
+      }
+    }
+    const grat = b.props.graticule;
+    const gratMargin = (grat && grat.on && grat.position==='outside') ? 30 : 0;
+    if(grat && grat.on){
+      const hmSize = hm.getSize();
+      const gratOpts = {
+        position: grat.position || 'inside',
+        dirs: grat.dirs || {top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
+        margin: gratMargin,
+        // desvio em mm (definido arrastando a grade travada) convertido pra px nesta resolução de captura
+        offsetX: ((grat.offsetXmm||0) / b.w) * hmSize.x,
+        offsetY: ((grat.offsetYmm||0) / b.h) * hmSize.y
+      };
+      drawFns.push(ctx=>{
+        if(grat.crs==='utm') pdDrawGraticuleUtm(ctx, hm, gratOpts);
+        else pdDrawGraticuleGeo(ctx, hm, gratOpts);
+      });
+    }
+    const extraDraw = drawFns.length ? (ctx)=>drawFns.forEach(fn=>fn(ctx)) : null;
+    b.props.preview = await captureMapInstance(hm, extraDraw, gratMargin);
+    // registra os parâmetros REALMENTE usados nesta captura — um retângulo de contexto
+    // desenhado por outro bloco precisa reproduzir exatamente esta prévia (já congelada
+    // em imagem), não a vista/tamanho atuais deste bloco, que podem ter mudado desde então
+    b.props._capCenter = center;
+    b.props._capZoom = zoom;
+    b.props._capW = b.w;
+    b.props._capH = b.h;
+  } finally {
+    hm.remove();
+    div.remove();
+  }
+}
+
+/* bounds geográficos realmente exibidos na PRÉVIA JÁ CAPTURADA do bloco "ot" — usa os
+   parâmetros congelados em _capCenter/_capZoom/_capW/_capH (gravados no momento da captura),
+   e não o centro/zoom/tamanho atuais do bloco, que podem ter mudado após a última captura
+   (por isso um retângulo de contexto pode "não bater" se o mapa referenciado for redimensionado
+   ou tiver sua vista trocada sem que sua prévia seja atualizada de novo). Sem captura prévia,
+   cai para os valores ao vivo como melhor esforço. */
+async function pdBlockBounds(ot){
+  const hasCap = ot.props.preview && ot.props._capCenter;
+  const center = hasCap ? ot.props._capCenter : (ot.props.center || [map.getCenter().lat, map.getCenter().lng]);
+  const zoom = hasCap ? ot.props._capZoom : (ot.props.zoom!=null ? ot.props.zoom : map.getZoom());
+  const w = hasCap ? ot.props._capW : ot.w;
+  const h = hasCap ? ot.props._capH : ot.h;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed; left:-10000px; top:0; width:640px; height:'+Math.round(640*h/w)+'px';
+  document.body.appendChild(div);
+  const tmp = L.map(div, {attributionControl:false, zoomControl:false, fadeAnimation:false});
+  try{
+    tmp.setView(center, zoom);
+    return tmp.getBounds();
+  } finally {
+    tmp.remove();
+    div.remove();
+  }
+}
+
+/* desenha um rótulo de grade com fundo branco, nos 4 lados do quadro (top/bottom/left/right),
+   dentro ou fora da moldura (opts.position), e na orientação escolhida (horizontal ou vertical
+   ascendente/descendente) — compartilhado pelos dois modos de grade (graus e UTM) */
+/* opts.dirs = {top,bottom,left,right}, cada lado com sua própria orientação de texto —
+   horizontal, vertical ascendente (lê de baixo pra cima) ou vertical descendente (lê de
+   cima pra baixo). A caixa branca de fundo é desenhada com EXATAMENTE as mesmas coordenadas
+   locais usadas no fillText (comprimento sempre ao longo do eixo local X, espessura no eixo
+   local Y — é assim que fillText realmente avança o texto), por isso ela acompanha a rotação
+   corretamente em vez de ficar num retângulo desalinhado. */
+function pdMakeGridLabelFn(ctx, size, opts){
+  const pos = opts.position || 'inside';
+  const margin = opts.margin || 0;
+  const dirs = opts.dirs || {};
+  return function label(x, y, text, side){
+    const dir = dirs[side] || 'horizontal';
+    const tw = ctx.measureText(text).width;
+    ctx.save();
+    if(dir==='horizontal'){
+      let tx=x, ty=y;
+      if(side==='top')    { tx = x+2; ty = pos==='outside' ? -margin+11 : 9; }
+      if(side==='bottom') { tx = x+2; ty = pos==='outside' ? size.y+margin-3 : size.y-2; }
+      if(side==='left')   { tx = pos==='outside' ? -margin+2 : 2; ty = y-1; }
+      if(side==='right')  { tx = pos==='outside' ? size.x+2 : size.x-tw-3; ty = y-1; }
+      ctx.fillStyle='#fff'; ctx.fillRect(tx-1, ty-9, tw+3, 11);
+      ctx.fillStyle='#000'; ctx.fillText(text, tx, ty);
+    } else {
+      // vertical: ancora no ponto da borda e gira o eixo local; fillText sempre em (2,2)
+      // avançando no local +x, que a rotação transforma em "sobe" (-90°) ou "desce" (+90°)
+      const angle = dir==='vertical-up' ? -Math.PI/2 : Math.PI/2;
+      let ax=x, ay=y;
+      if(side==='top')    { ax=x; ay = pos==='outside' ? -margin+2 : 2; }
+      if(side==='bottom') { ax=x; ay = pos==='outside' ? size.y+margin-2 : size.y-2; }
+      if(side==='left')   { ax = pos==='outside' ? -margin+2 : 2; ay=y; }
+      if(side==='right')  { ax = pos==='outside' ? size.x+margin-2 : size.x-2; ay=y; }
+      ctx.translate(ax, ay); ctx.rotate(angle);
+      ctx.fillStyle='#fff'; ctx.fillRect(1, -7, tw+3, 11);
+      ctx.fillStyle='#000'; ctx.fillText(text, 2, 2);
+    }
+    ctx.restore();
+  };
+}
+
+/* grade de coordenadas em graus (geográfica) — em Web Mercator sem rotação, meridianos e
+   paralelos são retas verticais/horizontais exatas, então dá pra desenhar direto sem amostragem.
+   offsetX/offsetY (px) deslocam a fase da grade — ajustados arrastando com "Editar posição
+   da grade" travada; rótulos saem nos 4 lados, dentro ou fora da moldura. */
+function pdDrawGraticuleGeo(ctx, hm, opts){
+  opts = opts || {};
+  const offX = opts.offsetX||0, offY = opts.offsetY||0;
+  const bounds = hm.getBounds();
+  const size = hm.getSize();
+  const lonStep = pdNiceNumber(bounds.getEast()-bounds.getWest()) || 1;
+  const latStep = pdNiceNumber(bounds.getNorth()-bounds.getSouth()) || 1;
+  const fmtDeg = v => v.toFixed(lonStep<1||latStep<1 ? 3 : 2)+'°';
+  ctx.save();
+  ctx.lineWidth = 0.6; ctx.font = '9px Arial, sans-serif';
+  const label = pdMakeGridLabelFn(ctx, size, opts);
+  for(let lon=Math.ceil(bounds.getWest()/lonStep)*lonStep; lon<=bounds.getEast(); lon+=lonStep){
+    const px = hm.latLngToContainerPoint([bounds.getSouth(), lon]).x + offX;
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,size.y); ctx.stroke();
+    ctx.setLineDash([]);
+    label(px, 0, fmtDeg(lon), 'top');
+    label(px, size.y, fmtDeg(lon), 'bottom');
+  }
+  for(let lat=Math.ceil(bounds.getSouth()/latStep)*latStep; lat<=bounds.getNorth(); lat+=latStep){
+    const py = hm.latLngToContainerPoint([lat, bounds.getWest()]).y + offY;
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(size.x,py); ctx.stroke();
+    ctx.setLineDash([]);
+    label(0, py, fmtDeg(lat), 'left');
+    label(size.x, py, fmtDeg(lat), 'right');
+  }
+  ctx.restore();
+}
+
+/* grade de coordenadas UTM SIRGAS 2000 (fuso automático pela longitude do centro do bloco,
+   limitado aos fusos 18S-25S já definidos em CRS_LIST/proj4, cobertura do território brasileiro).
+   Diferente da grade em graus, uma reta de E ou N constante em UTM NÃO é reta na tela quando a
+   base é servida em Web Mercator — por isso cada linha é amostrada em vários pontos e reprojetada
+   ponto a ponto de volta pra WGS84 (proj4 inverso) antes de converter pra pixel, reproduzindo a
+   leve curvatura/convergência real da grade UTM em vez de aproximar por uma reta. */
+function pdDrawGraticuleUtm(ctx, hm, opts){
+  opts = opts || {};
+  const offX = opts.offsetX||0, offY = opts.offsetY||0;
+  const bounds = hm.getBounds();
+  const size = hm.getSize();
+  const lonC = (bounds.getWest()+bounds.getEast())/2;
+  const zone = Math.min(25, Math.max(18, Math.floor((lonC+180)/6)+1));
+  const utmCrs = CRS_LIST.find(c=>c.kind==='utm' && c.zone===zone);
+  if(!utmCrs) return;
+  const corners = [
+    [bounds.getWest(),bounds.getSouth()], [bounds.getEast(),bounds.getSouth()],
+    [bounds.getWest(),bounds.getNorth()], [bounds.getEast(),bounds.getNorth()]
+  ].map(c=>projectCoord(c, utmCrs));
+  const Es = corners.map(c=>c[0]), Ns = corners.map(c=>c[1]);
+  const E0 = Math.min(...Es), E1 = Math.max(...Es), N0 = Math.min(...Ns), N1 = Math.max(...Ns);
+  const stepE = pdNiceNumber(E1-E0) || 1000, stepN = pdNiceNumber(N1-N0) || 1000;
+  const SAMPLES = 8;
+  ctx.save();
+  ctx.lineWidth = 0.6; ctx.font = '8px Arial, sans-serif';
+  const label = pdMakeGridLabelFn(ctx, size, opts);
+  for(let E=Math.ceil(E0/stepE)*stepE; E<=E1; E+=stepE){
+    const pts = [];
+    for(let i=0;i<=SAMPLES;i++){
+      const N = N0 + (N1-N0)*i/SAMPLES;
+      const [lo,la] = proj4('EPSG:'+utmCrs.epsg, 'EPSG:4326', [E,N]);
+      const p = hm.latLngToContainerPoint([la,lo]);
+      pts.push({x:p.x+offX, y:p.y+offY});
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); pts.forEach((p,i)=> i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    const txt = Math.round(E)+'mE';
+    label(pts[0].x, pts[0].y, txt, 'bottom');
+    label(pts[pts.length-1].x, pts[pts.length-1].y, txt, 'top');
+  }
+  for(let N=Math.ceil(N0/stepN)*stepN; N<=N1; N+=stepN){
+    const pts = [];
+    for(let i=0;i<=SAMPLES;i++){
+      const E = E0 + (E1-E0)*i/SAMPLES;
+      const [lo,la] = proj4('EPSG:'+utmCrs.epsg, 'EPSG:4326', [E,N]);
+      const p = hm.latLngToContainerPoint([la,lo]);
+      pts.push({x:p.x+offX, y:p.y+offY});
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); pts.forEach((p,i)=> i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    const txt = Math.round(N)+'mN';
+    label(pts[0].x, pts[0].y, txt, 'left');
+    label(pts[pts.length-1].x, pts[pts.length-1].y, txt, 'right');
+  }
+  ctx.restore();
+}
+map.on('zoomend', ()=>{
+  if(document.getElementById('mPrintDesigner').classList.contains('open')
+     && printLayout.blocks.some(b=>b.type==='scale')) pdRenderAll();
+});
+document.getElementById('pdAddImage').addEventListener('click', ()=>document.getElementById('pdImageFile').click());
+document.getElementById('pdImageFile').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const ref = await assetPut(f);
+  pdAddBlock('image', {asset:ref});
+  e.target.value = '';
+});
+document.getElementById('pdDeleteSel').addEventListener('click', ()=>{ if(pdSelId) pdDeleteBlock(pdSelId); });
+document.getElementById('pdSheet').addEventListener('pointerdown', e=>{ if(e.target.id==='pdSheet') pdSelect(null); });
 
 /* O Leaflet aplica setOpacity() no CONTÊINER da camada, não em cada tile —
    para a captura respeitar a transparência, acumula a opacidade dos ancestrais. */
-function effectiveAlpha(el){
-  let a = 1, n = el, stop = map.getContainer();
+function effectiveAlpha(el, mapInst){
+  let a = 1, n = el, stop = (mapInst||map).getContainer();
   while(n && n!==stop.parentNode){
     const o = parseFloat(getComputedStyle(n).opacity);
     if(!isNaN(o)) a *= o;
@@ -8015,32 +9067,41 @@ function effectiveAlpha(el){
   return a;
 }
 
-async function captureMap(){
-  // Rasteriza tiles visíveis + vetores num canvas (sem bibliotecas externas)
-  const size = map.getSize();
+/* rasteriza uma instância Leaflet (tiles + SVG de vetores) num canvas — sem bibliotecas
+   externas. Recebe a instância explicitamente (mapInst) para servir tanto o mapa principal
+   quanto as instâncias desanexadas dos blocos de mapa do editor de impressão; sem argumento,
+   mantém o comportamento original (captura o mapa principal `map`). */
+async function captureMapInstance(mapInst, extraDraw, margin){
+  mapInst = mapInst || map;
+  margin = margin || 0;
+  const size = mapInst.getSize();
   const scaleF = 2;
   const canvas = document.createElement('canvas');
-  canvas.width = size.x*scaleF; canvas.height = size.y*scaleF;
+  canvas.width = (size.x+margin*2)*scaleF; canvas.height = (size.y+margin*2)*scaleF;
   const ctx = canvas.getContext('2d');
   ctx.scale(scaleF, scaleF);
-  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size.x,size.y);
+  // fundo branco cobrindo também a margem reservada para rótulos "fora do quadro"
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,size.x+margin*2,size.y+margin*2);
+  // desloca a origem: o mapa em si passa a ser desenhado com um respiro de "margin" px ao redor,
+  // sem precisar mudar nenhuma das coordenadas (relativas ao próprio container) usadas abaixo
+  ctx.translate(margin, margin);
 
-  const mapRect = map.getContainer().getBoundingClientRect();
+  const mapRect = mapInst.getContainer().getBoundingClientRect();
 
   // 1) tiles e image overlays (tiles de COG sao <canvas>: desenhados direto)
-  map.getContainer().querySelectorAll('.leaflet-tile-pane canvas.leaflet-tile').forEach(cv=>{
+  mapInst.getContainer().querySelectorAll('.leaflet-tile-pane canvas.leaflet-tile').forEach(cv=>{
     const r = cv.getBoundingClientRect();
     try{
-      ctx.globalAlpha = effectiveAlpha(cv);
+      ctx.globalAlpha = effectiveAlpha(cv, mapInst);
       ctx.drawImage(cv, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){}
     ctx.globalAlpha = 1;
   });
-  const imgs = map.getContainer().querySelectorAll('.leaflet-tile-pane img, .leaflet-overlay-pane img');
+  const imgs = mapInst.getContainer().querySelectorAll('.leaflet-tile-pane img, .leaflet-overlay-pane img');
   const jobs = [...imgs].map(img=>new Promise(res=>{
     const r = img.getBoundingClientRect();
     const draw = el=>{ try{
-      ctx.globalAlpha = effectiveAlpha(img);
+      ctx.globalAlpha = effectiveAlpha(img, mapInst);
       ctx.drawImage(el, r.left-mapRect.left, r.top-mapRect.top, r.width, r.height);
     }catch(e){} ctx.globalAlpha=1; res(); };
     if(img.complete && img.naturalWidth){
@@ -8053,7 +9114,7 @@ async function captureMap(){
   await Promise.all(jobs);
 
   // 2) SVG de vetores
-  const svg = map.getContainer().querySelector('.leaflet-overlay-pane svg');
+  const svg = mapInst.getContainer().querySelector('.leaflet-overlay-pane svg');
   if(svg){
     const r = svg.getBoundingClientRect();
     const clone = svg.cloneNode(true);
@@ -8069,9 +9130,40 @@ async function captureMap(){
   }
 
   // 3) circleMarkers/labels no pane de markers (tooltips não são capturados)
+  // 4) desenho extra opcional (ex.: retângulo de contexto do editor de layout) — direto no
+  // canvas via coordenadas de mapInst.latLngToContainerPoint(), sem passar pela clonagem/
+  // serialização do SVG acima (que introduz um deslocamento perceptível nesse round-trip)
+  if(extraDraw){ try{ extraDraw(ctx, mapInst); }catch(e){ console.warn('extraDraw', e); } }
   return canvas.toDataURL('image/jpeg', .92);
 }
+/* mantém a assinatura antiga usada pelo fluxo de impressão simples (#pGo) */
+function captureMap(){ return captureMapInstance(map); }
 
+/* monta a legenda completa (base, rasters, grupos, camadas vetoriais, medições) como HTML —
+   usado tanto pela folha de impressão fixa (#psLegend) quanto pelo bloco de legenda do editor */
+function buildLegendHtml(){
+  let html = `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`;
+  rasterLayers.filter(r=>r.visible && !groupById(r.groupId)).forEach(r=>{
+    html += `<div class="li"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
+  });
+  groups.forEach(g=>{
+    const has = vectorLayers.some(l=>l.groupId===g.id && l.visible && l.group.getLayers().length) ||
+                rasterLayers.some(r=>r.groupId===g.id && r.visible);
+    if(has) html += `<div class="li" style="margin-top:2mm"><b style="border-bottom:2px solid ${g.color}">${g.name}</b></div>`;
+    rasterLayers.filter(r=>r.groupId===g.id && r.visible).forEach(r=>{
+      html += `<div class="li" style="margin-left:4mm"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
+    });
+    vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length).forEach(l=>{
+      html += vectorLegendHtml(l, 'margin-left:4mm');
+    });
+  });
+  vectorLayers.filter(l=>!groupById(l.groupId) && l.visible && l.group.getLayers().length).forEach(l=>{
+    html += vectorLegendHtml(l, '');
+  });
+  if(measureGroup.getLayers().length)
+    html += `<div class="li"><span class="sw ln" style="background:#f2d24b"></span> Medições</div>`;
+  return html;
+}
 function vectorLegendHtml(l, indentStyle){
   const ind = `${indentStyle};margin-left:${indentStyle?'8mm':'4mm'}`;
   // o mesmo gerador de miniatura do editor e do painel — contorno, tracejado e padrão
@@ -8102,27 +9194,7 @@ document.getElementById('pGo').addEventListener('click', async ()=>{
     Math.round(591657550.5 / Math.pow(2, map.getZoom()-1) / 2).toLocaleString('pt-BR');
 
   // legenda
-  const leg = document.getElementById('psLegend');
-  leg.innerHTML = '';
-  leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`);
-  rasterLayers.filter(r=>r.visible && !groupById(r.groupId)).forEach(r=>leg.insertAdjacentHTML('beforeend',
-    `<div class="li"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`));
-  groups.forEach(g=>{
-    const has = vectorLayers.some(l=>l.groupId===g.id && l.visible && l.group.getLayers().length) ||
-                rasterLayers.some(r=>r.groupId===g.id && r.visible);
-    if(has) leg.insertAdjacentHTML('beforeend',
-      `<div class="li" style="margin-top:2mm"><b style="border-bottom:2px solid ${g.color}">${g.name}</b></div>`);
-    rasterLayers.filter(r=>r.groupId===g.id && r.visible).forEach(r=>leg.insertAdjacentHTML('beforeend',
-      `<div class="li" style="margin-left:4mm"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`));
-    vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length).forEach(l=>{
-      leg.insertAdjacentHTML('beforeend', vectorLegendHtml(l, 'margin-left:4mm'));
-    });
-  });
-  vectorLayers.filter(l=>!groupById(l.groupId) && l.visible && l.group.getLayers().length).forEach(l=>{
-    leg.insertAdjacentHTML('beforeend', vectorLegendHtml(l, ''));
-  });
-  if(measureGroup.getLayers().length)
-    leg.insertAdjacentHTML('beforeend', `<div class="li"><span class="sw ln" style="background:#f2d24b"></span> Medições</div>`);
+  document.getElementById('psLegend').innerHTML = buildLegendHtml();
 
   try{ document.getElementById('psImg').src = await captureMap(); }
   catch(e){ console.error(e); }
@@ -8632,6 +9704,7 @@ function serializeProject(){
     view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() },
     crs: currentCRS.epsg,
     base: currentBaseName,
+    printLayout: printLayout,
     groups: groups.map(g=>({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed})),
     customCatalogs: catalogs.filter(c=>c.custom).map(c=>({name:c.name, url:c.url})),
     rasters: rasterLayers.filter(r=>!(r.def && r.def._volatile)).map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
@@ -8693,6 +9766,13 @@ function clearProjectState(){
 }
 async function applyProject(p){
   clearProjectState();
+  printLayout = (p.printLayout && Array.isArray(p.printLayout.blocks))
+    ? p.printLayout
+    : { paperSize:'A4', orientation:'landscape', blocks:[] };
+  pdSeq = printLayout.blocks.reduce((m,b)=>{
+    const n = parseInt(String(b.id).replace(/\D/g,''),10);
+    return isNaN(n) ? m : Math.max(m, n+1);
+  }, 1);
   // Passo 1: resolve todos os ativos (fotos, imagens) antes de montar as camadas,
   // porque assetURL() é síncrono por design — quem desenha não espera I/O.
   const refs = collectAssetRefs(p);

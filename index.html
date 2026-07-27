@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — Wbgs de estudo</title>
+<title>GeoMatias — WebGIS</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -358,6 +358,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   position:relative;
 }
 .tool svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.tool .tool-text{font-size:10px; font-weight:700; letter-spacing:.3px; color:currentColor}
 .tool:hover{background:var(--panel2)}
 .tool.active{background:var(--sel); color:var(--text)}
 #btnLocate.active{background:#4f9cf0; color:#fff}
@@ -1230,24 +1231,25 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Drawing toolbar ===== -->
 <div id="toolbar">
-  <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 9.9a.6.6 0 0 0 .05 1.13l7.3 2.82 2.82 7.3a.6.6 0 0 0 1.13.05z"/><path d="M21.5 2.5 10.15 13.85"/></svg><span class="tip">Onde estou (GPS)</span></button>
-  <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
-  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
   <button class="tool" data-tool="tree"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><path d="M9 10.5l3 3 3-3"/></svg><span class="tip">Árvore — registrar por toque no mapa</span></button>
   <button class="tool" id="btnTreeGps"><svg viewBox="0 0 24 24"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/><circle cx="12" cy="10.2" r="1.6" fill="currentColor" stroke="none"/></svg><span class="tip">Árvore — registrar na minha posição (GPS)</span></button>
-  <button class="tool" data-tool="segment"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M15 5h4v4"/><path d="M9 19H5v-4"/><circle cx="12" cy="12" r="2.2"/></svg><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Onde estou (GPS)</span></button>
+  <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
+  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
+  <button class="tool" data-tool="segment"><span class="tool-text">SAM</span><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
   <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster ou mapa base</span></button>
   <div class="tool-sep"></div>
-  <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span class="tip">Editar geometrias</span></button>
-  <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Ponto</span></button>
+  <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><span class="tip">Ponto</span></button>
   <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
   <button class="tool" data-tool="curve"><svg viewBox="0 0 24 24"><path d="M3 20c6 0 4-14 10-14 4 0 5 5 8 5"/><circle cx="3" cy="20" r="1.6"/><circle cx="21" cy="11" r="1.6"/></svg><span class="tip">Curva suavizada</span></button>
   <button class="tool" data-tool="polygon"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/><circle cx="21" cy="9" r="1.4" fill="currentColor"/><circle cx="3" cy="9" r="1.4" fill="currentColor"/></svg><span class="tip">Polígono (ponto a ponto)</span></button>
   <button class="tool" data-tool="gpsdraw"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4c0 3.2 4 7.5 4 7.5s4-4.3 4-7.5a4 4 0 0 0-4-4z"/><circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none"/><path d="M4 20 12 14.5 20 20" stroke-dasharray="2 3"/></svg><span class="tip">Desenhar por GPS (vértices pela posição atual)</span></button>
   <div class="tool-sep"></div>
-  <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><path d="M3 17 21 7"/><path d="M5 14v4M9 12v4M13 10v4M17 8v4"/></svg><span class="tip">Medir distância</span></button>
-  <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/><path d="M8 6v3M12 6v3M16 6v3"/></svg><span class="tip">Medir área</span></button>
-  <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
+  <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><g transform="rotate(-40 12 12)"><rect x="2" y="9.5" width="20" height="5" rx="1"/><path d="M6 9.5v2.2M10 9.5v3M14 9.5v2.2M18 9.5v3"/></g></svg><span class="tip">Medir distância</span></button>
+  <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9" fill="currentColor" fill-opacity=".25"/></svg><span class="tip">Medir área</span></button>
+  <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="1.6" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
+  <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><circle cx="5.5" cy="18.5" r="1.3" fill="currentColor"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="erase"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span class="tip">Apagar / limpar medições</span></button>
   <div class="tool-sep"></div>
   <button class="tool" id="btnTrackRec" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></svg><span class="tip">Gravar trilha GPS</span></button>
@@ -1394,7 +1396,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <span class="gm-scale">Zoom <b id="stZoom">—</b>
       <button type="button" class="gm-scale-precision" id="stZoomToggle" title="Ajustar zoom" data-icon="search"></button>
       <div class="gm-scale-decwrap" id="stZoomSliderWrap">
-        <input type="range" id="stZoomSlider" min="0" max="21" step="1" title="Nível de zoom">
+        <input type="range" class="gm-scale-decimals" id="stZoomSlider" min="0" max="21" step="1" title="Nível de zoom">
+        <div class="gm-scale-decticks" id="stZoomTicks"></div>
       </div>
     </span>
     <span id="stScale"></span>
@@ -1434,30 +1437,18 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       </div>
     </div>
 
-    <div class="sty-tabs">
-      <button class="sty-tab" data-exptab="layers">Camadas</button>
-      <button class="sty-tab" data-exptab="fields">Atributos</button>
-      <button class="sty-tab" data-exptab="style">Estilo e projeção</button>
-    </div>
-
-    <div class="sty-pane" id="expPaneLayers">
-      <p class="sub">Escolha quais camadas incluir e o nome que cada uma recebe na exportação.</p>
-      <div id="expLayerList"></div>
-    </div>
-
-    <div class="sty-pane" id="expPaneFields">
-      <p class="sub">Escolha quais atributos exportar em cada camada incluída. Campos com mais de 10 caracteres são truncados no Shapefile (.dbf).</p>
-      <div id="expFieldList"></div>
-    </div>
-
-    <div class="sty-pane" id="expPaneStyle">
-      <label class="attr-check"><input type="checkbox" id="expPreserveStyle" checked> Preservar simbologia (cor, contorno e transparência de cada feição)</label>
+    <div class="grid2" style="align-items:end">
+      <label class="attr-check"><input type="checkbox" id="expPreserveStyle" checked> Preservar simbologia na exportação</label>
       <div class="field">
-        <label>Sistema de projeção da exportação</label>
+        <label>Sistema de projeção</label>
         <select id="expCrs"></select>
       </div>
-      <div class="empty-hint" id="expCrsInfo" style="margin-top:6px"></div>
     </div>
+    <div class="empty-hint" id="expCrsInfo" style="margin:-4px 0 10px"></div>
+
+    <div class="tree-sec-title">Camadas</div>
+    <p class="sub">Escolha quais camadas incluir e o nome que cada uma recebe na exportação. O ícone de informação mostra os atributos e o estilo de cada camada.</p>
+    <div id="expLayerList"></div>
 
     <div class="actions">
       <button class="tb-btn primary" id="expGo">Exportar</button>
@@ -1652,6 +1643,12 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
             <option value="outside">Rótulos fora do quadro</option>
           </select>
           <button class="tb-btn" id="pdMapGridLock" data-icon="lock" title="Travar o mapa para arrastar e reposicionar as linhas da grade">Editar posição</button>
+        </div>
+        <div class="pd-grat-grid" style="margin-top:6px">
+          <span class="sub" style="flex-basis:100%">Presets: nº de etiquetas por lado, equidistantes — reseta a grade para o tamanho atual do mapa</span>
+          <button class="tb-btn pd-grat-preset" data-density="1" data-icon="target" title="1 etiqueta por lado, centralizada">1 linha</button>
+          <button class="tb-btn pd-grat-preset" data-density="2" data-icon="target" title="2 etiquetas por lado, equidistantes">2 linhas</button>
+          <button class="tb-btn pd-grat-preset" data-density="3" data-icon="target" title="3 etiquetas por lado, equidistantes">3 linhas</button>
         </div>
         <div class="pd-grat-sides">
           <label>Topo
@@ -3495,13 +3492,20 @@ map.on('zoomend', updZoom); updZoom();
   const toggle = document.getElementById('stZoomToggle');
   const wrap = document.getElementById('stZoomSliderWrap');
   const slider = document.getElementById('stZoomSlider');
+  const ticks = document.getElementById('stZoomTicks');
   toggle.addEventListener('click', ()=>{
     const showing = wrap.classList.toggle('show');
     toggle.classList.toggle('on', showing);
     if(showing){
-      slider.min = map.getMinZoom();
-      slider.max = map.getMaxZoom();
+      const min = map.getMinZoom(), max = map.getMaxZoom();
+      slider.min = min;
+      slider.max = max;
       slider.value = map.getZoom();
+      const steps = Math.min(max-min, 3);
+      ticks.innerHTML = Array.from({length:steps+1}, (_,i)=>{
+        const v = Math.round(min + (max-min)*i/steps);
+        return `<span>${v}</span>`;
+      }).join('');
     }
   });
   slider.addEventListener('input', ()=>{
@@ -7565,61 +7569,67 @@ document.getElementById('btnExport').addEventListener('click', ()=>{
   if(!vectorLayers.some(l=>l.group.getLayers().length)){ alert('Não há camadas vetoriais com feições para exportar.'); return; }
   renderExportLayers();
   renderExportCrs();
-  setExpTab('layers');
   open('mExport');
 });
 
-/* Estado de seleção do modal de exportação: por camada, inclusão, nome de saída
-   e atributos marcados. Mantido entre aberturas do modal na mesma sessão. */
-const exportSel = new Map(); // lyr.id -> {include, name, fields:Set<string>}
+/* Estado de seleção do modal de exportação: por camada, inclusão e nome de saída.
+   Atributos e estilo são só prévia (somente leitura) — vêm direto de lyr.fields/
+   lyr.rules/lyr.single, sem cópia própria. Mantido entre aberturas na mesma sessão. */
+const exportSel = new Map(); // lyr.id -> {include, name, expanded}
 function expLayerState(l){
   let st = exportSel.get(l.id);
-  if(!st){ st = { include:l.visible, name:l.name, fields:new Set((l.fields||[]).map(f=>f.name)) }; exportSel.set(l.id, st); }
+  if(!st){ st = { include:l.visible, name:l.name, expanded:false }; exportSel.set(l.id, st); }
   return st;
+}
+/* Prévia somente leitura de atributos e estilo de uma camada — mesmo padrão visual
+   (classes .d-title/.d-legend, symbolSwatchHtml) do painel "Legenda, descrição e
+   metadados" das camadas vetoriais (buildDetail), reaproveitado aqui sem duplicar lógica. */
+function buildExportLayerDetail(l){
+  const d = document.createElement('div');
+  d.className = 'layer-detail';
+  let html = '<div class="d-title">Atributos exportados</div>';
+  html += (l.fields && l.fields.length)
+    ? `<div>${l.fields.map(f=>f.name).join(', ')}</div>`
+    : '<div style="color:var(--muted)">Sem esquema definido — todas as propriedades presentes serão exportadas.</div>';
+  html += '<div class="d-title">Estilo</div><div class="d-legend">';
+  const row = (st, label, off)=>`<span style="display:inline-flex; align-items:center; gap:8px; ${off?'opacity:.45':''}">
+      ${symbolSwatchHtml(st, l.geomType, 34, 20)} <span>${label}</span></span>`;
+  if(l.styleMode==='rules' && ((l.rules||[]).length || l.rulesElse)){
+    html += '<div style="display:flex; flex-direction:column; gap:4px">';
+    (l.rules||[]).forEach(r=>{
+      html += row(r.style, r.label || (r.field+' '+(OP_LABEL[r.op]||r.op)+' '+r.value), r.hidden);
+    });
+    if(l.rulesElse) html += row(l.rulesElse.style, l.rulesElse.label || 'Outros', l.rulesElse.hidden);
+    html += '</div>';
+  } else {
+    html += row(Object.assign({ color:l.color }, l.single||{}), (GEOM_LABEL[l.geomType]||'').toLowerCase());
+  }
+  html += '</div>';
+  d.innerHTML = html;
+  return d;
 }
 function renderExportLayers(){
   const box = document.getElementById('expLayerList');
   const layers = vectorLayers.filter(l=>l.group.getLayers().length);
-  box.innerHTML = layers.map(l=>{
+  box.innerHTML = '';
+  if(!layers.length){ box.innerHTML = '<p class="empty-hint">Nenhuma camada vetorial com feições.</p>'; return; }
+  layers.forEach(l=>{
     const st = expLayerState(l);
-    return `<div class="sty-bar" data-explyr="${l.id}" style="align-items:center">
-      <label class="attr-check" style="flex:0 0 auto"><input type="checkbox" class="expLyrInc" ${st.include?'checked':''}></label>
-      <div class="field" style="flex:1 1 200px; margin:0"><input type="text" class="expLyrName" value="${st.name.replace(/"/g,'&quot;')}"></div>
-      <span class="sub" style="flex:0 0 auto">${l.group.getLayers().length} feição(ões)</span>
-    </div>`;
-  }).join('') || '<p class="empty-hint">Nenhuma camada vetorial com feições.</p>';
-  box.querySelectorAll('[data-explyr]').forEach(row=>{
-    const l = layers.find(x=>x.id===Number(row.getAttribute('data-explyr')));
-    const st = expLayerState(l);
-    row.querySelector('.expLyrInc').addEventListener('change', e=>{ st.include = e.target.checked; renderExportFields(); });
+    const row = document.createElement('div');
+    row.className = 'layer-row';
+    row.innerHTML = `
+      <input type="checkbox" class="expLyrInc" ${st.include?'checked':''} title="Incluir na exportação">
+      <div class="field" style="flex:1 1 120px; margin:0"><input type="text" class="expLyrName" value="${st.name.replace(/"/g,'&quot;')}" title="Nome de exportação da camada"></div>
+      <span class="badge">${GEOM_LABEL[l.geomType]||l.geomType}</span>
+      <span style="color:var(--muted); font-size:11.5px; flex:none">${l.group.getLayers().length} feição(ões)</span>
+      <button class="icon-btn info" title="Atributos e estilo desta camada">${st.expanded?icon('arrowDown'):icon('info')}</button>`;
+    row.querySelector('.expLyrInc').addEventListener('change', e=>{ st.include = e.target.checked; });
     row.querySelector('.expLyrName').addEventListener('input', e=>{ st.name = e.target.value; });
-  });
-  renderExportFields();
-}
-function renderExportFields(){
-  const box = document.getElementById('expFieldList');
-  const layers = vectorLayers.filter(l=>l.group.getLayers().length && expLayerState(l).include);
-  box.innerHTML = layers.map(l=>{
-    const st = expLayerState(l);
-    const rows = (l.fields||[]).map(f=>`<label class="attr-check"><input type="checkbox" class="expFld" data-lyr="${l.id}" data-fld="${f.name.replace(/"/g,'&quot;')}" ${st.fields.has(f.name)?'checked':''}> ${f.name}</label>`).join('');
-    return `<div class="tree-sec-title">${st.name}</div>${rows || '<p class="empty-hint">Sem atributos definidos nesta camada.</p>'}`;
-  }).join('') || '<p class="empty-hint">Nenhuma camada incluída na exportação.</p>';
-  box.querySelectorAll('.expFld').forEach(cb=>{
-    cb.addEventListener('change', ()=>{
-      const l = vectorLayers.find(x=>x.id===Number(cb.getAttribute('data-lyr')));
-      const st = expLayerState(l);
-      const name = cb.getAttribute('data-fld');
-      cb.checked ? st.fields.add(name) : st.fields.delete(name);
-    });
+    row.querySelector('.info').addEventListener('click', ()=>{ st.expanded = !st.expanded; renderExportLayers(); });
+    box.appendChild(row);
+    if(st.expanded) box.appendChild(buildExportLayerDetail(l));
   });
 }
-function setExpTab(tab){
-  document.querySelectorAll('#mExport .sty-tab').forEach(b=>b.classList.toggle('active', b.dataset.exptab===tab));
-  document.getElementById('expPaneLayers').classList.toggle('active', tab==='layers');
-  document.getElementById('expPaneFields').classList.toggle('active', tab==='fields');
-  document.getElementById('expPaneStyle').classList.toggle('active', tab==='style');
-}
-document.querySelectorAll('#mExport .sty-tab').forEach(b=>b.addEventListener('click', ()=>setExpTab(b.dataset.exptab)));
 
 /* CRS de exportação: escolha independente da CRS global do projeto (#mCRS/currentCRS).
    O select é populado sob demanda (não no carregamento do script) porque CRS_LIST só
@@ -7665,7 +7675,7 @@ function collectGeoJSON(opts){
         const orig = f.properties || {};
         const props = { camada: st.name };
         if(l.fields && l.fields.length){
-          l.fields.forEach(fld=>{ if(st.fields.has(fld.name) && orig[fld.name]!==undefined) props[fld.name] = orig[fld.name]; });
+          l.fields.forEach(fld=>{ if(orig[fld.name]!==undefined) props[fld.name] = orig[fld.name]; });
         } else {
           Object.keys(orig).forEach(k=>{ if(k!=='camada' && k!=='cor') props[k] = orig[k]; });
         }
@@ -8767,9 +8777,16 @@ function pdSelect(id){
       sel.value = dirs[sel.getAttribute('data-side')] || 'horizontal';
     });
     pdUpdateGridLockButton(b);
+    pdUpdateGratPresetButtons(b);
   } else {
     mapPanel.style.display = 'none';
   }
+}
+function pdUpdateGratPresetButtons(b){
+  const density = (b.props.graticule && b.props.graticule.density) || 0;
+  document.querySelectorAll('.pd-grat-preset').forEach(btn=>{
+    btn.classList.toggle('primary', density === Number(btn.getAttribute('data-density')));
+  });
 }
 function pdUpdateGridLockButton(b){
   const btn = document.getElementById('pdMapGridLock');
@@ -8835,6 +8852,22 @@ function pdNiceNumber(x){
   const r = x/mag;
   const n = r>=5 ? 5 : (r>=2 ? 2 : 1);
   return n*mag;
+}
+/* série de linhas de grade no modo automático (legado): passo "redondo" via pdNiceNumber
+   aplicado ao intervalo inteiro — produz de 1 a ~3 linhas conforme o zoom, sem contagem fixa */
+function pdNiceNumberSeries(min, max){
+  const step = pdNiceNumber(max-min) || 1;
+  const out = [];
+  for(let v=Math.ceil(min/step)*step; v<=max; v+=step) out.push(v);
+  return out;
+}
+/* N linhas internas igualmente espaçadas dentro de [min,max] — usadas pelos presets de
+   densidade fixa (1/2/3 etiquetas por lado), sem depender de números "redondos" */
+function pdEquidistantValues(min, max, count){
+  const step = (max-min)/(count+1);
+  const out = [];
+  for(let i=1;i<=count;i++) out.push(min+step*i);
+  return out;
 }
 /* rótulo "N" compartilhado por todas as variações de seta — cor, borda e tamanho
    configuráveis pelo painel do editor (props.showLabel/labelColor/labelBorderColor/labelSize).
@@ -9163,7 +9196,13 @@ function pdWireBlock(el, b){
         if(dir.includes('n')){ b.h = Math.max(10, oh-dy); b.y = oy+(oh-b.h); }
         el.style.left=b.x+'mm'; el.style.top=b.y+'mm'; el.style.width=b.w+'mm'; el.style.height=b.h+'mm';
       };
-      const up = ev=>{ h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); pdMarkDirty(); };
+      const up = ev=>{
+        h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up);
+        pdMarkDirty();
+        // a prévia (e a grade nela "assada") foi capturada no tamanho anterior do bloco — sem
+        // recapturar aqui, a imagem antiga fica esticada/cortada na nova moldura (grade desalinhada)
+        if(b.type==='map') pdAutoRefreshMap(b);
+      };
       h.addEventListener('pointermove', move);
       h.addEventListener('pointerup', up);
     });
@@ -9348,6 +9387,24 @@ document.querySelectorAll('.pd-grat-dir').forEach(sel=>{
     pdAutoRefreshMap(b);
   });
 });
+document.querySelectorAll('.pd-grat-preset').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+    b.props.graticule = b.props.graticule || {crs:'geo', position:'inside'};
+    b.props.graticule.on = true;
+    b.props.graticule.density = Number(btn.getAttribute('data-density'));
+    b.props.graticule.offsetXmm = 0;
+    b.props.graticule.offsetYmm = 0;
+    document.getElementById('pdMapGratOn').checked = true;
+    pdUpdateGratPresetButtons(b);
+    pdMarkDirty();
+    status('Recompondo a grade…');
+    // usa pdRefreshMapPreview direto (não pdAutoRefreshMap) porque um bloco recém-criado ainda
+    // não tem prévia — o preset precisa gerar a primeira captura, não só re-sincronizar uma existente
+    pdRefreshMapPreview(b).then(()=>{ pdRenderAll(); pdSelect(b.id); status(''); })
+      .catch(e=>{ console.error(e); status('Falha ao atualizar prévia do mapa.'); });
+  });
+});
 document.getElementById('pdMapGridLock').addEventListener('click', ()=>{
   const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b._gridEdit = !b._gridEdit;
@@ -9431,6 +9488,7 @@ async function pdRefreshMapPreview(b){
         position: grat.position || 'inside',
         dirs: grat.dirs || {top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
         margin: gratMargin,
+        density: grat.density || 0,
         // desvio em mm (definido arrastando a grade travada) convertido pra px nesta resolução de captura
         offsetX: ((grat.offsetXmm||0) / b.w) * hmSize.x,
         offsetY: ((grat.offsetYmm||0) / b.h) * hmSize.y
@@ -9515,8 +9573,15 @@ function pdMakeGridLabelFn(ctx, size, opts){
       if(side==='left')   { ax = pos==='outside' ? -margin+2 : 2; ay=y; }
       if(side==='right')  { ax = pos==='outside' ? size.x+margin-2 : size.x-2; ay=y; }
       ctx.translate(ax, ay); ctx.rotate(angle);
-      ctx.fillStyle='#fff'; ctx.fillRect(1, -7, tw+3, 11);
-      ctx.fillStyle='#000'; ctx.fillText(text, 2, 2);
+      // no lado esquerdo, o deslocamento perpendicular (-7..4) empurra a caixa para o eixo
+      // mundo -x — ou seja, para FORA do quadro — sempre que a rotação não compensa o sinal;
+      // isso só acontece do lado esquerdo (à direita o mesmo deslocamento já cai para dentro
+      // por coincidência de sinais). Espelha o deslocamento nesse caso para manter o rótulo
+      // dentro (ou fora, se pos==='outside') do quadro, como nos demais lados.
+      const flipLeft = side==='left' && ((dir==='vertical-up') !== (pos==='outside'));
+      const ry = flipLeft ? -4 : -7, txy = flipLeft ? -2 : 2;
+      ctx.fillStyle='#fff'; ctx.fillRect(1, ry, tw+3, 11);
+      ctx.fillStyle='#000'; ctx.fillText(text, 2, txy);
     }
     ctx.restore();
   };
@@ -9531,28 +9596,31 @@ function pdDrawGraticuleGeo(ctx, hm, opts){
   const offX = opts.offsetX||0, offY = opts.offsetY||0;
   const bounds = hm.getBounds();
   const size = hm.getSize();
-  const lonStep = pdNiceNumber(bounds.getEast()-bounds.getWest()) || 1;
-  const latStep = pdNiceNumber(bounds.getNorth()-bounds.getSouth()) || 1;
-  const fmtDeg = v => v.toFixed(lonStep<1||latStep<1 ? 3 : 2)+'°';
+  const density = opts.density|0;
+  const west = bounds.getWest(), east = bounds.getEast(), south = bounds.getSouth(), north = bounds.getNorth();
+  const lons = density>0 ? pdEquidistantValues(west, east, density) : pdNiceNumberSeries(west, east);
+  const lats = density>0 ? pdEquidistantValues(south, north, density) : pdNiceNumberSeries(south, north);
+  const fine = density>0 || (east-west)<1 || (north-south)<1;
+  const fmtDeg = v => v.toFixed(fine ? 4 : 2)+'°';
   ctx.save();
   ctx.lineWidth = 0.6; ctx.font = '9px Arial, sans-serif';
   const label = pdMakeGridLabelFn(ctx, size, opts);
-  for(let lon=Math.ceil(bounds.getWest()/lonStep)*lonStep; lon<=bounds.getEast(); lon+=lonStep){
-    const px = hm.latLngToContainerPoint([bounds.getSouth(), lon]).x + offX;
+  lons.forEach(lon=>{
+    const px = hm.latLngToContainerPoint([south, lon]).x + offX;
     ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
     ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,size.y); ctx.stroke();
     ctx.setLineDash([]);
     label(px, 0, fmtDeg(lon), 'top');
     label(px, size.y, fmtDeg(lon), 'bottom');
-  }
-  for(let lat=Math.ceil(bounds.getSouth()/latStep)*latStep; lat<=bounds.getNorth(); lat+=latStep){
-    const py = hm.latLngToContainerPoint([lat, bounds.getWest()]).y + offY;
+  });
+  lats.forEach(lat=>{
+    const py = hm.latLngToContainerPoint([lat, west]).y + offY;
     ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.setLineDash([3,3]);
     ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(size.x,py); ctx.stroke();
     ctx.setLineDash([]);
     label(0, py, fmtDeg(lat), 'left');
     label(size.x, py, fmtDeg(lat), 'right');
-  }
+  });
   ctx.restore();
 }
 
@@ -9577,12 +9645,14 @@ function pdDrawGraticuleUtm(ctx, hm, opts){
   ].map(c=>projectCoord(c, utmCrs));
   const Es = corners.map(c=>c[0]), Ns = corners.map(c=>c[1]);
   const E0 = Math.min(...Es), E1 = Math.max(...Es), N0 = Math.min(...Ns), N1 = Math.max(...Ns);
-  const stepE = pdNiceNumber(E1-E0) || 1000, stepN = pdNiceNumber(N1-N0) || 1000;
+  const density = opts.density|0;
+  const Evals = density>0 ? pdEquidistantValues(E0, E1, density) : pdNiceNumberSeries(E0, E1);
+  const Nvals = density>0 ? pdEquidistantValues(N0, N1, density) : pdNiceNumberSeries(N0, N1);
   const SAMPLES = 8;
   ctx.save();
   ctx.lineWidth = 0.6; ctx.font = '8px Arial, sans-serif';
   const label = pdMakeGridLabelFn(ctx, size, opts);
-  for(let E=Math.ceil(E0/stepE)*stepE; E<=E1; E+=stepE){
+  Evals.forEach(E=>{
     const pts = [];
     for(let i=0;i<=SAMPLES;i++){
       const N = N0 + (N1-N0)*i/SAMPLES;
@@ -9596,8 +9666,8 @@ function pdDrawGraticuleUtm(ctx, hm, opts){
     const txt = Math.round(E)+'mE';
     label(pts[0].x, pts[0].y, txt, 'bottom');
     label(pts[pts.length-1].x, pts[pts.length-1].y, txt, 'top');
-  }
-  for(let N=Math.ceil(N0/stepN)*stepN; N<=N1; N+=stepN){
+  });
+  Nvals.forEach(N=>{
     const pts = [];
     for(let i=0;i<=SAMPLES;i++){
       const E = E0 + (E1-E0)*i/SAMPLES;
@@ -9611,7 +9681,7 @@ function pdDrawGraticuleUtm(ctx, hm, opts){
     const txt = Math.round(N)+'mN';
     label(pts[0].x, pts[0].y, txt, 'left');
     label(pts[pts.length-1].x, pts[pts.length-1].y, txt, 'right');
-  }
+  });
   ctx.restore();
 }
 map.on('zoomend', ()=>{

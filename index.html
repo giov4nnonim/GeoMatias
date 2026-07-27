@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — WebGIS</title>
+<title>GeoMatias — Estudo</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -124,6 +124,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #tbActions::-webkit-scrollbar{display:none}
 #tbActions .tb-btn{flex:none; scroll-snap-align:end}
 .tb-btn.icon-only{width:34px; padding:0; justify-content:center; flex:none}
+#pOpenDesigner{color:var(--accent)}
+#pOpenDesigner:hover{color:var(--accent); background:var(--panel2)}
 .tb-btn.icon-only svg{width:16px; height:16px}
 /* transição suave ao trocar de tema (desligada para quem prefere menos movimento) */
 @media (prefers-reduced-motion:no-preference){
@@ -345,7 +347,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 /* ---------- Toolbar (drawing) ---------- */
 #toolbar{
-  position:absolute; right:10px; top:128px; z-index:1100;
+  position:absolute; right:10px; bottom:40px; z-index:1100;
   display:flex; flex-direction:column; gap:4px; padding:6px;
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
   box-shadow:0 8px 30px var(--shadow);
@@ -389,6 +391,11 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;
 }
 #statusbar b{color:var(--text); font-weight:500}
+/* a mensagem de status é a única largura variável da barra — absorve o espaço livre e trunca
+   com reticências em vez de crescer, para nunca empurrar o cluster da direita (zoom/escala/GPS)
+   fora do lugar. Assim ele fica sempre à mesma distância da borda direita que Lat está da esquerda. */
+#stMsg{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.st-right{display:flex; align-items:center; gap:18px; flex:none}
 
 /* ---------- North arrow ---------- */
 #north{
@@ -481,20 +488,23 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 .leaflet-control-zoom a{background:var(--panel)!important; color:var(--text)!important; border-color:var(--line)!important}
 .leaflet-control-zoom a:hover{background:var(--panel2)!important; color:var(--accent)!important}
 /* Escala gráfica customizada (substitui o L.control.scale padrão) */
+/* escala embutida na barra de status (#stScale) — sem painel/sombra próprios,
+   herda a aparência da barra que já a hospeda; nada flutua sobre o mapa. */
+#stScale{display:flex; align-items:center; height:100%}
 .gm-scale{
-  background:var(--scale-bg); border:1px solid var(--line); border-radius:8px;
-  padding:6px 9px 7px; box-shadow:0 4px 14px var(--shadow); font-family:inherit;
-  -webkit-user-select:none; user-select:none;
+  display:flex; align-items:center; gap:6px; height:100%; position:relative;
+  font-family:inherit; -webkit-user-select:none; user-select:none;
 }
-.gm-scale-bar{display:block; margin-bottom:3px}
-.gm-scale-row{display:flex; align-items:center; justify-content:center; gap:5px}
+.gm-scale-graphic{display:flex; flex-direction:column; align-items:stretch; justify-content:center; flex:none}
+.gm-scale-bar{display:block; flex:none}
+.gm-scale-barlabels{display:flex; justify-content:space-between; font-size:9px; color:var(--muted); line-height:1; margin-top:1px; font-variant-numeric:tabular-nums}
 .gm-scale-ratio{
-  font-size:11px; color:var(--text); font-weight:600; letter-spacing:.2px;
-  cursor:text; border-radius:4px; padding:1px 4px; text-align:center; white-space:nowrap;
+  font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;
+  cursor:text; border-radius:4px; padding:1px 4px; white-space:nowrap;
 }
-.gm-scale-ratio:hover{background:var(--panel2)}
+.gm-scale-ratio:hover{background:var(--panel2); color:var(--text)}
 .gm-scale-input{
-  width:84px; font-size:11px; font-weight:600; text-align:center; color:var(--text);
+  width:78px; font-size:12px; text-align:center; color:var(--text);
   background:var(--field); border:1px solid var(--accent); border-radius:4px; padding:1px 4px;
 }
 .gm-scale-precision{
@@ -502,9 +512,32 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   background:transparent; border:none; border-radius:4px; color:var(--muted); cursor:pointer; padding:0;
 }
 .gm-scale-precision:hover{color:var(--accent); background:var(--panel2)}
-.gm-scale-precision.on{color:var(--accent)}
+.gm-scale-precision.on{color:var(--accent); background:var(--panel2)}
 .gm-scale-precision svg{width:12px; height:12px}
-.gm-scale-dist{font-size:10px; color:var(--muted); text-align:center; margin-top:1px}
+/* o ajuste de casas decimais vira um popover acima da barra — na própria barra
+   não há altura sobrando, e assim nada empurra os vizinhos (Lat/Lon/Zoom/GPS) */
+.gm-scale-decwrap{
+  display:none; flex-direction:column; align-items:stretch; width:100px;
+  position:absolute; left:0; bottom:100%; margin-bottom:8px; z-index:10;
+  background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  padding:8px 10px; box-shadow:0 8px 24px var(--shadow-strong);
+}
+.gm-scale-decwrap.show{display:flex}
+.gm-scale-decimals{
+  -webkit-appearance:none; appearance:none; width:100%; height:14px; margin:0;
+  background:transparent; touch-action:none; cursor:pointer;
+}
+.gm-scale-decimals::-webkit-slider-runnable-track{height:2px; background:var(--line); border-radius:2px}
+.gm-scale-decimals::-webkit-slider-thumb{
+  -webkit-appearance:none; width:11px; height:11px; margin-top:-4.5px; border-radius:50%;
+  background:var(--accent); border:2px solid var(--panel); box-shadow:0 1px 3px var(--shadow);
+}
+.gm-scale-decimals::-moz-range-track{height:2px; background:var(--line); border-radius:2px}
+.gm-scale-decimals::-moz-range-thumb{
+  width:11px; height:11px; border-radius:50%; background:var(--accent); border:2px solid var(--panel); box-shadow:0 1px 3px var(--shadow);
+}
+.gm-scale-decticks{display:flex; justify-content:space-between; font-size:9px; color:var(--muted); line-height:1; margin-top:2px}
+.gm-scale-decticks span{width:11px; text-align:center}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .measure-label{
   background:linear-gradient(135deg, #8B7DF5 0%, #5a4bd6 100%); 
@@ -745,7 +778,16 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   .tool-sep{width:1px; height:26px; margin:4px 2px}
   #north{bottom:auto; top:60px; right:12px; transform:scale(.8); z-index:1099}
   #statusbar{gap:10px; font-size:11px; padding-bottom:env(safe-area-inset-bottom); height:calc(30px + env(safe-area-inset-bottom))}
-  #stScale{display:none}
+  /* Lat/Lon cedem lugar à escala, que é mais útil de bater o olho no celular */
+  #stLatWrap, #stLonWrap{display:none}
+  .gm-scale-barlabels{display:none}
+  /* ancorada acima da barra de status (30px de altura), o popover de casas decimais entraria
+     direto na faixa de ferramentas do rodapé (que começa a só 40px do fundo aqui). Mesma solução
+     já usada por #drawBar/#cmpDivider: flutua acima da toolbar inteira via --tbH, não da barra. */
+  .gm-scale-decwrap{
+    position:fixed; left:8px; right:8px; width:auto; margin-bottom:0;
+    bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom));
+  }
   /* a toolbar vira faixa no rodapé neste breakpoint — a bolinha da cortina sobe para não ficar atrás dela */
   #cmpDivider.active .cmp-grip{bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom))}
 }
@@ -856,11 +898,74 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
    precisa de posicionamento absoluto explícito para ficar ancorado no canto superior direito */
 .modal.m-designer{width:min(96vw, 1180px); max-width:96vw; height:min(92vh, 860px); display:flex; flex-direction:column; position:relative; padding-top:44px}
 .modal.m-designer .modal-x{position:absolute; top:10px; right:14px; float:none; margin:0}
-.pd-toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); margin-bottom:10px}
+.pd-toolbar-toggle{
+  position:absolute; top:10px; right:52px; width:30px; height:30px;
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:var(--muted); cursor:pointer; border-radius:6px; padding:0;
+}
+.pd-toolbar-toggle:hover{color:var(--text); background:var(--panel2)}
+.pd-toolbar-toggle svg{transition:transform .2s ease}
+.modal.m-designer.pd-collapsed .pd-toolbar, .modal.m-designer.pd-collapsed .pd-hint{display:none!important}
+.modal.m-designer.pd-collapsed .pd-toolbar-toggle svg{transform:rotate(180deg)}
+.pd-toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; padding:8px 0; border-bottom:1px solid var(--line)}
 .pd-toolbar .field{margin:0}
 .pd-toolbar select{padding:4px 6px}
-.pd-body{flex:1; overflow:auto; background:var(--panel3, var(--panel2)); border-radius:8px; padding:24px; display:flex; align-items:flex-start; justify-content:center}
+.pd-hint{margin:6px 0 10px}
+.pd-check{display:flex; align-items:center; gap:6px; height:34px; font-size:12.5px; color:var(--text); cursor:pointer; white-space:nowrap; margin:0}
+.pd-check input{accent-color:var(--text2); width:15px; height:15px; margin:0; flex:none}
+.pd-north-panel{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:flex-end; flex-basis:100%; margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
+.pd-north-labelopts{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:flex-end}
+.pd-north-color input[type=color]{width:44px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px; background:var(--field); cursor:pointer}
+.pd-grid-dims{display:flex; align-items:center; gap:5px; height:34px; font-size:11.5px; color:var(--muted)}
+.pd-grid-dims input{
+  width:38px; padding:4px 5px; font-size:12px; background:var(--field); border:1px solid var(--line);
+  color:var(--text); border-radius:6px; text-align:center; font-family:inherit;
+}
+/* justify-content:center truncava a régua/borda esquerda de forma irrecuperável quando a folha
+   é mais larga que a área visível: com o conteúdo centralizado, scrollLeft não consegue alcançar
+   valores negativos, então a sobra do lado esquerdo ficava sempre fora de alcance. Trocado por
+   margin:auto no próprio .pd-sheet-wrap (abaixo): centraliza quando cabe, mas some (sem cortar
+   nada) quando a folha é maior que a área visível — a régua/canto esquerdo sempre acessível. */
+.pd-body{flex:1; overflow:auto; background:var(--panel3, var(--panel2)); border-radius:8px; padding:24px; display:flex; align-items:flex-start}
+.pd-sheet-wrap{
+  display:inline-grid; flex:none; margin:auto;
+  grid-template-columns:14px auto 14px; grid-template-rows:14px auto 14px;
+  grid-template-areas:
+    "ctl  rt  ctr"
+    "rl   sh  rr"
+    "cbl  rb  cbr";
+}
+.pd-sheet-wrap.no-rulers{grid-template-columns:0 auto 0; grid-template-rows:0 auto 0}
+.pd-sheet-wrap.no-rulers .pd-ruler-corner, .pd-sheet-wrap.no-rulers .pd-ruler-h, .pd-sheet-wrap.no-rulers .pd-ruler-v{display:none}
+.pd-ruler-corner{background:var(--panel2)}
+#pdRulerCornerTL{grid-area:ctl} #pdRulerCornerTR{grid-area:ctr}
+#pdRulerCornerBL{grid-area:cbl} #pdRulerCornerBR{grid-area:cbr}
+.pd-ruler-h{position:relative; background:var(--panel2); overflow:hidden}
+.pd-ruler-v{position:relative; background:var(--panel2); overflow:hidden}
+#pdRulerH{grid-area:rt; border-bottom:1px solid var(--line)}
+#pdRulerHBottom{grid-area:rb; border-top:1px solid var(--line)}
+#pdRulerV{grid-area:rl; border-right:1px solid var(--line)}
+#pdRulerVRight{grid-area:rr; border-left:1px solid var(--line)}
+.pd-tick{position:absolute; background:var(--muted)}
+#pdRulerH .pd-tick, #pdRulerHBottom .pd-tick{width:1px}
+#pdRulerH .pd-tick{bottom:0}
+#pdRulerHBottom .pd-tick{top:0}
+.pd-tick.major{height:8px}
+.pd-tick.minor{height:4px}
+#pdRulerV .pd-tick, #pdRulerVRight .pd-tick{height:1px}
+#pdRulerV .pd-tick{right:0}
+#pdRulerVRight .pd-tick{left:0}
+#pdRulerV .pd-tick.major, #pdRulerVRight .pd-tick.major{width:8px; height:1px}
+#pdRulerV .pd-tick.minor, #pdRulerVRight .pd-tick.minor{width:4px; height:1px}
+.pd-ruler-label{position:absolute; font-size:8px; color:var(--muted); white-space:nowrap; line-height:1; pointer-events:none}
+#pdRulerH .pd-ruler-label{top:1px}
+#pdRulerHBottom .pd-ruler-label{bottom:1px}
+#pdRulerV .pd-ruler-label{left:2px; writing-mode:vertical-rl}
+#pdRulerVRight .pd-ruler-label{right:2px; writing-mode:vertical-rl}
+.pd-sheet-stack{position:relative; grid-area:sh}
 .pd-sheet{position:relative; background:#fff; box-shadow:0 2px 18px rgba(0,0,0,.45); flex:none; overflow:hidden}
+.pd-grid-overlay{position:absolute; inset:0; pointer-events:none; z-index:50; display:none}
+.pd-grid-overlay.on{display:block}
 .pd-block{position:absolute; box-sizing:border-box; border:1px dashed transparent; cursor:move; user-select:none}
 .pd-block:hover, .pd-block.sel{border-color:var(--accent)}
 .pd-block.sel{box-shadow:0 0 0 2px var(--accent-ring, var(--accent))}
@@ -1032,9 +1137,8 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tb-btn icon-only" id="btnPrintQuick" title="Layout de impressão">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
   </button>
-  <button class="tb-btn" id="btnInventory" title="Saídas do inventário arbóreo">
+  <button class="tb-btn icon-only" id="btnInventory" title="Saídas do inventário arbóreo">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-6"/><path d="M12 16c-3.3 0-6-2.4-6-5.5C6 7 8.7 4 12 4s6 3 6 6.5c0 3.1-2.7 5.5-6 5.5z"/></svg>
-    <span class="lbl">Inventário</span>
   </button>
   <button class="tb-btn icon-only" id="btnTheme" title="Alternar tema" aria-label="Alternar tema claro/escuro"></button>
   </div>
@@ -1109,10 +1213,6 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Drawing toolbar ===== -->
 <div id="toolbar">
-  <button class="tool" id="tbCollapse" aria-label="Recolher barra de ferramentas" aria-expanded="true" aria-controls="toolbar">
-    <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg><span class="tip">Recolher barra</span>
-  </button>
-  <div class="tool-sep"></div>
   <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 9.9a.6.6 0 0 0 .05 1.13l7.3 2.82 2.82 7.3a.6.6 0 0 0 1.13.05z"/><path d="M21.5 2.5 10.15 13.85"/></svg><span class="tip">Onde estou (GPS)</span></button>
   <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
   <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M16 16l4 4" stroke-dasharray="2 2"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
@@ -1137,6 +1237,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <div class="tool-sep"></div>
   <button class="tool" id="btnUndo" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v1"/></svg><span class="tip">Desfazer (Ctrl+Z)</span></button>
   <button class="tool" id="btnRedo" disabled><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0-6 6v1"/></svg><span class="tip">Refazer (Ctrl+Y)</span></button>
+  <div class="tool-sep"></div>
+  <button class="tool" id="tbCollapse" aria-label="Recolher barra de ferramentas" aria-expanded="true" aria-controls="toolbar">
+    <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg><span class="tip">Recolher barra</span>
+  </button>
 </div>
 
 <div id="hint"></div>
@@ -1266,12 +1370,19 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <!-- ===== Status bar ===== -->
 <div id="statusbar">
-  <span>Lat <b id="stLat">—</b></span>
-  <span>Lon <b id="stLon">—</b></span>
-  <span>Zoom <b id="stZoom">—</b></span>
-  <span id="stScale"></span>
-  <span id="stGps"></span>
-  <span style="margin-left:auto" id="stMsg"></span>
+  <span id="stLatWrap">Lat <b id="stLat">—</b></span>
+  <span id="stLonWrap">Lon <b id="stLon">—</b></span>
+  <span id="stMsg"></span>
+  <div class="st-right">
+    <span class="gm-scale">Zoom <b id="stZoom">—</b>
+      <button type="button" class="gm-scale-precision" id="stZoomToggle" title="Ajustar zoom" data-icon="search"></button>
+      <div class="gm-scale-decwrap" id="stZoomSliderWrap">
+        <input type="range" id="stZoomSlider" min="0" max="21" step="1" title="Nível de zoom">
+      </div>
+    </span>
+    <span id="stScale"></span>
+    <span id="stGps"></span>
+  </div>
 </div>
 
 <!-- ===== Modal: import ===== -->
@@ -1398,6 +1509,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <div class="modal-back" id="mPrintDesigner">
   <div class="modal m-designer">
     <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
+    <button type="button" class="pd-toolbar-toggle" id="pdToolbarToggle" title="Minimizar/expandir a barra de ferramentas" data-icon="arrowDown"></button>
     <h3>Editor de layout de impressão</h3>
     <div class="pd-toolbar">
       <div class="field"><label>Papel</label>
@@ -1419,17 +1531,34 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
       <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
       <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
-      <div class="field" id="pdNorthStyleWrap" style="display:none"><label>Estilo do norte</label>
-        <select id="pdNorthStyle">
-          <option value="arrow">Seta simples</option>
-          <option value="splitArrow">Seta dividida</option>
-          <option value="roseSimple">Rosa dos ventos simples</option>
-          <option value="roseFull">Rosa dos ventos completa</option>
-        </select>
+      <div class="pd-north-panel" id="pdNorthStyleWrap" style="display:none">
+        <div class="field"><label>Estilo do norte</label>
+          <select id="pdNorthStyle">
+            <option value="chevronMark">Seta ^ (logo)</option>
+            <option value="arrow">Seta simples</option>
+            <option value="splitArrow">Seta dividida</option>
+            <option value="upThin">Seta fina</option>
+            <option value="upBold">Seta cheia</option>
+            <option value="roseSimple">Rosa dos ventos simples</option>
+            <option value="roseFull">Rosa dos ventos completa</option>
+          </select>
+        </div>
+        <label class="pd-check"><input type="checkbox" id="pdNorthShowLabel" checked>Mostrar "N"</label>
+        <div class="pd-north-labelopts" id="pdNorthLabelOpts">
+          <div class="field pd-north-color"><label>Cor do "N"</label><input type="color" id="pdNorthLabelColor" value="#3a3a3a"></div>
+          <div class="field pd-north-color"><label>Borda do "N"</label><input type="color" id="pdNorthLabelBorder" value="#ffffff"></div>
+          <div class="pd-grid-dims"><span>Tamanho</span><input type="number" id="pdNorthLabelSize" min="8" max="30" value="16"></div>
+        </div>
       </div>
       <input type="file" id="pdImageFile" accept="image/*" style="display:none">
-      <span class="sub" style="margin-left:auto">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</span>
+      <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
+      <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
+      <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
+        <span>Colunas</span><input type="number" id="pdGridCols" min="1" max="60" value="10">
+        <span>Linhas</span><input type="number" id="pdGridRows" min="1" max="60" value="10">
+      </div>
     </div>
+    <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
     <div class="pd-toolbar" id="pdMapPanel" style="display:none">
       <button class="tb-btn" id="pdMapUseView" data-icon="target" title="Usa o centro/zoom/base atuais do mapa principal neste bloco">Fixar vista atual</button>
       <button class="tb-btn" id="pdMapSync" data-icon="refresh" title="Este bloco volta a acompanhar o mapa principal ao vivo">Sincronizar c/ mapa principal</button>
@@ -1491,7 +1620,20 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       </div>
     </div>
     <div class="pd-body">
-      <div class="pd-sheet" id="pdSheet"></div>
+      <div class="pd-sheet-wrap no-rulers" id="pdSheetWrap">
+        <div class="pd-ruler-corner" id="pdRulerCornerTL"></div>
+        <div class="pd-ruler-h" id="pdRulerH"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerTR"></div>
+        <div class="pd-ruler-v" id="pdRulerV"></div>
+        <div class="pd-sheet-stack">
+          <div class="pd-sheet" id="pdSheet"></div>
+          <div class="pd-grid-overlay" id="pdGridOverlay"></div>
+        </div>
+        <div class="pd-ruler-v" id="pdRulerVRight"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerBL"></div>
+        <div class="pd-ruler-h" id="pdRulerHBottom"></div>
+        <div class="pd-ruler-corner" id="pdRulerCornerBR"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2309,38 +2451,54 @@ document.head.appendChild(style);
 /* ---------- Mapa ---------- */
 const map = L.map('map', { zoomControl:true, attributionControl:true, preferCanvas:false })
   .setView([-14.2, -51.9], 5);
-/* ---------- Escala gráfica + textual (com edição manual e precisão) ---------- */
-const GmScale = L.Control.extend({
-  options:{ position:'bottomright', maxWidth:110 },
-  onAdd(m){
+/* ---------- Escala gráfica + textual (com edição manual e precisão) ----------
+   Embutida na barra de status (#stScale) em vez de um controle Leaflet flutuante,
+   para nunca sobrepor o mapa nem outros elementos, em desktop e mobile. */
+const GmScale = {
+  options:{ maxWidth:96 },
+  init(container, m){
     this._map = m;
     this._precise = (localStorage.getItem('geomatias_scale_precise')==='1');
-    const box = L.DomUtil.create('div', 'gm-scale');
-    box.innerHTML =
-      `<svg class="gm-scale-bar" width="${this.options.maxWidth}" height="10"></svg>`+
-      `<div class="gm-scale-row">`+
-        `<button type="button" class="gm-scale-precision" title="Alternar precisão (casas decimais)">${icon('target',12)}</button>`+
+    this._decimals = Math.min(5, Math.max(0, parseInt(localStorage.getItem('geomatias_scale_decimals'), 10) || 1));
+    container.innerHTML =
+      `<div class="gm-scale">`+
+        `<div class="gm-scale-graphic">`+
+          `<svg class="gm-scale-bar" width="${this.options.maxWidth}" height="10"></svg>`+
+          `<div class="gm-scale-barlabels"><span>0</span><span class="gm-scale-end"></span></div>`+
+        `</div>`+
         `<span class="gm-scale-ratio" title="Toque para digitar a escala (ex.: 1:5000)">1 : —</span>`+
-      `</div>`+
-      `<div class="gm-scale-dist"></div>`;
-    L.DomEvent.disableClickPropagation(box);
+        `<button type="button" class="gm-scale-precision" title="Alternar precisão (casas decimais)">${icon('target',12)}</button>`+
+        `<div class="gm-scale-decwrap">`+
+          `<input type="range" class="gm-scale-decimals" min="0" max="5" step="1" title="Casas decimais">`+
+          `<div class="gm-scale-decticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>`+
+        `</div>`+
+      `</div>`;
+    const box = container.firstElementChild;
     this._bar = box.querySelector('.gm-scale-bar');
+    this._endEl = box.querySelector('.gm-scale-end');
     this._ratioEl = box.querySelector('.gm-scale-ratio');
-    this._distEl = box.querySelector('.gm-scale-dist');
     this._precBtn = box.querySelector('.gm-scale-precision');
+    this._decWrap = box.querySelector('.gm-scale-decwrap');
+    this._decSlider = box.querySelector('.gm-scale-decimals');
+    this._decSlider.value = this._decimals;
     this._precBtn.classList.toggle('on', this._precise);
+    this._decWrap.classList.toggle('show', this._precise);
     this._precBtn.addEventListener('click', ()=>{
       this._precise = !this._precise;
       localStorage.setItem('geomatias_scale_precise', this._precise ? '1' : '0');
       this._precBtn.classList.toggle('on', this._precise);
+      this._decWrap.classList.toggle('show', this._precise);
+      this._update();
+    });
+    this._decSlider.addEventListener('input', ()=>{
+      this._decimals = parseInt(this._decSlider.value, 10);
+      localStorage.setItem('geomatias_scale_decimals', String(this._decimals));
       this._update();
     });
     this._ratioEl.addEventListener('click', ()=>this._editStart());
     m.on('move zoom zoomend moveend', this._update, this);
     this._update();
-    return box;
   },
-  onRemove(m){ m.off('move zoom zoomend moveend', this._update, this); },
   _niceMeters(x){
     if(x<=0) return 1;
     const pow10 = Math.pow(10, Math.floor(Math.log10(x)));
@@ -2349,6 +2507,12 @@ const GmScale = L.Control.extend({
     return n*pow10;
   },
   _fmtDist(m2){
+    if(this._precise){
+      const d = this._decimals;
+      return m2>=1000
+        ? (m2/1000).toLocaleString('pt-BR',{minimumFractionDigits:d, maximumFractionDigits:d})+' km'
+        : m2.toLocaleString('pt-BR',{minimumFractionDigits:d, maximumFractionDigits:d})+' m';
+    }
     return m2>=1000
       ? (m2/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' km'
       : Math.round(m2).toLocaleString('pt-BR')+' m';
@@ -2366,14 +2530,14 @@ const GmScale = L.Control.extend({
     const segs = 4, segW = barW/segs;
     let rects = '';
     for(let i=0;i<segs;i++){
-      rects += `<rect x="${i*segW}" y="0" width="${segW}" height="6" fill="${i%2===0?'var(--text)':'transparent'}" stroke="var(--muted)" stroke-width="1"/>`;
+      rects += `<rect x="${i*segW}" y="0" width="${segW}" height="7" fill="${i%2===0?'var(--muted)':'transparent'}" stroke="var(--muted)" stroke-width="1"/>`;
     }
     this._bar.setAttribute('width', barW);
     this._bar.innerHTML = rects;
-    this._distEl.textContent = this._fmtDist(niceMeters);
+    this._endEl.textContent = this._fmtDist(niceMeters);
     const denom = this._denom();
     const ratioTxt = this._precise
-      ? denom.toLocaleString('pt-BR',{minimumFractionDigits:1, maximumFractionDigits:1})
+      ? denom.toLocaleString('pt-BR',{minimumFractionDigits:this._decimals, maximumFractionDigits:this._decimals})
       : Math.round(denom).toLocaleString('pt-BR');
     this._ratioEl.textContent = '1 : '+ratioTxt;
   },
@@ -2406,8 +2570,8 @@ const GmScale = L.Control.extend({
     const zoom = 1 + Math.log2(591657550.5/(2*denom));
     this._map.setZoom(zoom);
   }
-});
-new GmScale().addTo(map);
+};
+GmScale.init(document.getElementById('stScale'), map);
 
 /* ---------- Bases ---------- */
 const bases = {
@@ -3266,8 +3430,32 @@ map.on('mousemove', e=>{
   document.getElementById('stLat').textContent = fmt(e.latlng.lat);
   document.getElementById('stLon').textContent = fmt(e.latlng.lng);
 });
-function updZoom(){ document.getElementById('stZoom').textContent = map.getZoom(); }
+function updZoom(){
+  document.getElementById('stZoom').textContent = map.getZoom();
+  const slider = document.getElementById('stZoomSlider');
+  if(slider && document.activeElement!==slider) slider.value = map.getZoom();
+}
 map.on('zoomend', updZoom); updZoom();
+
+/* ---------- Ajuste de zoom por controle deslizante — mesma mecânica do "Alternar
+   precisão" da escala (botão liga/desliga um popover com um slider) ---------- */
+(function stZoomSliderInit(){
+  const toggle = document.getElementById('stZoomToggle');
+  const wrap = document.getElementById('stZoomSliderWrap');
+  const slider = document.getElementById('stZoomSlider');
+  toggle.addEventListener('click', ()=>{
+    const showing = wrap.classList.toggle('show');
+    toggle.classList.toggle('on', showing);
+    if(showing){
+      slider.min = map.getMinZoom();
+      slider.max = map.getMaxZoom();
+      slider.value = map.getZoom();
+    }
+  });
+  slider.addEventListener('input', ()=>{
+    map.setZoom(parseFloat(slider.value));
+  });
+})();
 function status(msg){ const el=document.getElementById('stMsg'); el.textContent=msg||''; if(msg) setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 5000); }
 
 /* ---------- Utilidades geodésicas ---------- */
@@ -8323,7 +8511,7 @@ function pdAddBlock(type, extra){
   const defaults = {
     text:{w:80, h:30, props:{html:'Texto'}},
     image:{w:40, h:40, props:{asset:null}},
-    north:{w:16, h:24, props:{style:'arrow'}},
+    north:{w:16, h:24, props:{style:'chevronMark', showLabel:true, labelColor:'#3a3a3a', labelBorderColor:'#ffffff', labelSize:16}},
     scale:{w:55, h:18, props:{showBar:true, showText:true}},
     legend:{w:70, h:90, props:{}},
     map:{w:110, h:80, props:{center:null, zoom:null, base:null, layers:null, preview:null, contextOf:null,
@@ -8368,7 +8556,17 @@ function pdSelect(id){
   const wrap = document.getElementById('pdNorthStyleWrap');
   if(b && b.type==='north'){
     wrap.style.display = '';
-    document.getElementById('pdNorthStyle').value = b.props.style || 'arrow';
+    const style = b.props.style || 'chevronMark';
+    document.getElementById('pdNorthStyle').value = style;
+    const showLabel = b.props.showLabel!==false;
+    document.getElementById('pdNorthShowLabel').checked = showLabel;
+    document.getElementById('pdNorthLabelColor').value = b.props.labelColor || '#3a3a3a';
+    document.getElementById('pdNorthLabelBorder').value = b.props.labelBorderColor || '#ffffff';
+    document.getElementById('pdNorthLabelSize').value = b.props.labelSize || 16;
+    // rosa dos ventos desenha o próprio "N" junto dos outros pontos cardeais — os controles não se aplicam
+    const isRose = style==='roseSimple' || style==='roseFull';
+    document.getElementById('pdNorthShowLabel').closest('.pd-check').style.display = isRose ? 'none' : '';
+    document.getElementById('pdNorthLabelOpts').style.display = (!isRose && showLabel) ? '' : 'none';
   } else {
     wrap.style.display = 'none';
   }
@@ -8456,49 +8654,95 @@ function pdNiceNumber(x){
   const n = r>=5 ? 5 : (r>=2 ? 2 : 1);
   return n*mag;
 }
-function pdNorthArrowSvg(){
+/* rótulo "N" compartilhado por todas as variações de seta — cor, borda e tamanho
+   configuráveis pelo painel do editor (props.showLabel/labelColor/labelBorderColor/labelSize).
+   paint-order="stroke fill" faz o stroke desenhar por trás do preenchimento, dando o efeito
+   de contorno fino sem engordar as hastes da letra. */
+function pdNorthLabelSvg(props, y){
+  props = props || {};
+  if(props.showLabel===false) return '';
+  const size = props.labelSize || 16;
+  const color = props.labelColor || '#c0392b';
+  const border = props.labelBorderColor;
+  const strokeAttr = border ? ` stroke="${border}" stroke-width="${Math.max(0.6, size*0.09)}" paint-order="stroke fill"` : '';
+  return `<text x="20" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700" fill="${color}"${strokeAttr} font-family="Arial, sans-serif">N</text>`;
+}
+function pdNorthArrowSvg(props){
   return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
-    <text x="20" y="15" text-anchor="middle" font-size="16" font-weight="700" fill="#c0392b" font-family="Arial, sans-serif">N</text>
+    ${pdNorthLabelSvg(props, 15)}
     <polygon points="20,19 30,56 20,46 10,56" fill="#111"/>
   </svg>`;
 }
 /* seta dividida: metade preenchida, metade em contorno — convenção comum em plantas técnicas */
-function pdSplitArrowSvg(){
+function pdSplitArrowSvg(props){
   return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
-    <text x="20" y="15" text-anchor="middle" font-size="16" font-weight="700" fill="#c0392b" font-family="Arial, sans-serif">N</text>
+    ${pdNorthLabelSvg(props, 15)}
     <polygon points="20,19 10,56 20,46" fill="#111"/>
     <polygon points="20,19 30,56 20,46" fill="#fff" stroke="#111" stroke-width="1"/>
+  </svg>`;
+}
+/* seta fina: traço único minimalista, sem preenchimento */
+function pdUpThinSvg(props){
+  return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    ${pdNorthLabelSvg(props, 15)}
+    <line x1="20" y1="54" x2="20" y2="23" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+    <path d="M11,31 L20,20 L29,31" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+/* seta cheia: haste e ponta preenchidas, mais robusta para leitura à distância */
+function pdUpBoldSvg(props){
+  return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    ${pdNorthLabelSvg(props, 15)}
+    <path d="M20,18 L34,38 L25,38 L25,55 L15,55 L15,38 L6,38 Z" fill="#111"/>
+  </svg>`;
+}
+/* marca ^ (padrão do logo do projeto): chevron roxo no topo, "N" abaixo dele —
+   estilo/cor do "N" seguem os mesmos props das demais setas */
+function pdChevronMarkSvg(props){
+  return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+    <path d="M8,33 L20,7 L32,33" fill="none" stroke="#6C5CE7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pdNorthLabelSvg(props, 54)}
   </svg>`;
 }
 /* rosa dos ventos genérica: n pontas alternando preenchimento, com rótulos cardeais/colaterais */
 function pdRoseSvg(n){
   const cx=60, cy=60, rOuter = n>4?55:50, rInner = n>4?14:10;
-  const cardinal = ['N','NE','E','SE','S','SW','W','NW'];
+  /* siglas em português: Leste/Oeste no lugar de East/West, e suas compostas (SO, NO) */
+  const cardinal = ['N','NE','L','SE','S','SO','O','NO'];
   const step = 8/n;
+  const rLab = rOuter+10;
+  /* viewBox dimensionado para o alcance real dos rótulos (rLab + margem de meia-largura de
+     texto), não um 0 0 120 120 fixo — antes disso, no rose de 8 pontas os rótulos N/S/L/O
+     caíam fora da viewBox e eram cortados pelo próprio SVG (visível ao redimensionar o bloco,
+     que reforça o "meet" do preserveAspectRatio sobre a área já cortada) */
+  const half = rLab + 8;
+  const size = half*2;
   let polys='', labels='';
   for(let i=0;i<n;i++){
-    const ang = i*(360/n), half=(360/n)/2;
-    const a0=(ang-90)*Math.PI/180, aL=(ang-90-half)*Math.PI/180, aR=(ang-90+half)*Math.PI/180;
+    const ang = i*(360/n), halfAng=(360/n)/2;
+    const a0=(ang-90)*Math.PI/180, aL=(ang-90-halfAng)*Math.PI/180, aR=(ang-90+halfAng)*Math.PI/180;
     const tip=[cx+rOuter*Math.cos(a0), cy+rOuter*Math.sin(a0)];
     const left=[cx+rInner*Math.cos(aL), cy+rInner*Math.sin(aL)];
     const right=[cx+rInner*Math.cos(aR), cy+rInner*Math.sin(aR)];
     polys += `<polygon points="${tip.join(',')} ${left.join(',')} ${right.join(',')}" fill="${i%2===0?'#111':'#fff'}" stroke="#111" stroke-width="1"/>`;
     const lab = cardinal[i*step];
     const isN = lab==='N';
-    const rLab = rOuter+10;
     const lx=cx+rLab*Math.cos(a0), ly=cy+rLab*Math.sin(a0)+3;
     labels += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="${isN?12:9}" font-weight="${isN?700:400}" fill="${isN?'#c0392b':'#111'}" font-family="Arial, sans-serif">${lab}</text>`;
   }
-  return `<svg viewBox="0 0 120 120" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
+  return `<svg viewBox="${cx-half} ${cy-half} ${size} ${size}" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
     <circle cx="60" cy="60" r="${rOuter+2}" fill="none" stroke="#111" stroke-width="0.8"/>
     ${polys}${labels}
   </svg>`;
 }
-function pdNorthSvg(style){
-  if(style==='splitArrow') return pdSplitArrowSvg();
+function pdNorthSvg(style, props){
+  if(style==='splitArrow') return pdSplitArrowSvg(props);
+  if(style==='upThin') return pdUpThinSvg(props);
+  if(style==='upBold') return pdUpBoldSvg(props);
+  if(style==='chevronMark') return pdChevronMarkSvg(props);
   if(style==='roseSimple') return pdRoseSvg(4);
   if(style==='roseFull') return pdRoseSvg(8);
-  return pdNorthArrowSvg(); // 'arrow' (padrão)
+  return pdNorthArrowSvg(props); // 'arrow' (padrão antigo, mantido para projetos já salvos)
 }
 function pdScaleHtml(b){
   const denom = pdScaleDenom();
@@ -8537,7 +8781,7 @@ function pdBlockHtml(b){
     return `<div class="pd-inner">${src?`<img src="${src}">`:''}</div>`;
   }
   if(b.type==='north'){
-    return `<div class="pd-inner">${pdNorthSvg(b.props.style)}</div>`;
+    return `<div class="pd-inner">${pdNorthSvg(b.props.style, b.props)}</div>`;
   }
   if(b.type==='scale'){
     return pdScaleHtml(b);
@@ -8596,6 +8840,48 @@ function pdRenderAll(){
     if(n.querySelector('svg')) return;
     n.insertAdjacentHTML('afterbegin', icon(n.getAttribute('data-icon'), 13));
   });
+  pdRenderRulers(dims);
+  pdUpdateGridOverlay();
+}
+
+/* réguas em mm ao redor da folha — auxílio visual do editor, nunca entra na impressão final
+   (o export usa outro pipeline, que desenha só os blocos de printLayout) */
+function pdRenderRulers(dims){
+  const h = document.getElementById('pdRulerH'), v = document.getElementById('pdRulerV');
+  const hB = document.getElementById('pdRulerHBottom'), vR = document.getElementById('pdRulerVRight');
+  if(!h || !v || !hB || !vR) return;
+  [h, hB].forEach(el=>el.style.width = dims.w+'mm');
+  [v, vR].forEach(el=>el.style.height = dims.h+'mm');
+  let hHtml = '', vHtml = '';
+  for(let x=0; x<=dims.w; x+=10){
+    const major = x % 50 === 0;
+    hHtml += `<div class="pd-tick ${major?'major':'minor'}" style="left:${x}mm"></div>`;
+    if(major) hHtml += `<div class="pd-ruler-label" style="left:${x+1}mm">${x}</div>`;
+  }
+  for(let y=0; y<=dims.h; y+=10){
+    const major = y % 50 === 0;
+    vHtml += `<div class="pd-tick ${major?'major':'minor'}" style="top:${y}mm"></div>`;
+    if(major) vHtml += `<div class="pd-ruler-label" style="top:${y+1}mm">${y}</div>`;
+  }
+  h.innerHTML = hHtml;
+  hB.innerHTML = hHtml;
+  v.innerHTML = vHtml;
+  vR.innerHTML = vHtml;
+}
+
+/* grade de alinhamento sobre a folha — colunas/linhas configuráveis, apenas visual */
+function pdUpdateGridOverlay(){
+  const overlay = document.getElementById('pdGridOverlay');
+  if(!overlay) return;
+  const on = document.getElementById('pdShowGrid').checked;
+  overlay.classList.toggle('on', on);
+  if(!on) return;
+  const cols = Math.max(1, parseInt(document.getElementById('pdGridCols').value, 10) || 10);
+  const rows = Math.max(1, parseInt(document.getElementById('pdGridRows').value, 10) || 10);
+  const colPct = 100/cols, rowPct = 100/rows;
+  overlay.style.backgroundImage =
+    `repeating-linear-gradient(to right, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${colPct}%),`+
+    `repeating-linear-gradient(to bottom, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${rowPct}%)`;
 }
 
 /* arrastar (pelo corpo do bloco ou pela alça dedicada "mover") — mesma lógica para os dois gatilhos */
@@ -8711,6 +8997,45 @@ document.getElementById('pOpenDesigner').addEventListener('click', ()=>{
 });
 document.getElementById('pdPaper').addEventListener('change', e=>{ printLayout.paperSize = e.target.value; pdRenderAll(); pdMarkDirty(); });
 document.getElementById('pdOrient').addEventListener('change', e=>{ printLayout.orientation = e.target.value; pdRenderAll(); pdMarkDirty(); });
+
+/* minimizar/expandir a barra de ferramentas do editor — dá mais altura à prévia da folha */
+document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
+  document.querySelector('.modal.m-designer').classList.toggle('pd-collapsed');
+});
+
+/* réguas (mm) e grade de alinhamento (colunas/linhas) — só no editor, preferência local */
+(function pdRulerGridInit(){
+  const rulersChk = document.getElementById('pdShowRulers');
+  const gridChk = document.getElementById('pdShowGrid');
+  const gridDimsWrap = document.getElementById('pdGridDimsWrap');
+  const colsInp = document.getElementById('pdGridCols');
+  const rowsInp = document.getElementById('pdGridRows');
+  const wrap = document.getElementById('pdSheetWrap');
+
+  rulersChk.checked = localStorage.getItem('geomatias_pd_rulers') === '1';
+  gridChk.checked = localStorage.getItem('geomatias_pd_grid') === '1';
+  colsInp.value = localStorage.getItem('geomatias_pd_gridcols') || '10';
+  rowsInp.value = localStorage.getItem('geomatias_pd_gridrows') || '10';
+  wrap.classList.toggle('no-rulers', !rulersChk.checked);
+  gridDimsWrap.style.display = gridChk.checked ? '' : 'none';
+
+  rulersChk.addEventListener('change', ()=>{
+    localStorage.setItem('geomatias_pd_rulers', rulersChk.checked ? '1' : '0');
+    wrap.classList.toggle('no-rulers', !rulersChk.checked);
+  });
+  gridChk.addEventListener('change', ()=>{
+    localStorage.setItem('geomatias_pd_grid', gridChk.checked ? '1' : '0');
+    gridDimsWrap.style.display = gridChk.checked ? '' : 'none';
+    pdUpdateGridOverlay();
+  });
+  [colsInp, rowsInp].forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      localStorage.setItem('geomatias_pd_gridcols', colsInp.value);
+      localStorage.setItem('geomatias_pd_gridrows', rowsInp.value);
+      pdUpdateGridOverlay();
+    });
+  });
+})();
 document.getElementById('pdAddText').addEventListener('click', ()=>pdAddBlock('text'));
 document.getElementById('pdAddNorth').addEventListener('click', ()=>pdAddBlock('north'));
 document.getElementById('pdNorthStyle').addEventListener('change', e=>{
@@ -8719,6 +9044,35 @@ document.getElementById('pdNorthStyle').addEventListener('change', e=>{
   b.props.style = e.target.value;
   pdRenderAll();
   pdSelect(b.id);
+  pdMarkDirty();
+});
+document.getElementById('pdNorthShowLabel').addEventListener('change', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.showLabel = e.target.checked;
+  pdRenderAll();
+  pdSelect(b.id);
+  pdMarkDirty();
+});
+document.getElementById('pdNorthLabelColor').addEventListener('input', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.labelColor = e.target.value;
+  pdRenderAll();
+  pdMarkDirty();
+});
+document.getElementById('pdNorthLabelBorder').addEventListener('input', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.labelBorderColor = e.target.value;
+  pdRenderAll();
+  pdMarkDirty();
+});
+document.getElementById('pdNorthLabelSize').addEventListener('input', e=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.labelSize = Math.max(8, Math.min(30, parseInt(e.target.value,10) || 16));
+  pdRenderAll();
   pdMarkDirty();
 });
 document.getElementById('pdAddScale').addEventListener('click', ()=>pdAddBlock('scale'));

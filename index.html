@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — WebGIS</title>
+<title>GeoMatias — Wbgs de estudo</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -287,20 +287,23 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* Barra de finalização do desenho */
-#drawBar, #gpsDrawBar{
+#drawBar, #gpsDrawBar, #sketchBar{
   position:absolute; left:50%; bottom:44px; transform:translateX(-50%); z-index:1300;
   display:none; align-items:center; gap:8px; padding:8px 10px;
   background:var(--panel); border:1px solid var(--accent); border-radius:999px;
   box-shadow:0 8px 30px var(--shadow-strong);
 }
-#drawBar .db-msg, #gpsDrawBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
-#drawBar button, #gpsDrawBar button{height:32px; border-radius:999px}
+#drawBar .db-msg, #gpsDrawBar .db-msg, #sketchBar .db-msg{font-size:12.5px; color:var(--muted); padding:0 6px; max-width:40vw}
+#drawBar button, #gpsDrawBar button, #sketchBar button{height:32px; border-radius:999px}
+#skAlts{display:flex; align-items:center; gap:6px}
+#skAlts button{height:28px; border-radius:999px; padding:0 12px; font-size:12px; background:var(--sel); color:var(--text2); border:1px solid var(--line-sel); cursor:pointer; font-weight:600}
+#skAlts button.active{background:var(--accent-soft); color:var(--text); border-color:var(--accent)}
 @media (max-width:760px){
-  #drawBar, #gpsDrawBar{
+  #drawBar, #gpsDrawBar, #sketchBar{
     bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom));
     left:8px; right:8px; width:auto; transform:none; justify-content:center;
   }
-  #drawBar .db-msg, #gpsDrawBar .db-msg{display:none}
+  #drawBar .db-msg, #gpsDrawBar .db-msg, #sketchBar .db-msg{display:none}
 }
 
 /* Painel de perfil de elevação (medição 3D) */
@@ -1243,6 +1246,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><span class="tip">Ponto</span></button>
   <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
   <button class="tool" data-tool="curve"><svg viewBox="0 0 24 24"><path d="M3 20c6 0 4-14 10-14 4 0 5 5 8 5"/><circle cx="3" cy="20" r="1.6"/><circle cx="21" cy="11" r="1.6"/></svg><span class="tip">Curva suavizada</span></button>
+  <button class="tool" data-tool="sketch"><svg viewBox="0 0 24 24"><path d="M3 18c2.5-.5 3-8 6-10 2-1.3 2.5 2 5 1.3 2-.6 2.5-3 5-3"/><circle cx="3" cy="18" r="1.4" fill="currentColor"/><path d="M16 15.5l2 2 3.5-4"/></svg><span class="tip">Esboço — desenhar à mão livre e reconhecer a forma</span></button>
   <button class="tool" data-tool="polygon"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/><circle cx="21" cy="9" r="1.4" fill="currentColor"/><circle cx="3" cy="9" r="1.4" fill="currentColor"/></svg><span class="tip">Polígono (ponto a ponto)</span></button>
   <button class="tool" data-tool="gpsdraw"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4c0 3.2 4 7.5 4 7.5s4-4.3 4-7.5a4 4 0 0 0-4-4z"/><circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none"/><path d="M4 20 12 14.5 20 20" stroke-dasharray="2 3"/></svg><span class="tip">Desenhar por GPS (vértices pela posição atual)</span></button>
   <div class="tool-sep"></div>
@@ -1274,6 +1278,14 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tb-btn" id="dbVertex">Vértice</button>
   <button class="tb-btn" id="dbCancel">Cancelar</button>
   <button class="tb-btn primary" id="dbFinish"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2.5px;flex:none"><path d="M4 12.5 9.5 18 20 6"/></svg> Concluir geometria</button>
+</div>
+
+<!-- ===== Barra de confirmação do esboço reconhecido ===== -->
+<div id="sketchBar">
+  <span class="db-msg" id="skMsg">Reconhecido: —</span>
+  <div id="skAlts"></div>
+  <button class="tb-btn" id="skCancel">Cancelar</button>
+  <button class="tb-btn primary" id="skConfirm"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2.5px;flex:none"><path d="M4 12.5 9.5 18 20 6"/></svg> Confirmar</button>
 </div>
 
 <!-- ===== Painel: perfil de elevação (medição 3D) ===== -->
@@ -2681,8 +2693,8 @@ function setActiveLayer(lyr){ activeLayer = lyr; renderVectorList(); }
 
 /* Camada compatível com a ferramenta de desenho corrente */
 function toolGeom(tool){ return (tool==='point'||tool==='tree') ? 'point' : (tool==='polygon' ? 'polygon' : 'line'); }
-function targetLayerFor(tool){
-  const g = toolGeom(tool);
+function targetLayerFor(tool, geomOverride){
+  const g = geomOverride || toolGeom(tool);
   if(activeLayer && vectorLayers.includes(activeLayer) && activeLayer.geomType===g) return activeLayer;
   return null; // sem camada compatível: será criada após o desenho
 }
@@ -4802,7 +4814,7 @@ function openNewLayerModal(pending){
   document.getElementById('nlColor').value = PALETTE[vectorLayers.length % PALETTE.length];
   const typeSel = document.getElementById('nlType');
   if(pending){
-    typeSel.value = toolGeom(pending.tool);
+    typeSel.value = pending.geom || toolGeom(pending.tool);
     typeSel.disabled = true;
     document.getElementById('nlTitle').textContent = 'Salvar geometria em nova camada';
     document.getElementById('nlSub').textContent =
@@ -6541,6 +6553,7 @@ function deactivate(){
   if(typeof segMapClick==='function') map.off('click', segMapClick);
   if(typeof clearSegPreview==='function') clearSegPreview();
   if(typeof cmpDeactivate==='function') cmpDeactivate();
+  if(typeof sketchDeactivate==='function') sketchDeactivate();
   curveMode=false; measureMode=null; activeTool=null;
   if(typeof catalogRegionMode!=='undefined') catalogRegionMode=false;
   if(typeof gpsDraw!=='undefined' && gpsDraw){ map.removeLayer(gpsDraw.liveLayer); gpsDraw=null; }
@@ -6550,6 +6563,7 @@ function deactivate(){
   const db = document.getElementById('drawBar'); if(db) db.style.display='none';
   const gb = document.getElementById('gpsDrawBar'); if(gb) gb.style.display='none';
   const w3d = document.getElementById('db3dWrap'); if(w3d) w3d.style.display='none';
+  const sb = document.getElementById('sketchBar'); if(sb) sb.style.display='none';
 }
 
 /* estilo do desenho em curso: cor da camada compatível ou neutro */
@@ -6624,6 +6638,10 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
       case 'polygon':
         activeDrawer = new L.Draw.Polygon(map, { shapeOptions: drawStyle(tool), allowIntersection:true });
         showHint('Clique os vértices e use "✓ Concluir geometria" (ou clique no primeiro vértice).'+dest);
+        break;
+      case 'sketch':
+        sketchActivate();
+        showHint('Arraste para desenhar à mão livre. Ao soltar, escolha a forma reconhecida na barra e confirme.');
         break;
       case 'gpsdraw':
         document.querySelectorAll('input[name="gpsDrawGeom"]').forEach((r,i)=>r.checked=(i===0));
@@ -7250,36 +7268,51 @@ map.on(L.Draw.Event.CREATED, e=>{
   }
 
   /* --- desenho normal: toda geometria precisa de uma camada --- */
-  const target = targetLayerFor(activeTool);
   let finalLayer = lyr;
 
   if(lyr instanceof L.Marker){
-    finalLayer = pointMarker(lyr.getLatLng(), target || {color:'#FFFFFF'});
+    finalLayer = pointMarker(lyr.getLatLng(), targetLayerFor(activeTool) || {color:'#FFFFFF'});
   } else if(curveMode && lyr instanceof L.Polyline && !(lyr instanceof L.Polygon)){
-    finalLayer = L.polyline(smoothCurve(lyr.getLatLngs()), target ? styleFor(target) : {color:'#FFFFFF', weight:2.5});
-  } else if(target && lyr.setStyle){
-    lyr.setStyle(styleFor(target));
+    const t = targetLayerFor(activeTool);
+    finalLayer = L.polyline(smoothCurve(lyr.getLatLngs()), t ? styleFor(t) : {color:'#FFFFFF', weight:2.5});
+  } else if(targetLayerFor(activeTool) && lyr.setStyle){
+    lyr.setStyle(styleFor(targetLayerFor(activeTool)));
   }
 
-  // medidas informativas do popup
-  let info = '';
-  if(finalLayer instanceof L.Polygon){
-    const ring = finalLayer.getLatLngs()[0];
-    info = `Área: <b>${fmtArea(ringArea(ring))}</b><br>Perímetro: <b>${fmtDist(pathLength([...ring,ring[0]]))}</b>`;
-  } else if(finalLayer instanceof L.Polyline){
-    info = `Comprimento: <b>${fmtDist(pathLength(finalLayer.getLatLngs()))}</b>`;
-  } else if(finalLayer instanceof L.CircleMarker){
-    const p=finalLayer.getLatLng();
-    info = `Ponto<br>${fmt(p.lat)}, ${fmt(p.lng)}`;
+  commitDrawnLayer(finalLayer, activeTool);
+});
+
+/* Ponto único de criação de feição a partir de uma geometria já pronta —
+   usado tanto pelo L.Draw (acima) quanto pela ferramenta de esboço (sketch),
+   para não haver dois caminhos de criação de feição (mesmo princípio do
+   motor único de simbologia). */
+function commitDrawnLayer(finalLayer, tool, info){
+  // "sketch" não tem um único tipo de geometria fixo: depende da forma reconhecida
+  const geom = tool==='sketch'
+    ? (finalLayer instanceof L.Marker ? 'point' : finalLayer instanceof L.Polygon ? 'polygon' : 'line')
+    : undefined;
+  const target = targetLayerFor(tool, geom);
+
+  if(info===undefined){
+    info = '';
+    if(finalLayer instanceof L.Polygon){
+      const ring = finalLayer.getLatLngs()[0];
+      info = `Área: <b>${fmtArea(ringArea(ring))}</b><br>Perímetro: <b>${fmtDist(pathLength([...ring,ring[0]]))}</b>`;
+    } else if(finalLayer instanceof L.Polyline){
+      info = `Comprimento: <b>${fmtDist(pathLength(finalLayer.getLatLngs()))}</b>`;
+    } else if(finalLayer instanceof L.CircleMarker){
+      const p=finalLayer.getLatLng();
+      info = `Ponto<br>${fmt(p.lat)}, ${fmt(p.lng)}`;
+    }
   }
   finalLayer._measureInfo = info;
 
   if(!target){
     // sem camada compatível: mostra a geometria e abre a tela de criação de camada
-    const toolUsed = activeTool;
+    const toolUsed = tool;
     finalLayer.addTo(map);
     deactivate();
-    openNewLayerModal({ layer:finalLayer, tool:toolUsed });
+    openNewLayerModal({ layer:finalLayer, tool:toolUsed, geom });
     return;
   }
 
@@ -7287,25 +7320,338 @@ map.on(L.Draw.Event.CREATED, e=>{
   refreshFeatureStyle(finalLayer, target);
   finalLayer.bindPopup(featurePopup(finalLayer, info));
   target.group.addLayer(finalLayer);
-  pushAction({type:'add', layer:finalLayer, target, kind: activeTool==='tree' ? 'tree' : 'draw'});
+  pushAction({type:'add', layer:finalLayer, target, kind: tool==='tree' ? 'tree' : 'draw'});
   renderVectorList();
   status(`Geometria salva na camada "${target.name}" ✓`);
 
   // abre o formulário de atributos da camada
-  if(activeTool==='tree'){ stampTreeCoords(finalLayer, finalLayer.feature.properties, {metodo:'Toque no mapa'}); openTreeForm(gaid); }
+  if(tool==='tree'){ stampTreeCoords(finalLayer, finalLayer.feature.properties, {metodo:'Toque no mapa'}); openTreeForm(gaid); }
   else if(target.fields.length) openAttrForm(gaid);
 
-  // mantém a ferramenta ativa para desenho contínuo
-  if(activeTool && ['point','tree','line','curve','polygon'].includes(activeTool)){
-    activeDrawer =
-      (activeTool==='point'||activeTool==='tree') ? new L.Draw.Marker(map,{}) :
-      activeTool==='polygon' ? new L.Draw.Polygon(map,{shapeOptions:drawStyle(activeTool), allowIntersection:true}) :
-      activeTool==='curve'   ? new L.Draw.Polyline(map,{shapeOptions:drawStyle(activeTool, true)}) :
-                               new L.Draw.Polyline(map,{shapeOptions:drawStyle(activeTool)});
-    activeDrawer.enable();
-    updDrawBar();
+  // conclusão fecha a ferramenta — desenhar de novo exige reativar manualmente
+  deactivate();
+}
+
+/* =========================================================
+   Ferramenta "Esboço" — desenho livre com reconhecimento
+   geométrico determinístico (sem CDN, sem ML), fases 1-5 de
+   PLANO_DESENHO_INTELIGENTE.md.
+   Captura em container points (px), não lat/lng: reconhecer
+   retângulo/círculo exige espaço euclidiano, que graus não
+   garantem em Mercator. Conversão para latLng só na hora de
+   desenhar o preview / confirmar.
+   ========================================================= */
+let sketchPts = null, sketchPointerId = null, sketchLiveLayer = null;
+let sketchCandidates = null, sketchActiveKind = null;
+const SKETCH_LABELS = { line:'Reta', polyline:'Polilinha', curve:'Curva', circle:'Círculo', rectangle:'Retângulo', triangle:'Triângulo', polygonN:'Polígono', polygon:'Polígono' };
+
+function sketchActivate(){
+  map.getContainer().addEventListener('pointerdown', sketchPointerDown);
+}
+function sketchDeactivate(){
+  const c = map.getContainer();
+  c.removeEventListener('pointerdown', sketchPointerDown);
+  c.removeEventListener('pointermove', sketchPointerMove);
+  c.removeEventListener('pointerup', sketchPointerUp);
+  c.removeEventListener('pointercancel', sketchPointerUp);
+  map.dragging.enable(); map.doubleClickZoom.enable(); map.boxZoom.enable();
+  sketchPts = null; sketchPointerId = null; sketchCandidates = null; sketchActiveKind = null;
+  sketchClearPreview();
+  const alts = document.getElementById('skAlts'); if(alts) alts.innerHTML='';
+}
+function sketchPointerDown(e){
+  if(activeTool!=='sketch') return;
+  if(sketchCandidates) return; // resultado pendente de confirmação: novo traço ignorado
+  if(sketchPointerId!==null) return; // segundo ponteiro simultâneo: pan/pinch normal do mapa
+  sketchPointerId = e.pointerId;
+  map.dragging.disable(); map.doubleClickZoom.disable(); map.boxZoom.disable();
+  const pt = map.mouseEventToContainerPoint(e);
+  sketchPts = [{x:pt.x, y:pt.y}];
+  const c = map.getContainer();
+  c.addEventListener('pointermove', sketchPointerMove);
+  c.addEventListener('pointerup', sketchPointerUp);
+  c.addEventListener('pointercancel', sketchPointerAbort);
+}
+function sketchPointerMove(e){
+  if(e.pointerId!==sketchPointerId || !sketchPts) return;
+  const pt = map.mouseEventToContainerPoint(e);
+  const last = sketchPts[sketchPts.length-1];
+  if(Math.hypot(pt.x-last.x, pt.y-last.y) < 2) return; // ruído de tremor
+  sketchPts.push({x:pt.x, y:pt.y});
+  const latlngs = sketchPts.map(p=>map.containerPointToLatLng(p));
+  if(!sketchLiveLayer) sketchLiveLayer = L.polyline(latlngs, {...drawStyle('sketch', true), interactive:false}).addTo(map);
+  else sketchLiveLayer.setLatLngs(latlngs);
+}
+function sketchPointerUp(e){
+  if(e.pointerId!==sketchPointerId) return;
+  sketchEndStroke();
+  const pts = sketchPts; sketchPts = null;
+  if(pts && pts.length>=2) sketchRecognize(pts);
+}
+function sketchPointerAbort(e){
+  if(e.pointerId!==sketchPointerId) return;
+  sketchEndStroke();
+  sketchPts = null;
+  sketchClearPreview();
+}
+function sketchEndStroke(){
+  const c = map.getContainer();
+  c.removeEventListener('pointermove', sketchPointerMove);
+  c.removeEventListener('pointerup', sketchPointerUp);
+  c.removeEventListener('pointercancel', sketchPointerAbort);
+  sketchPointerId = null;
+  map.dragging.enable(); map.doubleClickZoom.enable(); map.boxZoom.enable();
+}
+function sketchClearPreview(){
+  if(sketchLiveLayer){ map.removeLayer(sketchLiveLayer); sketchLiveLayer=null; }
+}
+
+/* ---------- Geometria pura (px) ---------- */
+function ptDist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function pathPerimeter(pts){ let s=0; for(let i=1;i<pts.length;i++) s+=ptDist(pts[i-1],pts[i]); return s; }
+function bboxOf(pts){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  pts.forEach(p=>{ minX=Math.min(minX,p.x); minY=Math.min(minY,p.y); maxX=Math.max(maxX,p.x); maxY=Math.max(maxY,p.y); });
+  return {minX,minY,maxX,maxY,w:maxX-minX,h:maxY-minY};
+}
+function centroidOf(pts){ let cx=0,cy=0; pts.forEach(p=>{cx+=p.x;cy+=p.y;}); return {x:cx/pts.length, y:cy/pts.length}; }
+function polygonAreaPx(pts){ let s=0; for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; s += a.x*b.y - b.x*a.y; } return Math.abs(s)/2; }
+
+function resamplePath(pts, n){
+  const per = pathPerimeter(pts);
+  if(per<=0) return pts.map(p=>({...p}));
+  const step = per/(n-1);
+  const out=[{...pts[0]}];
+  let acc=0, i=0;
+  for(let k=1;k<n-1;k++){
+    const target = k*step;
+    while(i<pts.length-2 && acc+ptDist(pts[i],pts[i+1]) < target){ acc += ptDist(pts[i],pts[i+1]); i++; }
+    const a=pts[i], b=pts[i+1]||pts[i];
+    const segLen = ptDist(a,b);
+    const t = segLen>0 ? Math.max(0,Math.min(1,(target-acc)/segLen)) : 0;
+    out.push({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t});
   }
+  out.push({...pts[pts.length-1]});
+  return out;
+}
+
+/* Ramer–Douglas–Peucker: reutilizável também numa futura ferramenta de simplificação. */
+function rdp(pts, eps){
+  if(pts.length<3) return pts.slice();
+  function perpDist(p,a,b){
+    const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+    if(len===0) return ptDist(p,a);
+    const t = ((p.x-a.x)*dx+(p.y-a.y)*dy)/(len*len);
+    return Math.hypot(p.x-(a.x+t*dx), p.y-(a.y+t*dy));
+  }
+  function rec(seg){
+    if(seg.length<3) return seg;
+    let maxD=-1, idx=0;
+    for(let i=1;i<seg.length-1;i++){ const d=perpDist(seg[i],seg[0],seg[seg.length-1]); if(d>maxD){maxD=d; idx=i;} }
+    if(maxD>eps){
+      const left = rec(seg.slice(0, idx+1));
+      const right = rec(seg.slice(idx));
+      return left.slice(0,-1).concat(right);
+    }
+    return [seg[0], seg[seg.length-1]];
+  }
+  return rec(pts);
+}
+function mergeCollinear(pts, angleDeg){
+  if(pts.length<3) return pts;
+  const out=[pts[0]];
+  for(let i=1;i<pts.length-1;i++){
+    const a=out[out.length-1], b=pts[i], c=pts[i+1];
+    const v1={x:b.x-a.x,y:b.y-a.y}, v2={x:c.x-b.x,y:c.y-b.y};
+    const ang = Math.abs(Math.atan2(v1.x*v2.y-v1.y*v2.x, v1.x*v2.x+v1.y*v2.y))*180/Math.PI;
+    if(ang > angleDeg) out.push(b);
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+function segDist(p,a,b){
+  const dx=b.x-a.x, dy=b.y-a.y, len2=dx*dx+dy*dy;
+  if(len2===0) return ptDist(p,a);
+  const t = Math.max(0, Math.min(1, ((p.x-a.x)*dx+(p.y-a.y)*dy)/len2));
+  return Math.hypot(p.x-(a.x+t*dx), p.y-(a.y+t*dy));
+}
+function pointToPolylineDist(p, line){
+  let min=Infinity;
+  for(let i=1;i<line.length;i++) min=Math.min(min, segDist(p, line[i-1], line[i]));
+  return min;
+}
+/* fecho convexo — monotone chain */
+function convexHull(pts){
+  const uniq = pts.slice().sort((a,b)=> a.x-b.x || a.y-b.y);
+  if(uniq.length<3) return uniq;
+  const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const lower=[];
+  for(const p of uniq){ while(lower.length>=2 && cross(lower[lower.length-2],lower[lower.length-1],p)<=0) lower.pop(); lower.push(p); }
+  const upper=[];
+  for(let i=uniq.length-1;i>=0;i--){ const p=uniq[i]; while(upper.length>=2 && cross(upper[upper.length-2],upper[upper.length-1],p)<=0) upper.pop(); upper.push(p); }
+  lower.pop(); upper.pop();
+  return lower.concat(upper);
+}
+
+/* ---------- Candidatos abertos (gap > 0.15) ---------- */
+function candLine(pts){
+  const c = centroidOf(pts);
+  let sxx=0, sxy=0, syy=0;
+  pts.forEach(p=>{ const dx=p.x-c.x, dy=p.y-c.y; sxx+=dx*dx; sxy+=dx*dy; syy+=dy*dy; });
+  const theta = 0.5*Math.atan2(2*sxy, sxx-syy);
+  const dir = {x:Math.cos(theta), y:Math.sin(theta)};
+  let minT=Infinity, maxT=-Infinity, maxDev=0;
+  pts.forEach(p=>{
+    const dx=p.x-c.x, dy=p.y-c.y;
+    const t = dx*dir.x + dy*dir.y;
+    const perp = Math.abs(-dx*dir.y + dy*dir.x);
+    if(perp>maxDev) maxDev=perp;
+    if(t<minT) minT=t;
+    if(t>maxT) maxT=t;
+  });
+  const a = {x:c.x+dir.x*minT, y:c.y+dir.y*minT};
+  const b = {x:c.x+dir.x*maxT, y:c.y+dir.y*maxT};
+  const length = Math.hypot(b.x-a.x, b.y-a.y) || 1;
+  return { kind:'line', pts:[a,b], score: Math.max(0, 1 - maxDev/length) };
+}
+function candPolyline(pts){
+  const bb = bboxOf(pts), diag = Math.hypot(bb.w,bb.h) || 1;
+  const eps = Math.max(diag*0.02, 6);
+  let simp = mergeCollinear(rdp(pts, eps), 8);
+  let dev=0; pts.forEach(p=> dev += pointToPolylineDist(p, simp));
+  const avgDev = dev/pts.length;
+  const score = Math.max(0, Math.min(0.96, 1 - avgDev/diag - (simp.length>2 ? 0.03*(simp.length-2) : 0)));
+  return { kind:'polyline', pts:simp, score };
+}
+function candCurve(pts){
+  const rs = resamplePath(pts, 24);
+  let maxAng=0;
+  for(let i=1;i<rs.length-1;i++){
+    const a=rs[i-1], b=rs[i], c=rs[i+1];
+    const v1={x:b.x-a.x,y:b.y-a.y}, v2={x:c.x-b.x,y:c.y-b.y};
+    const len1=Math.hypot(v1.x,v1.y)||1, len2=Math.hypot(v2.x,v2.y)||1;
+    const cos = Math.max(-1,Math.min(1,(v1.x*v2.x+v1.y*v2.y)/(len1*len2)));
+    const ang = Math.acos(cos)*180/Math.PI;
+    if(ang>maxAng) maxAng=ang;
+  }
+  const score = maxAng<35 ? 0.9 : Math.max(0, 0.9-(maxAng-35)/90);
+  return { kind:'curve', pts: smoothCurveContainer(rs), score };
+}
+/* smoothCurve() já existente opera sobre latlngs; aqui a curva ainda está em
+   container points, então reamostrar basta como aproximação suave. */
+function smoothCurveContainer(pts){ return pts; }
+
+/* ---------- Candidatos fechados (gap <= 0.15) ---------- */
+function candCircle(pts){
+  const c = centroidOf(pts);
+  const radii = pts.map(p=>Math.hypot(p.x-c.x,p.y-c.y));
+  const meanR = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const sd = Math.sqrt(radii.reduce((a,r)=>a+(r-meanR)*(r-meanR),0)/radii.length);
+  const score = Math.max(0, 1 - sd/(meanR||1));
+  const N=64, poly=[];
+  for(let i=0;i<N;i++){ const a=i/N*2*Math.PI; poly.push({x:c.x+meanR*Math.cos(a), y:c.y+meanR*Math.sin(a)}); }
+  return { kind:'circle', pts:poly, score };
+}
+function candRectangle(pts){
+  const hull = convexHull(pts);
+  if(hull.length<3) return { kind:'rectangle', pts:null, score:0 };
+  let best=null;
+  for(let i=0;i<hull.length;i++){
+    const a=hull[i], b=hull[(i+1)%hull.length];
+    const len = ptDist(a,b) || 1;
+    const ux=(b.x-a.x)/len, uy=(b.y-a.y)/len, vx=-uy, vy=ux;
+    let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity;
+    hull.forEach(p=>{
+      const u=p.x*ux+p.y*uy, v=p.x*vx+p.y*vy;
+      minU=Math.min(minU,u); maxU=Math.max(maxU,u); minV=Math.min(minV,v); maxV=Math.max(maxV,v);
+    });
+    const area=(maxU-minU)*(maxV-minV);
+    if(!best || area<best.area) best={area, minU,maxU,minV,maxV,ux,uy,vx,vy};
+  }
+  const corners=[
+    {u:best.minU,v:best.minV},{u:best.maxU,v:best.minV},
+    {u:best.maxU,v:best.maxV},{u:best.minU,v:best.maxV}
+  ].map(c=>({x:c.u*best.ux+c.v*best.vx, y:c.u*best.uy+c.v*best.vy}));
+  const hullArea = polygonAreaPx(hull);
+  const score = best.area>0 ? Math.min(0.99, hullArea/best.area) : 0;
+  return { kind:'rectangle', pts:corners, score };
+}
+function candPolygonN(pts){
+  const bb = bboxOf(pts), diag = Math.hypot(bb.w,bb.h)||1;
+  let simp = mergeCollinear(rdp(pts, diag*0.02), 8);
+  if(simp.length>1 && ptDist(simp[0], simp[simp.length-1])<2) simp = simp.slice(0,-1);
+  if(simp.length<3) return { kind:'polygonN', pts:null, score:0 };
+  const score = Math.max(0.5, 0.9 - 0.02*Math.max(0, simp.length-6));
+  return { kind: simp.length===3 ? 'triangle' : 'polygonN', pts:simp, score };
+}
+function candFreePolygon(pts){
+  let simp = mergeCollinear(rdp(pts, 3), 4);
+  if(simp.length>1 && ptDist(simp[0], simp[simp.length-1])<2) simp = simp.slice(0,-1);
+  if(simp.length<3) simp = pts;
+  return { kind:'polygon', pts:simp, score:0.55 };
+}
+
+function sketchRecognize(rawPts){
+  sketchClearPreview();
+  const pts = rawPts.filter((p,i)=> i===0 || ptDist(p, rawPts[i-1])>=2);
+  if(pts.length<2){ status('Traço muito curto para reconhecer.'); return; }
+  const rs = resamplePath(pts, 64);
+  const per = pathPerimeter(pts);
+  const gap = per>0 ? ptDist(pts[0], pts[pts.length-1])/per : 0;
+
+  let candidates;
+  if(gap > 0.15) candidates = [candLine(rs), candPolyline(rs), candCurve(rs)];
+  else candidates = [candCircle(rs), candRectangle(rs), candPolygonN(rs), candFreePolygon(rs)];
+
+  candidates.forEach(c=>{ c.finalScore = (c.pts ? c.score : -1) - (c.pts ? c.pts.length*0.001 : 0); });
+  candidates.sort((a,b)=>b.finalScore-a.finalScore);
+  sketchCandidates = candidates.filter(c=>c.pts && c.pts.length>=2 && c.score>0.35);
+  if(!sketchCandidates.length){ status('Não foi possível reconhecer uma forma nesse traço.'); return; }
+  sketchActiveKind = sketchCandidates[0].kind;
+  sketchShowBar();
+}
+
+function sketchShowBar(){
+  const bar = document.getElementById('sketchBar');
+  const alts = document.getElementById('skAlts');
+  alts.innerHTML='';
+  sketchCandidates.forEach(c=>{
+    const b = document.createElement('button');
+    b.type='button';
+    b.textContent = SKETCH_LABELS[c.kind] || c.kind;
+    b.className = c.kind===sketchActiveKind ? 'active' : '';
+    b.addEventListener('click', ()=>{ sketchActiveKind = c.kind; sketchShowBar(); });
+    alts.appendChild(b);
+  });
+  const active = sketchCandidates.find(c=>c.kind===sketchActiveKind) || sketchCandidates[0];
+  document.getElementById('skMsg').textContent = 'Reconhecido: '+(SKETCH_LABELS[active.kind]||active.kind);
+  bar.style.display='flex';
+  sketchDrawPreview(active);
+}
+function sketchDrawPreview(candidate){
+  sketchClearPreview();
+  const latlngs = candidate.pts.map(p=>map.containerPointToLatLng(p));
+  const style = drawStyle('sketch', true);
+  sketchLiveLayer = (candidate.kind==='line'||candidate.kind==='polyline'||candidate.kind==='curve')
+    ? L.polyline(latlngs, {...style, interactive:false}).addTo(map)
+    : L.polygon(latlngs, {...style, interactive:false}).addTo(map);
+}
+document.getElementById('skConfirm').addEventListener('click', ()=>{
+  if(!sketchCandidates) return;
+  const active = sketchCandidates.find(c=>c.kind===sketchActiveKind) || sketchCandidates[0];
+  const isOpen = active.kind==='line'||active.kind==='polyline'||active.kind==='curve';
+  const geom = isOpen ? 'line' : 'polygon';
+  const latlngs = active.pts.map(p=>map.containerPointToLatLng(p));
+  const t = targetLayerFor('sketch', geom);
+  const finalLayer = isOpen
+    ? L.polyline(latlngs, t ? styleFor(t) : {color:'#FFFFFF', weight:2.5})
+    : L.polygon(latlngs, t ? styleFor(t) : {color:'#FFFFFF', weight:2.5, fillOpacity:.12});
+  sketchClearPreview();
+  sketchCandidates = null; sketchActiveKind = null;
+  document.getElementById('sketchBar').style.display='none';
+  commitDrawnLayer(finalLayer, 'sketch');
 });
+document.getElementById('skCancel').addEventListener('click', ()=>{ deactivate(); status('Esboço cancelado.'); });
 
 /* ---------- Modais genéricos ---------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', e=>e.target.closest('.modal-back').classList.remove('open')));

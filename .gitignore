@@ -1,26 +1,40 @@
-# Dados de campo e projetos exportados (podem conter fotos com dados sensíveis)
+# GeoMatias — só index.html e banner.png (icon.png) sao publicados
+# Tudo que segue e trabalho local/temporario deste ambiente de multiplas sessoes em paralelo
+
+# Copias numeradas geradas automaticamente durante edicao (Windows "Copia (N)")
+index - Copia*.html
+"index - Copia*.html"
+
+# Backups/snapshots do index.html (.bak, timestamps, pre-fase, etc.)
+index.html.bak*
+index.html.bak-*
+
+# Pastas de histórico e versões antigas
+historico/
+
+# Dados de campo e exportações do app (não têm backend — ficam só no navegador)
 *.geomatias.json
-*.geojson.bak
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.kml
+*.kmz
 
-# Versões de rascunho/desenvolvimento — apenas index.html é o canônico publicado
-webgis_*.html
-*_CORS_FIXED.html
-*_FIXED.html
+# Documentos de planejamento/prompt de sessão (não fazem parte do produto)
+PLANO_DESENHO_INTELIGENTE.md
+PROMPT_FASE_*.md
+⭐_LEIA_PRIMEIRO.txt
 
-# Notas de sessão, patches e instruções internas
-CORS_PATCH.js
-CORS_FIX_INSTRUCTIONS.md
-README_CORS_FIXED.md
-SUMARIO_FINAL.txt
-DOWNLOAD_INSTRUCTIONS.txt
-__LEIA_PRIMEIRO.txt
-*.txt.bak
+# Assets de trabalho não usados no HTML publicado (mantém banner.png se for o usado no repo)
+icon2.png
 
-# Backups genéricos
-*.bak
-*.old
-*~
-
-# Arquivos de sistema
+# Sistema / editores
 .DS_Store
 Thumbs.db
+*.swp
+*.tmp
+
+# Configuração local do Claude Code (mantém apenas o que for compartilhado no repo, se algum dia precisar)
+.claude/settings.local.json

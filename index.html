@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — Wbgs de estudo</title>
+<title>GeoMatias — WebGIS</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -298,6 +298,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #skAlts{display:flex; align-items:center; gap:6px}
 #skAlts button{height:28px; border-radius:999px; padding:0 12px; font-size:12px; background:var(--sel); color:var(--text2); border:1px solid var(--line-sel); cursor:pointer; font-weight:600}
 #skAlts button.active{background:var(--accent-soft); color:var(--text); border-color:var(--accent)}
+#skPrefs{display:flex; align-items:center; gap:10px}
+#skPrefs label{display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap}
+#skPrefs select{height:26px; border-radius:999px; padding:0 8px; font-size:12px; background:var(--sel); color:var(--text2); border:1px solid var(--line-sel)}
+@media (max-width:760px){ #skPrefs{display:none} }
 @media (max-width:760px){
   #drawBar, #gpsDrawBar, #sketchBar{
     bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom));
@@ -1239,7 +1243,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <div class="tool-sep"></div>
   <button class="tool" id="btnLocate"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tip">Onde estou (GPS)</span></button>
   <button class="tool" data-tool="query"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v.01M11 11v3" stroke-width="2"/></svg><span class="tip">Consultar informações (camadas de catálogo)</span></button>
-  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
+  <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M4.5 19.5 13 11"/><circle cx="4.2" cy="19.8" r="1.3" fill="currentColor" stroke="none"/><path d="M17 3l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="currentColor" stroke="none"/><path d="M20 13v2.4M18.8 14.2h2.4" stroke-width="1.4"/><path d="M6 4v2M5 5h2" stroke-width="1.4"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
   <button class="tool" data-tool="segment"><span class="tool-text">SAM</span><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
   <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster ou mapa base</span></button>
   <div class="tool-sep"></div>
@@ -1252,7 +1256,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <div class="tool-sep"></div>
   <button class="tool" data-tool="mline"><svg viewBox="0 0 24 24"><g transform="rotate(-40 12 12)"><rect x="2" y="9.5" width="20" height="5" rx="1"/><path d="M6 9.5v2.2M10 9.5v3M14 9.5v2.2M18 9.5v3"/></g></svg><span class="tip">Medir distância</span></button>
   <button class="tool" data-tool="marea"><svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9" fill="currentColor" fill-opacity=".25"/></svg><span class="tip">Medir área</span></button>
-  <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="1.6" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
+  <button class="tool" data-tool="coord"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg><span class="tip">Extrair coordenada</span></button>
   <button class="tool" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><circle cx="5.5" cy="18.5" r="1.3" fill="currentColor"/></svg><span class="tip">Editar geometrias</span></button>
   <button class="tool" data-tool="erase"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span class="tip">Apagar / limpar medições</span></button>
   <div class="tool-sep"></div>
@@ -1284,6 +1288,15 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 <div id="sketchBar">
   <span class="db-msg" id="skMsg">Reconhecido: —</span>
   <div id="skAlts"></div>
+  <div id="skPrefs">
+    <select id="skSens" title="Sensibilidade do reconhecimento">
+      <option value="loose">Solta</option>
+      <option value="normal" selected>Normal</option>
+      <option value="strict">Rígida</option>
+    </select>
+    <label><input type="checkbox" id="skSnapAngle" checked style="accent-color:var(--text2)"> Ângulo reto</label>
+    <label><input type="checkbox" id="skSnapVertex" checked style="accent-color:var(--text2)"> Grudar em vértices</label>
+  </div>
   <button class="tb-btn" id="skCancel">Cancelar</button>
   <button class="tb-btn primary" id="skConfirm"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2.5px;flex:none"><path d="M4 12.5 9.5 18 20 6"/></svg> Confirmar</button>
 </div>
@@ -7345,6 +7358,18 @@ let sketchPts = null, sketchPointerId = null, sketchLiveLayer = null;
 let sketchCandidates = null, sketchActiveKind = null;
 const SKETCH_LABELS = { line:'Reta', polyline:'Polilinha', curve:'Curva', circle:'Círculo', rectangle:'Retângulo', triangle:'Triângulo', polygonN:'Polígono', polygon:'Polígono' };
 
+/* ---------- Preferências do esboço (localStorage, fora do projeto) ---------- */
+const SKETCH_PREFS_KEY = 'geomatias_sketch_prefs';
+function sketchPrefs(){
+  try{ return {sens:'normal', rightAngle:true, snapVertex:true, ...JSON.parse(localStorage.getItem(SKETCH_PREFS_KEY)||'{}')}; }
+  catch(e){ return {sens:'normal', rightAngle:true, snapVertex:true}; }
+}
+function sketchSavePrefs(p){ try{ localStorage.setItem(SKETCH_PREFS_KEY, JSON.stringify(p)); }catch(e){} }
+function sketchScoreThreshold(){
+  const sens = sketchPrefs().sens;
+  return sens==='loose' ? 0.25 : sens==='strict' ? 0.45 : 0.35;
+}
+
 function sketchActivate(){
   map.getContainer().addEventListener('pointerdown', sketchPointerDown);
 }
@@ -7493,6 +7518,90 @@ function convexHull(pts){
   return lower.concat(upper);
 }
 
+/* ---------- Refinamentos pós-reconhecimento (fase 6, ligáveis) ---------- */
+/* Ângulos internos entre 82° e 98° são fixados em 90°, girando o vértice
+   seguinte ao redor do vértice atual (preserva o comprimento do lado). */
+function snapRightAngles(pts, closed){
+  if(pts.length<3) return pts;
+  const arr = pts.map(p=>({...p}));
+  const n = arr.length;
+  const startI = closed?0:1, endI = closed?n-1:n-2;
+  for(let i=startI;i<=endI;i++){
+    const cur = arr[i], prev = arr[(i-1+n)%n], nextIdx=(i+1)%n, next = arr[nextIdx];
+    const u={x:prev.x-cur.x,y:prev.y-cur.y}, w={x:next.x-cur.x,y:next.y-cur.y};
+    const lu=Math.hypot(u.x,u.y), lw=Math.hypot(w.x,w.y);
+    if(lu<1e-6||lw<1e-6) continue;
+    const cos=Math.max(-1,Math.min(1,(u.x*w.x+u.y*w.y)/(lu*lw)));
+    const ang=Math.acos(cos)*180/Math.PI;
+    if(Math.abs(ang-90)<=8 && Math.abs(ang-90)>1e-3){
+      const cross = u.x*w.y-u.y*w.x;
+      const sign = cross>=0?1:-1;
+      const baseAng = Math.atan2(u.y,u.x);
+      const targetAng = baseAng + sign*Math.PI/2;
+      arr[nextIdx] = {x:cur.x+lw*Math.cos(targetAng), y:cur.y+lw*Math.sin(targetAng)};
+    }
+  }
+  return arr;
+}
+/* Se o lado dominante (mais longo) estiver a <6° de um eixo cardeal (N-S/L-O
+   em espaço de tela), a forma inteira gira para alinhar exatamente. */
+function alignCardinal(pts, closed){
+  if(pts.length<2) return pts;
+  const n = pts.length, edges = closed?n:n-1;
+  let bestLen=-1, bestAng=0;
+  for(let i=0;i<edges;i++){
+    const a=pts[i], b=pts[(i+1)%n];
+    const len=ptDist(a,b);
+    if(len>bestLen){ bestLen=len; bestAng=Math.atan2(b.y-a.y,b.x-a.x); }
+  }
+  const deg = bestAng*180/Math.PI;
+  const norm = ((deg%90)+90)%90;
+  const delta = norm<=45 ? -norm : (90-norm);
+  if(Math.abs(delta)>6) return pts;
+  const rad = delta*Math.PI/180, cos=Math.cos(rad), sin=Math.sin(rad);
+  const c = centroidOf(pts);
+  return pts.map(p=>{
+    const dx=p.x-c.x, dy=p.y-c.y;
+    return {x:c.x+dx*cos-dy*sin, y:c.y+dx*sin+dy*cos};
+  });
+}
+/* Aplica os refinamentos ligados nas preferências a um candidato bruto. */
+function sketchRefine(pts, closed){
+  const prefs = sketchPrefs();
+  let out = pts;
+  if(prefs.rightAngle){ out = snapRightAngles(out, closed); out = alignCardinal(out, closed); }
+  return out;
+}
+/* Vértice a <12px (tela) de um vértice de outra feição da mesma camada gruda
+   nele — evita frestas entre talhões/feições vizinhas. */
+function sketchFlattenLatLngs(ll, out){
+  if(Array.isArray(ll)) ll.forEach(x=>sketchFlattenLatLngs(x, out));
+  else if(ll && ll.lat!==undefined) out.push(ll);
+  return out;
+}
+function sketchNeighborVertices(target){
+  const pts = [];
+  const src = target ? [target] : vectorLayers;
+  src.forEach(lyr=>{
+    lyr.group.eachLayer(l=>{
+      const raw = l.getLatLngs ? l.getLatLngs() : (l.getLatLng ? [l.getLatLng()] : []);
+      const flat = sketchFlattenLatLngs(raw, []);
+      flat.forEach(p=>pts.push(map.latLngToContainerPoint(p)));
+    });
+  });
+  return pts;
+}
+function sketchSnapToNeighbors(pts, target){
+  if(!sketchPrefs().snapVertex) return pts;
+  const neighbors = sketchNeighborVertices(target);
+  if(!neighbors.length) return pts;
+  return pts.map(p=>{
+    let best=null, bestD=12;
+    neighbors.forEach(np=>{ const d=ptDist(p,np); if(d<bestD){ bestD=d; best=np; } });
+    return best ? {x:best.x, y:best.y} : p;
+  });
+}
+
 /* ---------- Candidatos abertos (gap > 0.15) ---------- */
 function candLine(pts){
   const c = centroidOf(pts);
@@ -7605,7 +7714,7 @@ function sketchRecognize(rawPts){
 
   candidates.forEach(c=>{ c.finalScore = (c.pts ? c.score : -1) - (c.pts ? c.pts.length*0.001 : 0); });
   candidates.sort((a,b)=>b.finalScore-a.finalScore);
-  sketchCandidates = candidates.filter(c=>c.pts && c.pts.length>=2 && c.score>0.35);
+  sketchCandidates = candidates.filter(c=>c.pts && c.pts.length>=2 && c.score>sketchScoreThreshold());
   if(!sketchCandidates.length){ status('Não foi possível reconhecer uma forma nesse traço.'); return; }
   sketchActiveKind = sketchCandidates[0].kind;
   sketchShowBar();
@@ -7630,9 +7739,11 @@ function sketchShowBar(){
 }
 function sketchDrawPreview(candidate){
   sketchClearPreview();
-  const latlngs = candidate.pts.map(p=>map.containerPointToLatLng(p));
+  const isOpen = candidate.kind==='line'||candidate.kind==='polyline'||candidate.kind==='curve';
+  const pts = sketchRefine(candidate.pts, !isOpen);
+  const latlngs = pts.map(p=>map.containerPointToLatLng(p));
   const style = drawStyle('sketch', true);
-  sketchLiveLayer = (candidate.kind==='line'||candidate.kind==='polyline'||candidate.kind==='curve')
+  sketchLiveLayer = isOpen
     ? L.polyline(latlngs, {...style, interactive:false}).addTo(map)
     : L.polygon(latlngs, {...style, interactive:false}).addTo(map);
 }
@@ -7641,8 +7752,10 @@ document.getElementById('skConfirm').addEventListener('click', ()=>{
   const active = sketchCandidates.find(c=>c.kind===sketchActiveKind) || sketchCandidates[0];
   const isOpen = active.kind==='line'||active.kind==='polyline'||active.kind==='curve';
   const geom = isOpen ? 'line' : 'polygon';
-  const latlngs = active.pts.map(p=>map.containerPointToLatLng(p));
   const t = targetLayerFor('sketch', geom);
+  let pts = sketchRefine(active.pts, !isOpen);
+  pts = sketchSnapToNeighbors(pts, t);
+  const latlngs = pts.map(p=>map.containerPointToLatLng(p));
   const finalLayer = isOpen
     ? L.polyline(latlngs, t ? styleFor(t) : {color:'#FFFFFF', weight:2.5})
     : L.polygon(latlngs, t ? styleFor(t) : {color:'#FFFFFF', weight:2.5, fillOpacity:.12});
@@ -7652,6 +7765,17 @@ document.getElementById('skConfirm').addEventListener('click', ()=>{
   commitDrawnLayer(finalLayer, 'sketch');
 });
 document.getElementById('skCancel').addEventListener('click', ()=>{ deactivate(); status('Esboço cancelado.'); });
+(function sketchPrefsWiring(){
+  const sensSel = document.getElementById('skSens');
+  const angleChk = document.getElementById('skSnapAngle');
+  const vertexChk = document.getElementById('skSnapVertex');
+  const p = sketchPrefs();
+  sensSel.value = p.sens; angleChk.checked = p.rightAngle; vertexChk.checked = p.snapVertex;
+  function persist(){ sketchSavePrefs({sens:sensSel.value, rightAngle:angleChk.checked, snapVertex:vertexChk.checked}); }
+  sensSel.addEventListener('change', persist);
+  angleChk.addEventListener('change', ()=>{ persist(); if(sketchCandidates) sketchShowBar(); });
+  vertexChk.addEventListener('change', persist);
+})();
 
 /* ---------- Modais genéricos ---------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', e=>e.target.closest('.modal-back').classList.remove('open')));
@@ -9631,6 +9755,10 @@ document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   gridChk.addEventListener('change', ()=>{
     localStorage.setItem('geomatias_pd_grid', gridChk.checked ? '1' : '0');
     gridDimsWrap.style.display = gridChk.checked ? '' : 'none';
+    // a folha só reflete o tamanho de tela correto depois de pdFit recalcular a escala de
+    // ajuste; sem isso a grade é desenhada certa (proporção certa), mas numa folha que pode
+    // estar maior que a área visível — parecendo "só uma coluna" até rolar a tela
+    pdFitDeferred();
     pdUpdateGridOverlay();
   });
   [colsInp, rowsInp].forEach(inp=>{

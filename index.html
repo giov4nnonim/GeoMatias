@@ -1001,17 +1001,20 @@ body.split3d #v3dDivider{ display:block }
 }
 
 #inventorySheet{display:none}
-#pdPrintSheet{display:none}
+#pdPrintWrap{display:none}
 @media print{
   @page{size:A4 landscape; margin:10mm}
   html,body{overflow:visible; background:#fff; color:#000; height:auto}
   /* modo padrão: folha de mapa */
   body:not(.print-inv):not(.print-pd) > *:not(#printSheet){display:none!important}
-  /* modo layout personalizado: folha do editor de layout de impressão (#mPrintDesigner) —
-     o tamanho de papel real é definido em tempo de execução por um <style id="pdPrintPageStyle">
+  /* modo layout personalizado: folhas do editor de layout de impressão (#mPrintDesigner) —
+     uma .pd-print-page por folha do projeto, dentro de #pdPrintWrap; o tamanho de
+     papel real é definido em tempo de execução por um <style id="pdPrintPageStyle">
      próprio (pdPrintLayout()), que sobrescreve o @page acima */
-  body.print-pd > *:not(#pdPrintSheet){display:none!important}
-  body.print-pd #pdPrintSheet{display:block!important; box-shadow:none; margin:0}
+  body.print-pd > *:not(#pdPrintWrap){display:none!important}
+  body.print-pd #pdPrintWrap{display:block!important}
+  body.print-pd .pd-print-page{display:block!important; box-shadow:none; margin:0; page-break-after:always}
+  body.print-pd .pd-print-page:last-child{page-break-after:auto}
   #printSheet{display:block!important; width:100%; color:#000; font-family:Georgia, "Times New Roman", serif}
   #printSheet .p-head{border-bottom:3px double #000; padding-bottom:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-end}
   #printSheet h1{font-size:24pt; margin:0}
@@ -1068,6 +1071,9 @@ body.split3d #v3dDivider{ display:block }
 .pd-toolbar .field{margin:0}
 .pd-toolbar select{padding:4px 6px}
 .pd-hint{margin:6px 0 10px}
+.pd-sheet-tabs{display:flex; align-items:center; gap:4px; margin-bottom:8px; flex-wrap:wrap}
+.pd-sheet-tab{border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:6px 6px 0 0; padding:5px 12px; font-size:12.5px; cursor:pointer}
+.pd-sheet-tab.active{background:var(--accent); color:#fff; border-color:var(--accent)}
 .pd-check{display:flex; align-items:center; gap:6px; height:34px; font-size:12.5px; color:var(--text); cursor:pointer; white-space:nowrap; margin:0}
 .pd-check input{accent-color:var(--text2); width:15px; height:15px; margin:0; flex:none}
 .pd-north-panel{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:flex-end; flex-basis:100%; margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
@@ -1148,6 +1154,12 @@ body.split3d #v3dDivider{ display:block }
 .pd-block.type-line .pd-inner, .pd-block.type-rect .pd-inner{width:100%; height:100%; box-sizing:border-box}
 .pd-block.type-image .pd-inner img{width:100%; height:100%; object-fit:contain; display:block}
 .pd-block.type-map .pd-inner img{width:100%; height:100%; object-fit:contain; display:block; background:#fff}
+.pd-block.type-view3d .pd-inner img, .pd-block.type-elevProfile .pd-inner img{width:100%; height:100%; object-fit:contain; display:block; background:#fff}
+.pd-block.type-treeCard .pd-inner, .pd-block.type-treeTable .pd-inner, .pd-block.type-measure3dInfo .pd-inner{background:#fff; color:#000; padding:2mm; box-sizing:border-box; overflow:auto; font-size:8pt}
+.pd-block.type-treeCard .pd-inner .iv-card{border:none; padding:0; margin:0; page-break-inside:auto}
+.pd-inv-table{width:100%; border-collapse:collapse; font-size:7.5pt}
+.pd-inv-table th, .pd-inv-table td{border:1px solid #999; padding:1mm 1.5mm; text-align:left}
+.pd-inv-table th{background:#eee}
 .pd-block.grid-edit{cursor:default}
 .pd-grid-drag-overlay{position:absolute; inset:0; cursor:move; touch-action:none}
 .pd-grid-drag-overlay img{width:100%; height:100%; object-fit:contain; opacity:.75; display:block; pointer-events:none}
@@ -1506,6 +1518,11 @@ body.split3d #v3dDivider{ display:block }
       <label id="v3dTerrainWrap" title="Ligar/desligar relevo 3D"><input type="checkbox" id="v3dTerrainOn" checked> Terreno</label>
       <label id="v3dHillWrap" title="Sombreamento sobre o relevo"><input type="checkbox" id="v3dHillOn"> Sombreado</label>
       <label id="v3dSkyWrap" title="Céu/atmosfera"><input type="checkbox" id="v3dSkyOn" checked> Céu</label>
+      <div id="v3dSkyModeGroup" role="group" aria-label="Modo do céu (dia/noite)">
+        <button type="button" class="v3d-seg" id="v3dSkyAuto" data-sky-mode="auto" title="Acompanha o tema do app (claro = dia, escuro = noite)">Auto</button>
+        <button type="button" class="v3d-seg" id="v3dSkyDay" data-sky-mode="day" title="Céu de dia"><span data-icon="sun"></span></button>
+        <button type="button" class="v3d-seg" id="v3dSkyNight" data-sky-mode="night" title="Céu de noite"><span data-icon="moon"></span></button>
+      </div>
     </div>
     <div class="v3d-row">
       <div id="v3dMTools" role="group" aria-label="Ferramentas de medição 3D">
@@ -1724,6 +1741,7 @@ body.split3d #v3dDivider{ display:block }
       <label><input type="radio" name="rType" value="img"> Imagem</label>
       <label><input type="radio" name="rType" value="cog"> COG / GeoTIFF</label>
       <label><input type="radio" name="rType" value="dem"> DEM (elevação)</label>
+      <label><input type="radio" name="rType" value="terrain"> Terreno (Terrarium/Terrain-RGB)</label>
     </div>
     <div class="field"><label>Nome da camada</label><input type="text" id="rName" placeholder="Ex.: Ortofoto 2024"></div>
     <div id="rXYZ">
@@ -1775,6 +1793,16 @@ body.split3d #v3dDivider{ display:block }
       </div>
       <div class="attr-check"><input type="checkbox" id="rDemKeep" checked><label for="rDemKeep" style="cursor:pointer">Guardar cópia no dispositivo (reabre sem reapontar o arquivo)</label></div>
     </div>
+    <div id="rTerrain" style="display:none">
+      <p class="sub" style="margin-bottom:10px">Fonte de relevo já codificada como tiles XYZ (Terrarium ou Terrain-RGB) — ex.: AWS Terrain Tiles, Mapzen, MapTiler. Ao contrário do DEM (GeoTIFF lido localmente), estes tiles vêm prontos de um servidor externo: alimentam o terreno da <b>vista 3D</b> diretamente, mas não servem para medição de elevação (só o DEM/COG local faz isso).</p>
+      <div class="field"><label>URL do template (use {z}/{x}/{y})</label><input type="text" id="rTerrainUrl" placeholder="https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"></div>
+      <div class="field"><label>Codificação</label>
+        <select id="rTerrainEnc">
+          <option value="terrarium" selected>Terrarium (AWS Terrain Tiles, Mapzen)</option>
+          <option value="mapbox">Terrain-RGB (Mapbox/MapTiler)</option>
+        </select>
+      </div>
+    </div>
     <div class="field"><label>Opacidade: <span id="rOpV">100%</span></label><input type="range" id="rOp" min="10" max="100" value="100" style="width:100%; accent-color:var(--text2)"></div>
     <div class="actions">
       <button class="tb-btn primary" id="rGo">Adicionar</button>
@@ -1825,6 +1853,11 @@ body.split3d #v3dDivider{ display:block }
       <button class="tb-btn" id="pdAddScale" data-icon="ruler">Escala</button>
       <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
       <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
+      <button class="tb-btn" id="pdAddTreeCard" data-icon="treeIcon" title="Ficha de uma árvore do inventário">Ficha de árvore</button>
+      <button class="tb-btn" id="pdAddTreeTable" data-icon="table" title="Tabela com os indivíduos do inventário">Tabela do inventário</button>
+      <button class="tb-btn" id="pdAddView3D" data-icon="cube3d" title="Recorte (screenshot) da vista 3D">Recorte 3D</button>
+      <button class="tb-btn" id="pdAddElevProfile" data-icon="elevProfile" title="Imagem do perfil de elevação">Perfil de elevação</button>
+      <button class="tb-btn" id="pdAddMeasure3dInfo" data-icon="volume3d" title="Resumo em texto da última medição de distância/volume 3D">Info. medição 3D</button>
       <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
       <button class="tb-btn" id="pdPrint" data-icon="printer" title="Abre o diálogo de impressão do navegador — escolha &quot;Salvar como PDF&quot; para gerar um PDF">Imprimir / PDF</button>
       <button class="tb-btn" id="pdExportPng" data-icon="download" title="Baixa este layout como imagem PNG">Baixar PNG</button>
@@ -1836,6 +1869,7 @@ body.split3d #v3dDivider{ display:block }
       </div>
     </div>
     <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
+    <div class="pd-sheet-tabs" id="pdSheetTabs"></div>
     <div class="pd-main">
     <div class="pd-body">
       <div class="pd-sheet-scaler" id="pdSheetScaler">
@@ -2035,6 +2069,34 @@ body.split3d #v3dDivider{ display:block }
           </label>
         </div>
       </div>
+    </div>
+    <div class="pd-side-section" id="pdTreeCardPanel" style="display:none">
+      <div class="field" style="flex-basis:100%">
+        <label>Indivíduo do inventário</label>
+        <select id="pdTreeCardSel"><option value="">Selecione…</option></select>
+      </div>
+    </div>
+    <div class="pd-side-section" id="pdTreeTablePanel" style="display:none">
+      <div class="field" style="flex-basis:100%">
+        <label>Filtro</label>
+        <select id="pdTreeTableFilter">
+          <option value="">Todos os indivíduos</option>
+          <option value="enquadra">Enquadrados em compensação</option>
+          <option value="corte">Pretensão: Corte</option>
+        </select>
+      </div>
+      <div class="field" style="flex-basis:100%; margin-top:4px">
+        <label>Colunas</label>
+        <div id="pdTreeTableCols" style="display:flex; flex-wrap:wrap; gap:8px 14px; font-size:12.5px"></div>
+      </div>
+    </div>
+    <div class="pd-side-section" id="pdView3DPanel" style="display:none">
+      <button class="tb-btn primary" id="pdView3DCapture" data-icon="camera" title="Captura a vista 3D atual (é preciso abrir a vista 3D primeiro)">Capturar vista 3D atual</button>
+      <p class="sub" style="flex-basis:100%">Instantâneo estático — não atualiza sozinho se a vista 3D mudar depois.</p>
+    </div>
+    <div class="pd-side-section" id="pdElevProfilePanel" style="display:none">
+      <button class="tb-btn primary" id="pdElevProfileCapture" data-icon="camera" title="Captura o perfil de elevação atual (é preciso medir uma linha na vista 3D primeiro)">Capturar perfil</button>
+      <p class="sub" style="flex-basis:100%">Instantâneo estático — não atualiza sozinho se o perfil mudar depois.</p>
     </div>
     </aside>
     </div>
@@ -2613,6 +2675,7 @@ const ICONS = {
   refresh:'<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>',
   arrowDown:'<path d="M12 4v14M6 13l6 6 6-6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
   crop:'<path d="M6 2v16h16M2 6h16v16"/>',
@@ -2630,6 +2693,10 @@ const ICONS = {
   cube3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
   compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>',
   volume3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4"/><path d="M6 11.5 12 14.5 18 11.5" stroke-dasharray="2.5 2.5"/>',
+  treeIcon:'<path d="M12 2 6 11h3l-4 6h4v5h6v-5h4l-4-6h3Z"/>',
+  elevProfile:'<path d="M3 20h18"/><path d="M3 16l4-6 4 3 5-9 5 8" fill="none"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
+  moon:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/>',
   bold:'<path d="M6 4h7a4 4 0 0 1 0 8H6z"/><path d="M6 12h8a4 4 0 0 1 0 8H6z"/>',
   italic:'<path d="M11 4h7M6 20h7M14 4 10 20"/>',
   underline:'<path d="M6 4v7a6 6 0 0 0 12 0V4"/><path d="M5 20h14"/>',
@@ -2640,7 +2707,8 @@ const ICONS = {
   alignJustify:'<path d="M4 6h16M4 11h16M4 16h16M4 21h16"/>',
   lineTool:'<path d="M4 20 20 4"/><circle cx="4" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.6" fill="currentColor" stroke="none"/>',
   rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>',
-  printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>'
+  printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>',
+  contour:'<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 7.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -2811,12 +2879,14 @@ function collectAssetRefs(p){
     const pr = ft.properties||{};
     PHOTO_KEYS.forEach(k=>{ if(isAssetRef(pr[k])) set.add(pr[k]); });
   }));
-  ((p.printLayout && p.printLayout.blocks) || []).forEach(b=>{
+  const pdSheetsRef = (p.printLayout && Array.isArray(p.printLayout.sheets)) ? p.printLayout.sheets
+    : (p.printLayout && Array.isArray(p.printLayout.blocks)) ? [{blocks:p.printLayout.blocks}] : [];
+  pdSheetsRef.forEach(sheet=>(sheet.blocks||[]).forEach(b=>{
     if(b.type==='image' && isAssetRef(b.props && b.props.asset)) set.add(b.props.asset);
     if(b.type==='legend' && b.props && Array.isArray(b.props.items)){
       b.props.items.forEach(it=>{ if(isAssetRef(it.iconAsset)) set.add(it.iconAsset); });
     }
-  });
+  }));
   return set;
 }
 
@@ -3838,6 +3908,7 @@ function buildRasterRow(r){
      <span class="name" title="${r.name}">${r.name}</span>
      <button class="icon-btn zoom info" title="Legenda, descrição e metadados">${r.expanded?icon('arrowDown'):icon('info')}</button>
      <button class="icon-btn zoom opa" title="Transparência da camada">${icon('contrast')}</button>
+     ${r.def && r.def.type==='dem' ? `<button class="icon-btn zoom contour" title="Gerar curvas de nível">${icon('contour')}</button>` : ''}
      <button class="icon-btn" title="Remover">${icon('close')}</button>`;
   row.children[0].addEventListener('change', e=>{
     r.visible = e.target.checked;
@@ -3847,6 +3918,8 @@ function buildRasterRow(r){
   });
   row.querySelector('.info').addEventListener('click', ()=>{ r.expanded = !r.expanded; renderRasterList(); });
   row.querySelector('.opa').addEventListener('click', ()=>{ r.opacityOpen = !r.opacityOpen; renderRasterList(); });
+  const contourBtn = row.querySelector('.contour');
+  if(contourBtn) contourBtn.addEventListener('click', ()=>generateContours(r));
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
     if(CMP.active && CMP.layerRef===r) deactivate();
     map.removeLayer(r.layer);
@@ -6526,6 +6599,11 @@ async function loadTurf(){
   if(!turfMod) turfMod = await import('https://cdn.jsdelivr.net/npm/@turf/turf@7/+esm');
   return turfMod;
 }
+let d3ContourMod = null;
+async function loadD3Contour(){
+  if(!d3ContourMod) d3ContourMod = await import('https://cdn.jsdelivr.net/npm/d3-contour@4/+esm');
+  return d3ContourMod;
+}
 function cloneLatLngs(ll){
   if(Array.isArray(ll)) return ll.map(cloneLatLngs);
   return L.latLng(ll.lat, ll.lng);
@@ -7592,15 +7670,19 @@ async function run3DMeasure(lyr, latlngs){
   }
 }
 
+function formatDistReport(stats){
+  if(!stats) return '';
+  return `Plana: <b>${fmtDist(stats.flatDist)}</b> · Superfície: <b>${fmtDist(stats.surfaceDist)}</b>`
+    + (stats.covered != null && stats.covered < 0.98
+        ? ` <span style="color:var(--warn)">(só ${Math.round(stats.covered*100)}% da linha tem DEM)</span>` : '')
+    + `<br>Δh: <b>${stats.deltaH.toFixed(1)} m</b> · Declive médio: <b>${stats.avgSlope.toFixed(1)}%</b> · máx.: <b>${stats.maxSlope.toFixed(1)}%</b>`;
+}
 function drawElevProfile(samples, stats){
   const panel = document.getElementById('elevPanel');
   const canvas = document.getElementById('elevCanvas');
   const statsEl = document.getElementById('elevStats');
   panel.style.display = 'block';
-  statsEl.innerHTML = `Plana: <b>${fmtDist(stats.flatDist)}</b> · Superfície: <b>${fmtDist(stats.surfaceDist)}</b>`
-    + (stats.covered != null && stats.covered < 0.98
-        ? ` <span style="color:var(--warn)">(só ${Math.round(stats.covered*100)}% da linha tem DEM)</span>` : '')
-    + `<br>Δh: <b>${stats.deltaH.toFixed(1)} m</b> · Declive médio: <b>${stats.avgSlope.toFixed(1)}%</b> · máx.: <b>${stats.maxSlope.toFixed(1)}%</b>`;
+  statsEl.innerHTML = formatDistReport(stats);
 
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth || 340, h = 140;
@@ -8298,6 +8380,11 @@ const close = id=>document.getElementById(id).classList.remove('open');
     let meta = document.querySelector('meta[name="theme-color"]');
     if(!meta){ meta=document.createElement('meta'); meta.name='theme-color'; document.head.appendChild(meta); }
     meta.content = (t==='light') ? '#ffffff' : '#141a20';
+    // acompanha o tema no céu 3D quando o modo é 'auto' — SCENE3D só existe
+    // após o parse completo do script (é 'const' no topo do arquivo, TDZ
+    // até lá), daí o try/catch: a 1ª chamada (fora do IIFE, no load) ocorre
+    // antes dessa declaração, as seguintes (clique no botão) já a encontram
+    try{ if(SCENE3D.map3d && SCENE3D.skyMode==='auto') applySky(); }catch(e){}
   }
 
   const stored = (()=>{ try{ return localStorage.getItem(KEY); }catch(e){ return null; } })();
@@ -9168,6 +9255,83 @@ L.gridLayer.dem = (src, opts)=>new L.GridLayer.DEM(src, opts);
 
 /* Lista de camadas raster marcadas como DEM (para a medição 3D) */
 function demLayers(){ return rasterLayers.filter(r=>r.def && r.def.type==='dem' && r.layer instanceof L.GridLayer.DEM); }
+/* Fontes de terreno para a vista 3D (#v3dDemSel/applyTerrain): DEM local
+   (COG, dá para amostrar elevação ponto a ponto via sampleElevationsAt) +
+   terrain externo (Terrarium/Terrain-RGB XYZ já codificado, só visual —
+   não tem _openDem()/sampleElevationsAt, então cota/medição/hastes/volume
+   continuam restritos a demLayers(); terrainSources() é usado só para o
+   relevo 3D em si). */
+function terrainSources(){ return rasterLayers.filter(r=>r.def && (r.def.type==='dem' || r.def.type==='terrain')); }
+
+/* Curvas de nível a partir de um DEM local (COG) — d3-contour carregado sob
+   demanda (mesmo padrão de loadTurf/loadMapLibre). Vira uma CAMADA VETORIAL
+   REAL via newVectorLayer, não um overlay paralelo — herda toda a pilha de
+   simbologia/exportação/impressão/tabela de atributos já existente. */
+async function generateContours(r){
+  const intervalStr = prompt('Intervalo entre curvas de nível (metros):', '10');
+  if(intervalStr==null) return;
+  const interval = parseFloat(intervalStr);
+  if(!isFinite(interval) || interval<=0){ alert('Intervalo inválido.'); return; }
+  const masterStr = prompt('Curva-mestra a cada quantas curvas? (0 = nenhuma)', '5');
+  const masterEvery = Math.max(0, Math.round(parseFloat(masterStr)||0));
+  status('Gerando curvas de nível…');
+  try{
+    const d3c = await loadD3Contour();
+    const info = await r.layer._openDem();
+    const demBounds = info.latLngBounds;
+    const viewBounds = map.getBounds();
+    // usa a vista atual se ela cabe inteira dentro do DEM (mais rápido, área
+    // relevante para o usuário); senão contorna o DEM inteiro
+    const bounds = demBounds.contains(viewBounds) ? viewBounds : demBounds;
+    const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
+    // grade limitada (não o DEM bruto) — evita estourar memória em arquivos grandes
+    const ow = 400, oh = 400;
+    const win = await tileWindowRead(info, bbox, ow, oh, { resample:'bilinear', fill:NaN });
+    if(!win){ status('Curvas de nível: janela fora da cobertura do DEM.'); return; }
+    const band = win.data[0], gw = win.ow, gh = win.oh;
+    let min=Infinity, max=-Infinity;
+    for(let i=0;i<band.length;i++){ const v=band[i]; if(v!=null && !Number.isNaN(v)){ if(v<min) min=v; if(v>max) max=v; } }
+    if(!isFinite(min)){ status('Curvas de nível: sem dado válido na área visível.'); return; }
+    // d3-contour não entende NaN — nodata vira um valor bem abaixo de qualquer threshold gerado
+    const sentinel = min - 1e6;
+    const values = new Float64Array(band.length);
+    for(let i=0;i<band.length;i++){ const v=band[i]; values[i] = (v==null || Number.isNaN(v)) ? sentinel : v; }
+    const thresholds = [];
+    for(let t=Math.ceil(min/interval)*interval; t<=max; t+=interval) thresholds.push(t);
+    if(!thresholds.length){ status('Curvas de nível: intervalo maior que a variação de cota da área.'); return; }
+    const contours = d3c.contours().size([gw,gh]).thresholds(thresholds)(values);
+    // pixel da grade -> lat/lng, mapeamento linear sobre o bbox lido
+    const px2ll = (x,y) => [ bbox[0] + (x/gw)*(bbox[2]-bbox[0]), bbox[3] - (y/gh)*(bbox[3]-bbox[1]) ];
+    const lyr = newVectorLayer('Curvas de nível — '+r.name, 'line',
+      [ {name:'cota', type:'number', options:[], required:false},
+        {name:'mestra', type:'checkbox', options:[], required:false} ], '#caa456');
+    let nLines = 0, idx = 0;
+    contours.forEach(feat=>{
+      idx++;
+      const isMaster = masterEvery>0 && (idx % masterEvery===0);
+      // cada polígono de d3-contour representa a área "acima do threshold";
+      // seus anéis SÃO a curva de nível naquele valor — extrai como linhas
+      feat.coordinates.forEach(poly=>poly.forEach(ring=>{
+        if(ring.length<2) return;
+        const latlngs = ring.map(([x,y])=>{ const [lng,lat]=px2ll(x,y); return L.latLng(lat,lng); });
+        const line = L.polyline(latlngs, styleFor(lyr));
+        if(isMaster) line.setStyle({weight:2.4});
+        lyr.group.addLayer(line);
+        registerFeature(line, lyr);
+        line.feature.properties.cota = feat.value;
+        line.feature.properties.mestra = isMaster;
+        nLines++;
+      }));
+    });
+    renderVectorList();
+    if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
+    scheduleSave();
+    status('Curvas de nível: '+nLines+' linhas geradas ('+thresholds.length+' cotas, intervalo de '+interval+' m).');
+  }catch(err){
+    console.error(err);
+    status('Falha ao gerar curvas de nível: '+err.message);
+  }
+}
 
 /* DEMs que INTERSECTAM a geometria, do mais fino para o mais grosseiro.
    Três diferenças em relação à versão anterior (findCoveringDem):
@@ -9223,6 +9387,7 @@ document.querySelectorAll('input[name=rType]').forEach(r=>r.addEventListener('ch
   document.getElementById('rIMG').style.display = v==='img'?'':'none';
   document.getElementById('rCOG').style.display = v==='cog'?'':'none';
   document.getElementById('rDEM').style.display = v==='dem'?'':'none';
+  document.getElementById('rTerrain').style.display = v==='terrain'?'':'none';
 }));
 document.getElementById('rOp').addEventListener('input', e=>document.getElementById('rOpV').textContent=e.target.value+'%');
 
@@ -9327,6 +9492,14 @@ function addRasterFromDef(def, silent){
     });
     layer.on('cog:error', e=>cogErrorAlert(def.name, e.error));
   }
+  else if(def.type==='terrain'){
+    // tiles Terrarium/Terrain-RGB já vêm codificados (relevo em RGB) — em
+    // 2D não há renderização própria (Leaflet não tem raster-dem nativo),
+    // então mostra o tile cru como qualquer XYZ; a vista 3D é quem
+    // realmente usa esta fonte (applyTerrain() lê direto de def.url,
+    // sem precisar do protocolo gmdem:// — o dado já está pronto).
+    layer = L.tileLayer(def.url, {maxZoom:15, opacity:def.opacity});
+  }
   else layer = L.imageOverlay(assetURL(def.asset) || def.dataUrl, def.bounds, {opacity:def.opacity});
   layer.addTo(map);
   rasterLayers.push({id:++layerSeq, name:def.name, layer, visible:true, def});
@@ -9415,6 +9588,11 @@ document.getElementById('rGo').addEventListener('click', async ()=>{
       } else {
         def = {type:'dem', name, url, opacity, demRender, azimuth, altitude};
       }
+    } else if(type==='terrain'){
+      const url = document.getElementById('rTerrainUrl').value.trim();
+      const encoding = document.getElementById('rTerrainEnc').value;
+      if(!url.includes('{z}')) throw new Error('URL deve conter {z}/{x}/{y}.');
+      def = {type, name, url, encoding, opacity};
     }
     addRasterFromDef(def);
     close('mRaster');
@@ -9760,14 +9938,15 @@ function has3D(){
 const SCENE3D = {
   active:false, map3d:null, layout:'full',
   cam:{ pitch:60, bearing:0 },
-  exaggeration:1.5, terrainOn:true, hillshadeOn:false, skyOn:true,
+  exaggeration:1.5, terrainOn:true, hillshadeOn:false, skyOn:true, skyMode:'auto', // 'auto'|'day'|'night'
   terrainDemName:null,
   mirrored:new Set(),      // ids de source/layer já injetados no style vivo
   camLock:0, splitPct:50,
   // --- Medição 3D (Fase 2) ---
   measureMode:null,        // null | 'dist' | 'volume'
   measurePts:[],           // [{lat,lng}] vértices em progresso
-  measureResult:null       // {samples, stats} da última medição de distância concluída
+  measureResult:null,      // {samples, stats} da última medição de distância concluída
+  volumeResult:null        // {cut,fill,net,ref,areaTotal,nSamples} da última medição de volume concluída
 };
 
 /* ---------- Protocolos gmdem:// e gmcog:// ---------- */
@@ -9897,12 +10076,12 @@ function onView3DMouseMove(e){
 }
 function populateDemSelect(){
   const sel = document.getElementById('v3dDemSel');
-  const dems = demLayers();
+  const dems = terrainSources();
   const prev = sel.value;
-  sel.innerHTML = dems.length ? '' : '<option value="">nenhum DEM carregado</option>';
+  sel.innerHTML = dems.length ? '' : '<option value="">nenhum DEM/terreno carregado</option>';
   dems.forEach(r=>{
     const o = document.createElement('option');
-    o.value = r.name; o.textContent = r.name;
+    o.value = r.name; o.textContent = r.name + (r.def.type==='terrain' ? ' (terreno externo)' : '');
     sel.appendChild(o);
   });
   if(dems.some(r=>r.name===prev)) sel.value = prev;
@@ -9911,21 +10090,32 @@ function populateDemSelect(){
 }
 async function applyTerrain(){
   const m3 = SCENE3D.map3d;
-  const rec = demLayers().find(r=>r.name===SCENE3D.terrainDemName);
+  const rec = terrainSources().find(r=>r.name===SCENE3D.terrainDemName);
   if(!rec || !SCENE3D.terrainOn){
     m3.setTerrain(null);
     const hl = m3.getLayer('__v3d_hillshade'); if(hl) m3.setLayoutProperty('__v3d_hillshade','visibility','none');
     return;
   }
-  const info = await rec.layer._openDem();
-  const b = info.latLngBounds;
-  const srcId = 'gmdem_'+rec.id;
-  if(!m3.getSource(srcId)){
-    m3.addSource(srcId, {
-      type:'raster-dem', encoding:'terrarium', tileSize:256,
-      tiles:['gmdem://'+rec.id+'/{z}/{x}/{y}'],
-      bounds:[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()], maxzoom:18
-    });
+  let srcId;
+  if(rec.def.type==='terrain'){
+    // já vem codificado (Terrarium/Terrain-RGB) — aponta direto para a URL
+    // externa, sem passar pelo protocolo gmdem:// (esse existe só para
+    // reencodar pixels lidos de um COG local; aqui o dado já está pronto)
+    srcId = 'gmterrain_'+rec.id;
+    if(!m3.getSource(srcId)){
+      m3.addSource(srcId, { type:'raster-dem', encoding:rec.def.encoding||'terrarium', tileSize:256, tiles:[rec.def.url], maxzoom:15 });
+    }
+  } else {
+    const info = await rec.layer._openDem();
+    const b = info.latLngBounds;
+    srcId = 'gmdem_'+rec.id;
+    if(!m3.getSource(srcId)){
+      m3.addSource(srcId, {
+        type:'raster-dem', encoding:'terrarium', tileSize:256,
+        tiles:['gmdem://'+rec.id+'/{z}/{x}/{y}'],
+        bounds:[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()], maxzoom:18
+      });
+    }
   }
   m3.setTerrain({ source:srcId, exaggeration:SCENE3D.exaggeration });
   if(!m3.getLayer('__v3d_hillshade')){
@@ -9936,10 +10126,19 @@ async function applyTerrain(){
     m3.setLayoutProperty('__v3d_hillshade','visibility', SCENE3D.hillshadeOn?'visible':'none');
   }
 }
+const SKY_PALETTES = {
+  night:{ 'sky-color':'#1d252d', 'horizon-color':'#31404d', 'fog-color':'#141a20' },
+  day:{ 'sky-color':'#bfe3ff', 'horizon-color':'#eaf6ff', 'fog-color':'#dff0ff' }
+};
+function skyEffectiveMode(){
+  if(SCENE3D.skyMode==='day' || SCENE3D.skyMode==='night') return SCENE3D.skyMode;
+  const theme = document.documentElement.getAttribute('data-theme');
+  return theme==='light' ? 'day' : 'night';
+}
 function applySky(){
   const m3 = SCENE3D.map3d;
   if(typeof m3.setSky!=='function') return;
-  m3.setSky(SCENE3D.skyOn ? { 'sky-color':'#1d252d', 'horizon-color':'#31404d', 'fog-color':'#141a20' } : null);
+  m3.setSky(SCENE3D.skyOn ? SKY_PALETTES[skyEffectiveMode()] : null);
 }
 
 /* ---------- Medição 3D (Fase 2): distância e corte/aterro ---------- */
@@ -10089,19 +10288,23 @@ async function v3dVolFinish(){
   const latlngs = SCENE3D.measurePts.map(p=>L.latLng(p.lat,p.lng));
   const res = await computeVolume(latlngs, refMode, refValue);
   if(!res){ status('Volume 3D: nenhum DEM cobre esta área ou dados insuficientes.'); v3dSetMeasureMode(null); return; }
+  SCENE3D.volumeResult = res;
   showVolumePanel(res);
   SCENE3D.measurePts = [];
   v3dSetMeasureMode(null);
   status('Volume 3D concluído.');
 }
+function formatVolumeReport(res){
+  if(!res) return '';
+  return `Corte: <b>${res.cut.toFixed(1)} m³</b> · Aterro: <b>${res.fill.toFixed(1)} m³</b><br>`+
+    `Saldo: <b>${res.net>=0?'+':''}${res.net.toFixed(1)} m³</b> (${res.net>=0?'excesso de material':'déficit de material'})<br>`+
+    `Referência: <b>${res.ref.toFixed(1)} m</b> · Área amostrada: <b>${(res.areaTotal/10000).toFixed(2)} ha</b> (${res.nSamples} amostras)`;
+}
 function showVolumePanel(res){
   const panel = document.getElementById('v3dVolPanel');
   const elevOpen = document.getElementById('elevPanel').style.display==='block';
   panel.style.bottom = elevOpen ? '270px' : '100px';
-  document.getElementById('v3dVolStats').innerHTML =
-    `Corte: <b>${res.cut.toFixed(1)} m³</b> · Aterro: <b>${res.fill.toFixed(1)} m³</b><br>`+
-    `Saldo: <b>${res.net>=0?'+':''}${res.net.toFixed(1)} m³</b> (${res.net>=0?'excesso de material':'déficit de material'})<br>`+
-    `Referência: <b>${res.ref.toFixed(1)} m</b> · Área amostrada: <b>${(res.areaTotal/10000).toFixed(2)} ha</b> (${res.nSamples} amostras)`;
+  document.getElementById('v3dVolStats').innerHTML = formatVolumeReport(res);
   panel.style.display = 'block';
 }
 
@@ -10243,9 +10446,9 @@ async function mirror3D(){
     }
   }
 
-  // rasters do usuário (xyz/wms/img/cog) — dem entra só via applyTerrain()
+  // rasters do usuário (xyz/wms/img/cog) — dem/terrain entram só via applyTerrain()
   for(const r of rasterLayers){
-    if(!r.def || r.def.type==='dem') continue;
+    if(!r.def || r.def.type==='dem' || r.def.type==='terrain') continue;
     const id = 'ras_'+r.id;
     if(!r.visible){ if(m3.getLayer(id)) m3.setLayoutProperty(id,'visibility','none'); continue; }
     wanted.add(id);
@@ -10353,6 +10556,7 @@ function close3D(){
   SCENE3D.active = false;
   v3dSetMeasureMode(null); // cancela vértices em progresso e esconde ações
   SCENE3D.measureResult = null;
+  SCENE3D.volumeResult = null;
   document.getElementById('v3dVolPanel').style.display = 'none';
   // #elevPanel É INTENCIONALMENTE deixado aberto — mesmo comportamento já
   // existente para medições 2D (o perfil persiste após fechar o 3D).
@@ -10418,6 +10622,19 @@ document.getElementById('v3dNorth').addEventListener('click', ()=>{
 document.getElementById('v3dTerrainOn').addEventListener('change', e=>{ SCENE3D.terrainOn=e.target.checked; if(SCENE3D.map3d) applyTerrain(); });
 document.getElementById('v3dHillOn').addEventListener('change', e=>{ SCENE3D.hillshadeOn=e.target.checked; if(SCENE3D.map3d) applyTerrain(); });
 document.getElementById('v3dSkyOn').addEventListener('change', e=>{ SCENE3D.skyOn=e.target.checked; if(SCENE3D.map3d) applySky(); });
+function updateSkyModeButtons(){
+  document.querySelectorAll('#v3dSkyModeGroup .v3d-seg').forEach(btn=>{
+    btn.classList.toggle('primary', btn.getAttribute('data-sky-mode')===SCENE3D.skyMode);
+  });
+}
+document.querySelectorAll('#v3dSkyModeGroup .v3d-seg').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    SCENE3D.skyMode = btn.getAttribute('data-sky-mode');
+    updateSkyModeButtons();
+    if(SCENE3D.map3d) applySky();
+  });
+});
+updateSkyModeButtons();
 document.getElementById('v3dDemSel').addEventListener('change', e=>{ SCENE3D.terrainDemName=e.target.value||null; if(SCENE3D.map3d) applyTerrain(); });
 document.querySelectorAll('.v3d-mtool').forEach(b=>{
   b.addEventListener('click', ()=>{
@@ -10451,12 +10668,58 @@ document.getElementById('btnPrintQuick').addEventListener('click', ()=>open('mPr
 
 /* =========================================================
    Editor de layout de impressão — motor de blocos
-   Modelo: printLayout = {paperSize, orientation, blocks:[{id,type,x,y,w,h,z,props}]}
+   Modelo: printLayout = {paperSize, orientation, sheets:[{blocks:[{id,type,x,y,w,h,z,props}]}], activeSheet}
+   Papel/orientação são globais ao layout (todas as folhas do mesmo projeto
+   de impressão compartilham tamanho) — cada folha só guarda seus blocos.
    x/y/w/h em mm, relativos ao canto superior esquerdo da folha.
    Persistido dentro do projeto (serializeProject/applyProject).
    ========================================================= */
-let printLayout = { paperSize:'A4', orientation:'landscape', blocks:[] };
+let printLayout = { paperSize:'A4', orientation:'landscape', sheets:[{blocks:[]}], activeSheet:0 };
 let pdSelId = null, pdSeq = 1;
+function pdBlocks(){ return printLayout.sheets[printLayout.activeSheet].blocks; }
+function pdSetBlocks(arr){ printLayout.sheets[printLayout.activeSheet].blocks = arr; }
+function pdAddSheet(){
+  printLayout.sheets.push({blocks:[]});
+  pdSwitchSheet(printLayout.sheets.length-1);
+  pdMarkDirty();
+}
+function pdDuplicateSheet(idx){
+  const src = printLayout.sheets[idx];
+  const clone = JSON.parse(JSON.stringify(src));
+  clone.blocks.forEach(b=>{ b.id = 'pb'+(pdSeq++); });
+  printLayout.sheets.splice(idx+1, 0, clone);
+  pdSwitchSheet(idx+1);
+  pdMarkDirty();
+}
+function pdDeleteSheet(idx){
+  if(printLayout.sheets.length<=1){ status('O layout precisa de ao menos uma folha.'); return; }
+  printLayout.sheets.splice(idx, 1);
+  pdSwitchSheet(Math.min(idx, printLayout.sheets.length-1));
+  pdMarkDirty();
+}
+function pdSwitchSheet(idx){
+  printLayout.activeSheet = Math.max(0, Math.min(idx, printLayout.sheets.length-1));
+  pdSelId = null;
+  pdRenderSheetTabs();
+  pdRenderAll();
+  pdSelect(null);
+}
+function pdRenderSheetTabs(){
+  const wrap = document.getElementById('pdSheetTabs');
+  if(!wrap) return;
+  wrap.innerHTML = printLayout.sheets.map((s,i)=>
+    `<button type="button" class="pd-sheet-tab ${i===printLayout.activeSheet?'active':''}" data-idx="${i}">Folha ${i+1}</button>`
+  ).join('') +
+  `<button type="button" class="tb-btn" id="pdSheetAdd" title="Adicionar folha">${icon('plus',14)}</button>`+
+  `<button type="button" class="tb-btn" id="pdSheetDup" title="Duplicar folha atual">${icon('copy',14)}</button>`+
+  `<button type="button" class="tb-btn" id="pdSheetDel" title="Excluir folha atual">${icon('trash',14)}</button>`;
+  wrap.querySelectorAll('.pd-sheet-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>pdSwitchSheet(Number(btn.getAttribute('data-idx'))));
+  });
+  const add = document.getElementById('pdSheetAdd'); if(add) add.addEventListener('click', pdAddSheet);
+  const dup = document.getElementById('pdSheetDup'); if(dup) dup.addEventListener('click', ()=>pdDuplicateSheet(printLayout.activeSheet));
+  const del = document.getElementById('pdSheetDel'); if(del) del.addEventListener('click', ()=>pdDeleteSheet(printLayout.activeSheet));
+}
 
 const PAPER_MM = { A4:{w:297,h:210}, A3:{w:420,h:297} }; // dimensões em paisagem
 function paperDims(size, orientation){
@@ -10481,9 +10744,14 @@ function pdAddBlock(type, extra){
     map:{w:110, h:80, props:{center:null, zoom:null, base:null, layers:null, preview:null, contextOf:null,
       graticule:{on:false, crs:'geo', position:'inside',
         dirs:{top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
-        offsetXmm:0, offsetYmm:0}}}
+        offsetXmm:0, offsetYmm:0}}},
+    treeCard:{w:90, h:60, props:{featureId:null}},
+    treeTable:{w:170, h:90, props:{filter:null, columns:INVENTORY_TABLE_COLUMNS.map(c=>c.key)}},
+    view3d:{w:110, h:80, props:{preview:null}},
+    elevProfile:{w:100, h:40, props:{preview:null}},
+    measure3dInfo:{w:80, h:30, props:{}}
   }[type] || {w:40, h:40, props:{}};
-  if(type==='map' && printLayout.blocks.filter(x=>x.type==='map').length>=5){
+  if(type==='map' && pdBlocks().filter(x=>x.type==='map').length>=5){
     status('Máximo de 5 blocos de mapa por layout.');
     return null;
   }
@@ -10491,11 +10759,11 @@ function pdAddBlock(type, extra){
     id:'pb'+(pdSeq++), type,
     x: Math.max(4, (dims.w-defaults.w)/2), y: Math.max(4, (dims.h-defaults.h)/2),
     w: defaults.w, h: defaults.h,
-    z: printLayout.blocks.length+1,
+    z: pdBlocks().length+1,
     rot: 0, flipH: false, flipV: false,
     props: Object.assign({}, defaults.props, extra||{})
   };
-  printLayout.blocks.push(b);
+  pdBlocks().push(b);
   pdRenderAll();
   pdSelect(b.id);
   pdMarkDirty();
@@ -10503,9 +10771,9 @@ function pdAddBlock(type, extra){
 }
 
 function pdDeleteBlock(id){
-  printLayout.blocks = printLayout.blocks.filter(b=>b.id!==id);
+  pdSetBlocks(pdBlocks().filter(b=>b.id!==id));
   // limpa referências de retângulo de contexto que apontavam para o bloco removido
-  printLayout.blocks.forEach(b=>{ if(b.type==='map' && b.props.contextOf===id) b.props.contextOf = null; });
+  pdBlocks().forEach(b=>{ if(b.type==='map' && b.props.contextOf===id) b.props.contextOf = null; });
   if(pdSelId===id) pdSelId=null;
   pdRenderAll();
   pdMarkDirty();
@@ -10516,14 +10784,16 @@ function pdSelect(id){
   document.querySelectorAll('#pdSheet .pd-block').forEach(el=>{
     el.classList.toggle('sel', el.dataset.id===id);
   });
-  const b = id && printLayout.blocks.find(x=>x.id===id);
+  const b = id && pdBlocks().find(x=>x.id===id);
   const sub = document.getElementById('pdSideSub');
   const empty = document.getElementById('pdSideEmpty');
   if(sub){
-    const label = b ? ({text:'Texto', image:'Imagem', line:'Linha', rect:'Retângulo', north:'Norte', scale:'Escala', legend:'Legenda', map:'Mapa'})[b.type]||b.type : 'Nenhum bloco selecionado';
+    const label = b ? ({text:'Texto', image:'Imagem', line:'Linha', rect:'Retângulo', north:'Norte', scale:'Escala', legend:'Legenda', map:'Mapa',
+      treeCard:'Ficha de árvore', treeTable:'Tabela do inventário', view3d:'Recorte 3D', elevProfile:'Perfil de elevação', measure3dInfo:'Info. medição 3D'})[b.type]||b.type : 'Nenhum bloco selecionado';
     sub.textContent = label;
   }
-  if(empty) empty.style.display = (b && (b.type==='north' || b.type==='map' || b.type==='text' || b.type==='line' || b.type==='rect' || b.type==='legend')) ? 'none' : '';
+  const propTypes = ['north','map','text','line','rect','legend','treeCard','treeTable','view3d','elevProfile','measure3dInfo'];
+  if(empty) empty.style.display = (b && propTypes.includes(b.type)) ? 'none' : '';
   const textWrap = document.getElementById('pdTextStyleWrap');
   if(b && b.type==='text'){
     textWrap.style.display = '';
@@ -10613,7 +10883,83 @@ function pdSelect(id){
   } else {
     mapPanel.style.display = 'none';
   }
+  const treeCardPanel = document.getElementById('pdTreeCardPanel');
+  if(b && b.type==='treeCard'){
+    treeCardPanel.style.display = '';
+    pdRenderTreeCardSelect(b);
+  } else {
+    treeCardPanel.style.display = 'none';
+  }
+  const treeTablePanel = document.getElementById('pdTreeTablePanel');
+  if(b && b.type==='treeTable'){
+    treeTablePanel.style.display = '';
+    document.getElementById('pdTreeTableFilter').value = b.props.filter || '';
+    pdRenderTreeTableCols(b);
+  } else {
+    treeTablePanel.style.display = 'none';
+  }
+  document.getElementById('pdView3DPanel').style.display = (b && b.type==='view3d') ? '' : 'none';
+  document.getElementById('pdElevProfilePanel').style.display = (b && b.type==='elevProfile') ? '' : 'none';
 }
+function pdRenderTreeCardSelect(b){
+  const sel = document.getElementById('pdTreeCardSel');
+  const feats = inventoryFeatures(null);
+  sel.innerHTML = '<option value="">Selecione…</option>' + feats.map(f=>{
+    const id = f.layer && f.layer._gaid;
+    if(!id) return '';
+    const label = (f.p.numero_ponto!=null?'Ponto '+f.p.numero_ponto:'') + (f.p.especie||f.p.nome_popular ? ' — '+(f.p.especie||f.p.nome_popular) : '');
+    return `<option value="${id}" ${b.props.featureId===id?'selected':''}>${esc(label||id)}</option>`;
+  }).join('');
+}
+function pdRenderTreeTableCols(b){
+  const wrap = document.getElementById('pdTreeTableCols');
+  const active = b.props.columns && b.props.columns.length ? b.props.columns : INVENTORY_TABLE_COLUMNS.map(c=>c.key);
+  wrap.innerHTML = INVENTORY_TABLE_COLUMNS.map(c=>
+    `<label class="pd-check"><input type="checkbox" class="pd-tt-col" data-key="${c.key}" ${active.includes(c.key)?'checked':''}>${esc(c.label)}</label>`
+  ).join('');
+}
+document.getElementById('pdTreeCardSel').addEventListener('change', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.featureId = e.target.value || null;
+  pdRenderAll(); pdSelect(b.id); pdMarkDirty();
+});
+document.getElementById('pdTreeTableFilter').addEventListener('change', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.filter = e.target.value || null;
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableCols').addEventListener('change', e=>{
+  if(!e.target.classList.contains('pd-tt-col')) return;
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  const checked = Array.from(document.querySelectorAll('.pd-tt-col:checked')).map(c=>c.getAttribute('data-key'));
+  b.props.columns = checked;
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdView3DCapture').addEventListener('click', async ()=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  if(!SCENE3D.map3d){ status('Abra a vista 3D antes de capturar.'); return; }
+  try{
+    SCENE3D.map3d._render();
+    b.props.preview = SCENE3D.map3d.getCanvas().toDataURL('image/png');
+    pdRenderAll(); pdMarkDirty();
+    status('Vista 3D capturada ✓');
+  }catch(e){ console.error(e); status('Falha ao capturar a vista 3D.'); }
+});
+document.getElementById('pdElevProfileCapture').addEventListener('click', ()=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  const canvas = document.getElementById('elevCanvas');
+  if(!canvas || !canvas._profileMeta){ status('Meça uma linha na vista 3D antes de capturar o perfil.'); return; }
+  try{
+    b.props.preview = canvas.toDataURL('image/png');
+    pdRenderAll(); pdMarkDirty();
+    status('Perfil de elevação capturado ✓');
+  }catch(e){ console.error(e); status('Falha ao capturar o perfil de elevação.'); }
+});
 function pdUpdateGratPresetButtons(b){
   const density = (b.props.graticule && b.props.graticule.density) || 0;
   document.querySelectorAll('.pd-grat-preset').forEach(btn=>{
@@ -10631,13 +10977,13 @@ function pdUpdateGridLockButton(b){
 
 /* rótulo estável "Mapa N" pela ordem de criação entre os blocos de mapa do layout */
 function pdMapLabel(blockId){
-  const maps = printLayout.blocks.filter(x=>x.type==='map');
+  const maps = pdBlocks().filter(x=>x.type==='map');
   const i = maps.findIndex(x=>x.id===blockId);
   return 'Mapa '+(i+1);
 }
 function pdRenderMapContextSelect(b){
   const sel = document.getElementById('pdMapContext');
-  const others = printLayout.blocks.filter(x=>x.type==='map' && x.id!==b.id);
+  const others = pdBlocks().filter(x=>x.type==='map' && x.id!==b.id);
   sel.innerHTML = '<option value="">Nenhum</option>' +
     others.map(o=>`<option value="${o.id}">${pdMapLabel(o.id)}</option>`).join('');
   sel.value = b.props.contextOf || '';
@@ -11148,6 +11494,38 @@ function pdBlockHtml(b){
       ${body}
     </div>`;
   }
+  if(b.type==='treeCard'){
+    const feats = inventoryFeatures(null);
+    const f = feats.find(x=>x.layer && x.layer._gaid===b.props.featureId);
+    if(!f) return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Ficha de árvore sem indivíduo selecionado — escolha na aba lateral</div>`;
+    return `<div class="pd-inner">${buildTreeCardHtml(f)}</div>`;
+  }
+  if(b.type==='treeTable'){
+    const feats = inventoryFeatures(b.props.filter);
+    if(!feats.length) return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Nenhum indivíduo do inventário para exibir</div>`;
+    return `<div class="pd-inner">${buildInventoryTableHtml(feats, b.props.columns)}</div>`;
+  }
+  if(b.type==='view3d'){
+    if(b.props.preview){
+      return `<div class="pd-inner"><img src="${b.props.preview}" style="width:100%; height:100%; object-fit:cover; display:block"></div>`;
+    }
+    return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Recorte 3D sem prévia — abra a vista 3D e clique em "Capturar vista 3D atual"</div>`;
+  }
+  if(b.type==='elevProfile'){
+    if(b.props.preview){
+      return `<div class="pd-inner"><img src="${b.props.preview}" style="width:100%; height:100%; object-fit:contain; display:block; background:#fff"></div>`;
+    }
+    return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Perfil de elevação sem prévia — meça uma linha na vista 3D e clique em "Capturar perfil"</div>`;
+  }
+  if(b.type==='measure3dInfo'){
+    const dist = SCENE3D.measureResult ? formatDistReport(SCENE3D.measureResult.stats) : '';
+    const vol = SCENE3D.volumeResult ? formatVolumeReport(SCENE3D.volumeResult) : '';
+    const body = [dist, vol].filter(Boolean).join('<br><br>') || 'Sem medição 3D registrada — meça distância ou volume na vista 3D.';
+    return `<div class="pd-inner" style="font-family:Arial, sans-serif">
+      <b style="display:block; border-bottom:1px solid #000; padding-bottom:1mm; margin-bottom:1mm; letter-spacing:1px">MEDIÇÃO 3D</b>
+      ${body}
+    </div>`;
+  }
   return '<div class="pd-inner"></div>';
 }
 
@@ -11158,7 +11536,7 @@ function pdRenderAll(){
   sheet.style.width = dims.w+'mm';
   sheet.style.height = dims.h+'mm';
   sheet.innerHTML = '';
-  printLayout.blocks.slice().sort((a,b)=>a.z-b.z).forEach(b=>{
+  pdBlocks().slice().sort((a,b)=>a.z-b.z).forEach(b=>{
     const el = document.createElement('div');
     el.className = 'pd-block type-'+b.type;
     el.dataset.id = b.id;
@@ -11196,7 +11574,7 @@ function pdRenderAll(){
 }
 
 /* Ajusta a folha para caber sempre na área visível do editor. O scale é puramente
-   visual (as coordenadas em mm em printLayout.blocks continuam intocadas), e como os
+   visual (as coordenadas em mm em pdBlocks() continuam intocadas), e como os
    deltas de arraste usam getBoundingClientRect — que já reflete o transform — o
    arraste e o redimensionamento acompanham o cursor mesmo com scale < 1. */
 function pdFit(){
@@ -11381,6 +11759,7 @@ document.getElementById('pOpenDesigner').addEventListener('click', ()=>{
   close('mPrint');
   document.getElementById('pdPaper').value = printLayout.paperSize;
   document.getElementById('pdOrient').value = printLayout.orientation;
+  pdRenderSheetTabs();
   pdRenderAll();
   open('mPrintDesigner');
   requestAnimationFrame(pdFit);
@@ -11433,7 +11812,7 @@ document.getElementById('pdAddRect').addEventListener('click', ()=>pdAddBlock('r
 
 function pdTextField(id, key, opts){
   document.getElementById(id).addEventListener(opts&&opts.evt||'input', e=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    const b = pdBlocks().find(x=>x.id===pdSelId);
     if(!b) return;
     let v = e.target.type==='checkbox' ? e.target.checked : e.target.value;
     if(opts && opts.num) v = opts.clamp ? opts.clamp(parseFloat(v)||0) : (parseFloat(v)||0);
@@ -11454,7 +11833,7 @@ pdTextField('pdTextBorderStyle','borderStyle',{evt:'change'});
 pdTextField('pdTextBorderRadius','borderRadius',{num:true, clamp:v=>Math.max(0, Math.min(60, v))});
 document.querySelectorAll('#pdTextStyleWrap .pd-text-toggle').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    const b = pdBlocks().find(x=>x.id===pdSelId);
     if(!b) return;
     const key = btn.getAttribute('data-key');
     b.props[key] = !b.props[key];
@@ -11465,7 +11844,7 @@ document.querySelectorAll('#pdTextStyleWrap .pd-text-toggle').forEach(btn=>{
 });
 document.querySelectorAll('#pdTextStyleWrap .pd-text-align').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    const b = pdBlocks().find(x=>x.id===pdSelId);
     if(!b) return;
     b.props.align = btn.getAttribute('data-value');
     document.querySelectorAll('#pdTextStyleWrap .pd-text-align').forEach(x=>x.classList.toggle('primary', x===btn));
@@ -11475,7 +11854,7 @@ document.querySelectorAll('#pdTextStyleWrap .pd-text-align').forEach(btn=>{
 });
 function pdLineField(id, key, opts){
   document.getElementById(id).addEventListener(opts&&opts.evt||'input', e=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    const b = pdBlocks().find(x=>x.id===pdSelId);
     if(!b) return;
     let v = e.target.value;
     if(opts && opts.num) v = opts.clamp ? opts.clamp(parseFloat(v)||0) : (parseFloat(v)||0);
@@ -11495,7 +11874,7 @@ pdLineField('pdRectBorderStyle','borderStyle',{evt:'change'});
 pdLineField('pdRectBorderRadius','borderRadius',{num:true, clamp:v=>Math.max(0, Math.min(60, v))});
 document.getElementById('pdAddNorth').addEventListener('click', ()=>pdAddBlock('north'));
 document.getElementById('pdNorthStyle').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b) return;
   b.props.style = e.target.value;
   pdRenderAll();
@@ -11503,7 +11882,7 @@ document.getElementById('pdNorthStyle').addEventListener('change', e=>{
   pdMarkDirty();
 });
 document.getElementById('pdNorthShowLabel').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b) return;
   b.props.showLabel = e.target.checked;
   pdRenderAll();
@@ -11511,21 +11890,21 @@ document.getElementById('pdNorthShowLabel').addEventListener('change', e=>{
   pdMarkDirty();
 });
 document.getElementById('pdNorthLabelColor').addEventListener('input', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b) return;
   b.props.labelColor = e.target.value;
   pdRenderAll();
   pdMarkDirty();
 });
 document.getElementById('pdNorthLabelBorder').addEventListener('input', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b) return;
   b.props.labelBorderColor = e.target.value;
   pdRenderAll();
   pdMarkDirty();
 });
 document.getElementById('pdNorthLabelSize').addEventListener('input', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b) return;
   b.props.labelSize = Math.max(8, Math.min(30, parseInt(e.target.value,10) || 16));
   pdRenderAll();
@@ -11534,8 +11913,13 @@ document.getElementById('pdNorthLabelSize').addEventListener('input', e=>{
 document.getElementById('pdAddScale').addEventListener('click', ()=>pdAddBlock('scale'));
 document.getElementById('pdAddLegend').addEventListener('click', ()=>pdAddBlock('legend'));
 document.getElementById('pdAddMap').addEventListener('click', ()=>pdAddBlock('map'));
+document.getElementById('pdAddTreeCard').addEventListener('click', ()=>pdAddBlock('treeCard'));
+document.getElementById('pdAddTreeTable').addEventListener('click', ()=>pdAddBlock('treeTable'));
+document.getElementById('pdAddView3D').addEventListener('click', ()=>pdAddBlock('view3d'));
+document.getElementById('pdAddElevProfile').addEventListener('click', ()=>pdAddBlock('elevProfile'));
+document.getElementById('pdAddMeasure3dInfo').addEventListener('click', ()=>pdAddBlock('measure3dInfo'));
 document.getElementById('pdLegendCustomize').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b || b.type!=='legend') return;
   const seed = legendAutoItems();
   b.props.groups = seed.groups;
@@ -11544,20 +11928,20 @@ document.getElementById('pdLegendCustomize').addEventListener('click', ()=>{
   pdRenderAll(); pdSelect(b.id); pdMarkDirty();
 });
 document.getElementById('pdLegendAuto').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b || b.type!=='legend') return;
   b.props.mode = 'auto';
   pdRenderAll(); pdSelect(b.id); pdMarkDirty();
 });
 document.getElementById('pdLegendAddGroup').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b || b.type!=='legend') return;
   const gid = 'lg'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
   b.props.groups.push({id:gid, name:'Novo grupo', color:GRP_PALETTE[b.props.groups.length % GRP_PALETTE.length]});
   pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
 });
 document.getElementById('pdLegendAddItem').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b || b.type!=='legend') return;
   const id = 'li'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
   b.props.items.push({id, label:'Novo item', geomType:'point', color:'#6C5CE7', shape:'circle', iconAsset:null, groupId:null});
@@ -11567,7 +11951,7 @@ document.getElementById('pdLegendIconFile').addEventListener('change', async e=>
   const f = e.target.files[0];
   e.target.value = '';
   if(!f || !pdLegendIconTarget) return;
-  const b = printLayout.blocks.find(x=>x.id===pdLegendIconTarget.blockId);
+  const b = pdBlocks().find(x=>x.id===pdLegendIconTarget.blockId);
   const it = b && b.props.items.find(x=>x.id===pdLegendIconTarget.itemId);
   pdLegendIconTarget = null;
   if(!it) return;
@@ -11576,40 +11960,40 @@ document.getElementById('pdLegendIconFile').addEventListener('change', async e=>
   pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
 });
 document.getElementById('pdMapUseView').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   const c = map.getCenter();
   b.props.center = [c.lat, c.lng]; b.props.zoom = map.getZoom(); b.props.base = currentBaseName;
   pdMarkDirty();
   pdAutoRefreshMap(b);
 });
 document.getElementById('pdMapSync').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b.props.center = null; b.props.zoom = null; b.props.base = null;
   pdMarkDirty();
   pdAutoRefreshMap(b);
 });
 document.getElementById('pdMapContext').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b.props.contextOf = e.target.value || null;
   pdMarkDirty();
   pdAutoRefreshMap(b);
 });
 document.getElementById('pdMapGratOn').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b.props.graticule = b.props.graticule || {crs:'geo'};
   b.props.graticule.on = e.target.checked;
   pdMarkDirty();
   pdAutoRefreshMap(b);
 });
 document.getElementById('pdMapGratCrs').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b.props.graticule = b.props.graticule || {on:false};
   b.props.graticule.crs = e.target.value;
   pdMarkDirty();
   pdAutoRefreshMap(b);
 });
 document.getElementById('pdMapGratPos').addEventListener('change', e=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b.props.graticule = b.props.graticule || {on:false, crs:'geo'};
   b.props.graticule.position = e.target.value;
   pdMarkDirty();
@@ -11617,7 +12001,7 @@ document.getElementById('pdMapGratPos').addEventListener('change', e=>{
 });
 document.querySelectorAll('.pd-grat-dir').forEach(sel=>{
   sel.addEventListener('change', e=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+    const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
     b.props.graticule = b.props.graticule || {on:false, crs:'geo'};
     b.props.graticule.dirs = b.props.graticule.dirs || {top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'};
     b.props.graticule.dirs[e.target.getAttribute('data-side')] = e.target.value;
@@ -11627,7 +12011,7 @@ document.querySelectorAll('.pd-grat-dir').forEach(sel=>{
 });
 document.querySelectorAll('.pd-grat-preset').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+    const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
     b.props.graticule = b.props.graticule || {crs:'geo', position:'inside'};
     b.props.graticule.on = true;
     b.props.graticule.density = Number(btn.getAttribute('data-density'));
@@ -11644,7 +12028,7 @@ document.querySelectorAll('.pd-grat-preset').forEach(btn=>{
   });
 });
 document.getElementById('pdMapGridLock').addEventListener('click', ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   b._gridEdit = !b._gridEdit;
   pdUpdateGridLockButton(b);
   pdRenderAll();
@@ -11652,7 +12036,7 @@ document.getElementById('pdMapGridLock').addEventListener('click', ()=>{
   status(b._gridEdit ? 'Arraste dentro do mapa para reposicionar a grade. Clique de novo em "Concluir" quando terminar.' : '');
 });
 document.getElementById('pdMapRefresh').addEventListener('click', async ()=>{
-  const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
+  const b = pdBlocks().find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   status('Capturando prévia do mapa…');
   try{ await pdRefreshMapPreview(b); pdRenderAll(); pdSelect(b.id); pdMarkDirty(); status(''); }
   catch(e){ console.error(e); status('Falha ao capturar prévia do mapa.'); }
@@ -11701,7 +12085,7 @@ async function pdRefreshMapPreview(b){
     // L.rectangle+captura de SVG — esse caminho introduzia um deslocamento no resultado final.
     const drawFns = [];
     if(b.props.contextOf){
-      const ot = printLayout.blocks.find(x=>x.id===b.props.contextOf && x.type==='map');
+      const ot = pdBlocks().find(x=>x.id===b.props.contextOf && x.type==='map');
       if(ot){
         const otBounds = await pdBlockBounds(ot);
         if(otBounds){
@@ -11923,7 +12307,7 @@ function pdDrawGraticuleUtm(ctx, hm, opts){
 }
 map.on('zoomend', ()=>{
   if(document.getElementById('mPrintDesigner').classList.contains('open')
-     && printLayout.blocks.some(b=>b.type==='scale')) pdRenderAll();
+     && pdBlocks().some(b=>b.type==='scale')) pdRenderAll();
 });
 document.getElementById('pdAddImage').addEventListener('click', ()=>document.getElementById('pdImageFile').click());
 document.getElementById('pdImageFile').addEventListener('change', async e=>{
@@ -11963,13 +12347,23 @@ function pdBuildCleanSheet(){
 }
 function pdPrintLayout(){
   const dims = paperDims(printLayout.paperSize, printLayout.orientation);
-  const clean = pdBuildCleanSheet();
-  clean.id = 'pdPrintSheet';
-  clean.style.width = dims.w+'mm';
-  clean.style.height = dims.h+'mm';
-  clean.style.boxShadow = 'none';
-  document.querySelectorAll('#pdPrintSheet').forEach(n=>n.remove());
-  document.body.appendChild(clean);
+  const originalSheet = printLayout.activeSheet;
+  const wrap = document.createElement('div');
+  wrap.id = 'pdPrintWrap';
+  printLayout.sheets.forEach((s, i)=>{
+    printLayout.activeSheet = i;
+    pdRenderAll(); // desenha a folha i em #pdSheet, que pdBuildCleanSheet clona abaixo
+    const clean = pdBuildCleanSheet();
+    clean.classList.add('pd-print-page');
+    clean.style.width = dims.w+'mm';
+    clean.style.height = dims.h+'mm';
+    clean.style.boxShadow = 'none';
+    wrap.appendChild(clean);
+  });
+  printLayout.activeSheet = originalSheet;
+  pdRenderAll();
+  document.querySelectorAll('#pdPrintWrap').forEach(n=>n.remove());
+  document.body.appendChild(wrap);
   let styleEl = document.getElementById('pdPrintPageStyle');
   if(!styleEl){ styleEl = document.createElement('style'); styleEl.id = 'pdPrintPageStyle'; document.head.appendChild(styleEl); }
   styleEl.textContent = `@page{size:${printLayout.paperSize} ${printLayout.orientation}; margin:0}`;
@@ -11978,7 +12372,7 @@ function pdPrintLayout(){
 }
 window.addEventListener('afterprint', ()=>{
   document.body.classList.remove('print-pd');
-  document.querySelectorAll('#pdPrintSheet').forEach(n=>n.remove());
+  document.querySelectorAll('#pdPrintWrap').forEach(n=>n.remove());
 });
 /* ---------- PNG: rasterizador nativo por bloco, direto em <canvas> ----------
    Por que não "serializar a folha inteira como SVG e desenhar num <img>": um
@@ -12239,6 +12633,101 @@ async function pdDrawLegendBlock(ctx, b, w, h, mm, px, pt){
   }
   ctx.restore();
 }
+function pdDrawSimpleHtmlBlock(ctx, w, h, mm, pt, title, htmlBody){
+  ctx.save();
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+  const fontPx = Math.round(pt(8));
+  const padX = mm(2);
+  let y = mm(2);
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = '#000';
+  if(title){
+    ctx.font = 'bold '+fontPx+'px Arial, sans-serif';
+    ctx.fillText(title, padX, y);
+    y += fontPx*1.3;
+    ctx.strokeStyle = '#000'; ctx.lineWidth = Math.max(1, mm(0.3));
+    ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(w-padX, y); ctx.stroke();
+    y += mm(1);
+  }
+  ctx.font = fontPx+'px Arial, sans-serif';
+  const maxWidth = w - padX*2;
+  const lineHeight = fontPx*1.35;
+  pdHtmlToLines(htmlBody).forEach(line=>{
+    pdWrapLine(ctx, line, maxWidth).forEach(l=>{
+      if(y > h-lineHeight) return;
+      ctx.fillText(l, padX, y);
+      y += lineHeight;
+    });
+  });
+  ctx.restore();
+}
+async function pdDrawTreeCardBlock(ctx, b, w, h, mm, px, pt){
+  const feats = inventoryFeatures(null);
+  const f = feats.find(x=>x.layer && x.layer._gaid===b.props.featureId);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  if(!f){
+    ctx.fillStyle = '#666'; ctx.font = Math.round(pt(8))+'px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Ficha de árvore sem indivíduo selecionado', w/2, h/2);
+    return;
+  }
+  const p = f.p;
+  const colW = w*0.28, textX = colW*2 + mm(1);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, colW, h); ctx.clip();
+  if(p.foto){ try{ pdDrawContainImage(ctx, await pdLoadImage(assetURL(p.foto)), colW, h); }catch(e){} }
+  ctx.restore();
+  ctx.save(); ctx.translate(colW, 0); ctx.beginPath(); ctx.rect(0, 0, colW, h); ctx.clip();
+  if(p.foto_tronco){ try{ pdDrawContainImage(ctx, await pdLoadImage(assetURL(p.foto_tronco)), colW, h); }catch(e){} }
+  ctx.restore();
+  ctx.save(); ctx.translate(textX, 0);
+  const textW = Math.max(1, w - textX);
+  const lines = ['Ponto '+(p.numero_ponto??'—')];
+  if(p.codigo) lines.push('Identificação: '+p.codigo);
+  if(p.nome_cientifico) lines.push('Espécie: '+p.nome_cientifico);
+  if(p.nome_popular||p.especie) lines.push('Nome popular: '+(p.nome_popular||p.especie));
+  if(p.dap_cm!=null && p.dap_cm!=='') lines.push('DAP: '+p.dap_cm+' cm');
+  if(p.altura_m!=null && p.altura_m!=='') lines.push('Altura: '+p.altura_m+' m');
+  if(p.volume_m3!=null && p.volume_m3!=='') lines.push('Volume: '+p.volume_m3+' m³');
+  if(p.estado_fito) lines.push('Estado fitossanitário: '+p.estado_fito);
+  const fontPx = Math.round(pt(8));
+  ctx.font = fontPx+'px Arial, sans-serif'; ctx.fillStyle = '#000'; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+  let ty = 0;
+  lines.forEach(line=>{
+    pdWrapLine(ctx, line, textW).forEach(l=>{ if(ty <= h-fontPx*1.35){ ctx.fillText(l, 0, ty); ty += fontPx*1.35; } });
+  });
+  ctx.restore();
+}
+function pdDrawTreeTableBlock(ctx, b, w, h, mm, px, pt){
+  const feats = inventoryFeatures(b.props.filter);
+  const cols = (b.props.columns && b.props.columns.length ? b.props.columns : INVENTORY_TABLE_COLUMNS.map(c=>c.key))
+    .map(k=>INVENTORY_TABLE_COLUMNS.find(c=>c.key===k)).filter(Boolean);
+  ctx.save();
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  if(!feats.length || !cols.length){
+    ctx.fillStyle = '#666'; ctx.font = Math.round(pt(8))+'px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Nenhum indivíduo do inventário para exibir', w/2, h/2);
+    ctx.restore(); return;
+  }
+  const fontPx = Math.round(pt(7.5));
+  const rowH = fontPx*1.8;
+  const colW = w/cols.length;
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+  ctx.font = 'bold '+fontPx+'px Arial, sans-serif'; ctx.fillStyle = '#000';
+  cols.forEach((c,i)=>{ ctx.fillText(c.label, i*colW+mm(1), mm(1)); });
+  ctx.strokeStyle = '#999'; ctx.lineWidth = Math.max(1, px(1));
+  let y = rowH;
+  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  ctx.font = fontPx+'px Arial, sans-serif';
+  for(const f of feats){
+    if(y > h-rowH) break;
+    cols.forEach((c,i)=>{
+      const val = f.p[c.key]!=null ? String(f.p[c.key]) : '';
+      ctx.fillText(val, i*colW+mm(1), y+mm(0.8));
+    });
+    y += rowH;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  ctx.restore();
+}
 async function pdDrawBlockToCanvas(ctx, b, mm, px, pt){
   const x = mm(b.x), y = mm(b.y), w = mm(b.w), h = mm(b.h);
   ctx.save();
@@ -12263,34 +12752,55 @@ async function pdDrawBlockToCanvas(ctx, b, mm, px, pt){
       await pdDrawScaleBlock(ctx, b, w, h, mm, px, pt);
     } else if(b.type==='legend'){
       await pdDrawLegendBlock(ctx, b, w, h, mm, px, pt);
+    } else if(b.type==='view3d' || b.type==='elevProfile'){
+      if(b.props.preview) pdDrawContainImage(ctx, await pdLoadImage(b.props.preview), w, h);
+      else { ctx.fillStyle = '#e8e8e8'; ctx.fillRect(0, 0, w, h); }
+    } else if(b.type==='treeCard'){
+      await pdDrawTreeCardBlock(ctx, b, w, h, mm, px, pt);
+    } else if(b.type==='treeTable'){
+      pdDrawTreeTableBlock(ctx, b, w, h, mm, px, pt);
+    } else if(b.type==='measure3dInfo'){
+      const dist = SCENE3D.measureResult ? formatDistReport(SCENE3D.measureResult.stats) : '';
+      const vol = SCENE3D.volumeResult ? formatVolumeReport(SCENE3D.volumeResult) : '';
+      const body = [dist, vol].filter(Boolean).join('<br><br>') || 'Sem medição 3D registrada.';
+      pdDrawSimpleHtmlBlock(ctx, w, h, mm, pt, 'MEDIÇÃO 3D', body);
     }
   }catch(e){ console.warn('pdDrawBlockToCanvas', b.type, e); }
   ctx.restore();
+}
+function pdRenderSheetToCanvas(sheetBlocks, dims){
+  const DPI = 150;
+  const mm = v => v * DPI/25.4;     // medidas do modelo de blocos (x/y/w/h), sempre em mm
+  const px = v => v * DPI/96;       // medidas em px CSS (borda, raio de canto)
+  const pt = v => v * DPI/72;       // tamanho de fonte, sempre definido em pt no modelo
+  const pxW = Math.round(mm(dims.w)), pxH = Math.round(mm(dims.h));
+  const canvas = document.createElement('canvas');
+  canvas.width = pxW; canvas.height = pxH;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH);
+  const blocks = sheetBlocks.slice().sort((a,b)=>a.z-b.z);
+  return { canvas, ctx, mm, px, pt, blocks };
+}
+function pdCanvasToPngBlob(canvas){
+  return new Promise(res=>canvas.toBlob(res, 'image/png'));
 }
 async function pdExportPNG(){
   status('Gerando PNG…');
   try{
     const dims = paperDims(printLayout.paperSize, printLayout.orientation);
-    const DPI = 150;
-    const mm = v => v * DPI/25.4;     // medidas do modelo de blocos (x/y/w/h), sempre em mm
-    const px = v => v * DPI/96;       // medidas em px CSS (borda, raio de canto)
-    const pt = v => v * DPI/72;       // tamanho de fonte, sempre definido em pt no modelo
-    const pxW = Math.round(mm(dims.w)), pxH = Math.round(mm(dims.h));
-    const canvas = document.createElement('canvas');
-    canvas.width = pxW; canvas.height = pxH;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH);
-    const blocks = printLayout.blocks.slice().sort((a,b)=>a.z-b.z);
-    for(const b of blocks){ await pdDrawBlockToCanvas(ctx, b, mm, px, pt); }
-    canvas.toBlob(blob=>{
+    const multi = printLayout.sheets.length>1;
+    for(let i=0;i<printLayout.sheets.length;i++){
+      const { canvas, ctx, mm, px, pt, blocks } = pdRenderSheetToCanvas(printLayout.sheets[i].blocks, dims);
+      for(const b of blocks){ await pdDrawBlockToCanvas(ctx, b, mm, px, pt); }
+      const blob = await pdCanvasToPngBlob(canvas);
       if(!blob){ status('Falha ao gerar PNG.'); return; }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'layout-impressao.png';
+      a.download = multi ? `layout_pagina${i+1}.png` : 'layout-impressao.png';
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-      status('');
-    }, 'image/png');
+    }
+    status('');
   }catch(e){ console.error(e); status('Falha ao gerar PNG.'); }
 }
 document.getElementById('pdPrint').addEventListener('click', pdPrintLayout);
@@ -12705,45 +13215,62 @@ document.getElementById('invGenCards').addEventListener('click', ()=>{
 });
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function buildTreeCardHtml(f){
+  const p = f.p;
+  const foto = p.foto ? `<figure><img src="${assetURL(p.foto)}" alt="indivíduo"><figcaption>Indivíduo</figcaption></figure>`
+                      : `<div class="iv-noimg">sem foto</div>`;
+  const tronco = p.foto_tronco ? `<figure><img src="${assetURL(p.foto_tronco)}" alt="tronco"><figcaption>Tronco / lacre</figcaption></figure>`
+                      : `<div class="iv-noimg">sem foto do tronco</div>`;
+  const ll = f.ll;
+  const row = (k,v,extra='')=> (v!=null && v!=='') ? `<div><span class="k">${k}:</span> ${v}${extra}</div>` : '';
+  const capTxt = p.cap_fustes ? (String(p.cap_fustes).includes(';') ? String(p.cap_fustes).split(/[;,\s]+/).filter(Boolean).map((c,i)=>`Fuste ${i+1}: ${c} cm`).join(' · ') : p.cap_fustes+' cm') : '';
+  const dapTxt = (p.dap_cm!=null && p.dap_cm!=='') ? p.dap_cm+' cm'+(p.dap_multifuste?' (eq.)':'') : '';
+  const volWarn = p.volume_fora_faixa ? ` <span class="warn">${icon('warning')} estimado fora da faixa de validade (DAP≤10 cm)</span>` : '';
+  const volTxt = (p.volume_m3!=null && p.volume_m3!=='') ? p.volume_m3+' m³' : '';
+  const attrs =
+    `<div style="font-weight:700;font-size:11pt;margin-bottom:1.5mm">Ponto ${esc(p.numero_ponto??'—')}</div>`+
+    row('Identificação', esc(p.codigo))+
+    (p.nome_cientifico?`<div><span class="k">Espécie:</span> <span class="sci">${esc(p.nome_cientifico)}</span></div>`:'')+
+    row('Nome popular', esc(p.nome_popular||p.especie))+
+    row('Família', esc(p.familia))+
+    row('Origem', esc(p.origem))+
+    (ll?`<div><span class="k">Coordenadas:</span> Lat ${(p.latitude??ll.lat).toFixed?.(6) ?? p.latitude} · Long ${(p.longitude??ll.lng).toFixed?.(6) ?? p.longitude}${p.metodo_registro?' <span style="color:#666">('+esc(p.metodo_registro)+(p.precisao_gps_m!=null&&p.precisao_gps_m!==''?', ±'+p.precisao_gps_m+' m':'')+')</span>':''}</div>`:'')+
+    (p.coord_proj?`<div><span class="k">Projetada:</span> ${esc(p.coord_proj)}</div>`:'')+
+    (p.crs_registro?`<div><span class="k">SRC:</span> ${esc(p.crs_registro)}</div>`:'')+
+    row('Altura', p.altura_m!=null&&p.altura_m!==''?p.altura_m+' m':'')+
+    row('CAP', capTxt)+
+    row('DAP', dapTxt)+
+    row('Volume', volTxt, volWarn)+
+    row('Estado fitossanitário', esc(p.estado_fito))+
+    row('Pretensão', esc(p.pretensao))+
+    (p.confianca_id!=null&&p.confianca_id!==''?`<div><span class="k">Confiança da ID:</span> ${Math.round(p.confianca_id*100)}%${p.identificacao_confirmada?' (confirmada)':' (sugestão)'}</div>`:'')+
+    row('Observações', esc(p.observacoes));
+  return `<div class="iv-card">${foto}${tronco}<div class="iv-attrs">${attrs}</div></div>`;
+}
 function buildInventoryCards(feats, title, author){
   const sheet = document.getElementById('inventorySheet');
   const head = `<div class="iv-head"><h1>${esc(title)}</h1>`+
     `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoMatias — WebGIS para P&D e estudo de UI</div></div>`;
-  const cards = feats.map(f=>{
-    const p = f.p;
-    const foto = p.foto ? `<figure><img src="${assetURL(p.foto)}" alt="indivíduo"><figcaption>Indivíduo</figcaption></figure>`
-                        : `<div class="iv-noimg">sem foto</div>`;
-    const tronco = p.foto_tronco ? `<figure><img src="${assetURL(p.foto_tronco)}" alt="tronco"><figcaption>Tronco / lacre</figcaption></figure>`
-                        : `<div class="iv-noimg">sem foto do tronco</div>`;
-    const ll = f.ll;
-    const row = (k,v,extra='')=> (v!=null && v!=='') ? `<div><span class="k">${k}:</span> ${v}${extra}</div>` : '';
-    const capTxt = p.cap_fustes ? (String(p.cap_fustes).includes(';') ? String(p.cap_fustes).split(/[;,\s]+/).filter(Boolean).map((c,i)=>`Fuste ${i+1}: ${c} cm`).join(' · ') : p.cap_fustes+' cm') : '';
-    const dapTxt = (p.dap_cm!=null && p.dap_cm!=='') ? p.dap_cm+' cm'+(p.dap_multifuste?' (eq.)':'') : '';
-    const volWarn = p.volume_fora_faixa ? ` <span class="warn">${icon('warning')} estimado fora da faixa de validade (DAP≤10 cm)</span>` : '';
-    const volTxt = (p.volume_m3!=null && p.volume_m3!=='') ? p.volume_m3+' m³' : '';
-    const attrs =
-      `<div style="font-weight:700;font-size:11pt;margin-bottom:1.5mm">Ponto ${esc(p.numero_ponto??'—')}</div>`+
-      row('Identificação', esc(p.codigo))+
-      (p.nome_cientifico?`<div><span class="k">Espécie:</span> <span class="sci">${esc(p.nome_cientifico)}</span></div>`:'')+
-      row('Nome popular', esc(p.nome_popular||p.especie))+
-      row('Família', esc(p.familia))+
-      row('Origem', esc(p.origem))+
-      (ll?`<div><span class="k">Coordenadas:</span> Lat ${(p.latitude??ll.lat).toFixed?.(6) ?? p.latitude} · Long ${(p.longitude??ll.lng).toFixed?.(6) ?? p.longitude}${p.metodo_registro?' <span style="color:#666">('+esc(p.metodo_registro)+(p.precisao_gps_m!=null&&p.precisao_gps_m!==''?', ±'+p.precisao_gps_m+' m':'')+')</span>':''}</div>`:'')+
-      (p.coord_proj?`<div><span class="k">Projetada:</span> ${esc(p.coord_proj)}</div>`:'')+
-      (p.crs_registro?`<div><span class="k">SRC:</span> ${esc(p.crs_registro)}</div>`:'')+
-      row('Altura', p.altura_m!=null&&p.altura_m!==''?p.altura_m+' m':'')+
-      row('CAP', capTxt)+
-      row('DAP', dapTxt)+
-      row('Volume', volTxt, volWarn)+
-      row('Estado fitossanitário', esc(p.estado_fito))+
-      row('Pretensão', esc(p.pretensao))+
-      (p.confianca_id!=null&&p.confianca_id!==''?`<div><span class="k">Confiança da ID:</span> ${Math.round(p.confianca_id*100)}%${p.identificacao_confirmada?' (confirmada)':' (sugestão)'}</div>`:'')+
-      row('Observações', esc(p.observacoes));
-    return `<div class="iv-card">${foto}${tronco}<div class="iv-attrs">${attrs}</div></div>`;
-  }).join('');
+  const cards = feats.map(buildTreeCardHtml).join('');
   const foot = `<div class="iv-foot"><span>${author?'Responsável: '+esc(author):''}</span>`+
     `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoMatias — WebGIS para P&D e estudo de UI</span></div>`;
   sheet.innerHTML = head + cards + foot;
+}
+const INVENTORY_TABLE_COLUMNS = [
+  {key:'numero_ponto', label:'Ponto'}, {key:'codigo', label:'Identificação'},
+  {key:'nome_popular', label:'Nome popular'}, {key:'nome_cientifico', label:'Espécie'},
+  {key:'dap_cm', label:'DAP (cm)'}, {key:'altura_m', label:'Altura (m)'},
+  {key:'volume_m3', label:'Volume (m³)'}, {key:'estado_fito', label:'Estado fitoss.'}
+];
+function buildInventoryTableHtml(feats, columns){
+  const cols = (columns && columns.length ? columns : INVENTORY_TABLE_COLUMNS.map(c=>c.key))
+    .map(k=>INVENTORY_TABLE_COLUMNS.find(c=>c.key===k)).filter(Boolean);
+  const thead = `<tr>${cols.map(c=>`<th>${esc(c.label)}</th>`).join('')}</tr>`;
+  const tbody = feats.map(f=>{
+    const p = f.p;
+    return `<tr>${cols.map(c=>`<td>${esc(p[c.key]??'')}</td>`).join('')}</tr>`;
+  }).join('');
+  return `<table class="pd-inv-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
 
 /* ---------- CSV (planilha de campo) ---------- */
@@ -13030,7 +13557,7 @@ function serializeProject(){
     printLayout: printLayout,
     view3d: { layout:SCENE3D.layout, exaggeration:SCENE3D.exaggeration, pitch:SCENE3D.cam.pitch,
       bearing:SCENE3D.cam.bearing, terrainOn:SCENE3D.terrainOn, hillshadeOn:SCENE3D.hillshadeOn,
-      skyOn:SCENE3D.skyOn, terrainDemName:SCENE3D.terrainDemName },
+      skyOn:SCENE3D.skyOn, skyMode:SCENE3D.skyMode, terrainDemName:SCENE3D.terrainDemName },
     groups: groups.map(g=>({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed})),
     customCatalogs: catalogs.filter(c=>c.custom).map(c=>({name:c.name, url:c.url})),
     rasters: rasterLayers.filter(r=>!(r.def && r.def._volatile)).map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
@@ -13092,13 +13619,21 @@ function clearProjectState(){
 }
 async function applyProject(p){
   clearProjectState();
-  printLayout = (p.printLayout && Array.isArray(p.printLayout.blocks))
-    ? p.printLayout
-    : { paperSize:'A4', orientation:'landscape', blocks:[] };
-  pdSeq = printLayout.blocks.reduce((m,b)=>{
+  if(p.printLayout && Array.isArray(p.printLayout.sheets)){
+    printLayout = p.printLayout;
+    if(!(printLayout.activeSheet>=0 && printLayout.activeSheet<printLayout.sheets.length)) printLayout.activeSheet = 0;
+  } else if(p.printLayout && Array.isArray(p.printLayout.blocks)){
+    // migração de projetos salvos antes do suporte a múltiplas páginas (folha única)
+    printLayout = { paperSize:p.printLayout.paperSize||'A4', orientation:p.printLayout.orientation||'landscape',
+      sheets:[{blocks:p.printLayout.blocks}], activeSheet:0 };
+  } else {
+    printLayout = { paperSize:'A4', orientation:'landscape', sheets:[{blocks:[]}], activeSheet:0 };
+  }
+  pdSeq = printLayout.sheets.reduce((m,s)=>(s.blocks||[]).reduce((m2,b)=>{
     const n = parseInt(String(b.id).replace(/\D/g,''),10);
-    return isNaN(n) ? m : Math.max(m, n+1);
-  }, 1);
+    return isNaN(n) ? m2 : Math.max(m2, n+1);
+  }, m), 1);
+  pdRenderSheetTabs();
   // Passo 1: resolve todos os ativos (fotos, imagens) antes de montar as camadas,
   // porque assetURL() é síncrono por design — quem desenha não espera I/O.
   const refs = collectAssetRefs(p);
@@ -13185,6 +13720,8 @@ async function applyProject(p){
     SCENE3D.terrainOn = p.view3d.terrainOn!==false;
     SCENE3D.hillshadeOn = !!p.view3d.hillshadeOn;
     SCENE3D.skyOn = p.view3d.skyOn!==false;
+    SCENE3D.skyMode = p.view3d.skyMode || 'auto';
+    updateSkyModeButtons();
     SCENE3D.terrainDemName = p.view3d.terrainDemName || null;
     const exagEl = document.getElementById('v3dExag'); if(exagEl) exagEl.value = SCENE3D.exaggeration;
     const exagV = document.getElementById('v3dExagV'); if(exagV) exagV.textContent = SCENE3D.exaggeration.toFixed(1)+'×';

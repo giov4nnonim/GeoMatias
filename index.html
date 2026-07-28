@@ -1001,11 +1001,17 @@ body.split3d #v3dDivider{ display:block }
 }
 
 #inventorySheet{display:none}
+#pdPrintSheet{display:none}
 @media print{
   @page{size:A4 landscape; margin:10mm}
   html,body{overflow:visible; background:#fff; color:#000; height:auto}
   /* modo padrão: folha de mapa */
-  body:not(.print-inv) > *:not(#printSheet){display:none!important}
+  body:not(.print-inv):not(.print-pd) > *:not(#printSheet){display:none!important}
+  /* modo layout personalizado: folha do editor de layout de impressão (#mPrintDesigner) —
+     o tamanho de papel real é definido em tempo de execução por um <style id="pdPrintPageStyle">
+     próprio (pdPrintLayout()), que sobrescreve o @page acima */
+  body.print-pd > *:not(#pdPrintSheet){display:none!important}
+  body.print-pd #pdPrintSheet{display:block!important; box-shadow:none; margin:0}
   #printSheet{display:block!important; width:100%; color:#000; font-family:Georgia, "Times New Roman", serif}
   #printSheet .p-head{border-bottom:3px double #000; padding-bottom:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-end}
   #printSheet h1{font-size:24pt; margin:0}
@@ -1820,6 +1826,8 @@ body.split3d #v3dDivider{ display:block }
       <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
       <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
       <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
+      <button class="tb-btn" id="pdPrint" data-icon="printer" title="Abre o diálogo de impressão do navegador — escolha &quot;Salvar como PDF&quot; para gerar um PDF">Imprimir / PDF</button>
+      <button class="tb-btn" id="pdExportPng" data-icon="download" title="Baixa este layout como imagem PNG">Baixar PNG</button>
       <input type="file" id="pdImageFile" accept="image/*" style="display:none">
       <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
       <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
@@ -2631,7 +2639,8 @@ const ICONS = {
   alignRight:'<path d="M4 6h16M10 11h10M6 16h14M12 21h8"/>',
   alignJustify:'<path d="M4 6h16M4 11h16M4 16h16M4 21h16"/>',
   lineTool:'<path d="M4 20 20 4"/><circle cx="4" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.6" fill="currentColor" stroke="none"/>',
-  rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>'
+  rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>',
+  printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -11799,18 +11808,17 @@ function pdMakeGridLabelFn(ctx, size, opts){
       let ax=x, ay=y;
       if(side==='top')    { ax=x; ay = pos==='outside' ? -margin+2 : 2; }
       if(side==='bottom') { ax=x; ay = pos==='outside' ? size.y+margin-2 : size.y-2; }
-      if(side==='left')   { ax = pos==='outside' ? -margin+2 : 2; ay=y; }
+      // lado esquerdo: com a mesma folga de 2px usada nos outros lados, o texto rotacionado
+      // nasce quase todo fora do canvas (só a lasca do traço de base ficava visível — a caixa
+      // branca de fundo aparecia, mas sem nenhuma letra dentro, o bug relatado). A folga
+      // precisa ser >= altura da fonte para a rotação caber inteira para dentro do quadro
+      // (ou para dentro da margem, se pos==='outside'); verificado desenhando em canvas e
+      // conferindo os pixels realmente pintados, não só a matemática da rotação.
+      if(side==='left')   { ax = pos==='outside' ? -margin-9 : 11; ay=y; }
       if(side==='right')  { ax = pos==='outside' ? size.x+margin-2 : size.x-2; ay=y; }
       ctx.translate(ax, ay); ctx.rotate(angle);
-      // no lado esquerdo, o deslocamento perpendicular (-7..4) empurra a caixa para o eixo
-      // mundo -x — ou seja, para FORA do quadro — sempre que a rotação não compensa o sinal;
-      // isso só acontece do lado esquerdo (à direita o mesmo deslocamento já cai para dentro
-      // por coincidência de sinais). Espelha o deslocamento nesse caso para manter o rótulo
-      // dentro (ou fora, se pos==='outside') do quadro, como nos demais lados.
-      const flipLeft = side==='left' && ((dir==='vertical-up') !== (pos==='outside'));
-      const ry = flipLeft ? -4 : -7, txy = flipLeft ? -2 : 2;
-      ctx.fillStyle='#fff'; ctx.fillRect(1, ry, tw+3, 11);
-      ctx.fillStyle='#000'; ctx.fillText(text, 2, txy);
+      ctx.fillStyle='#fff'; ctx.fillRect(1, -7, tw+3, 11);
+      ctx.fillStyle='#000'; ctx.fillText(text, 2, 2);
     }
     ctx.restore();
   };
@@ -11926,6 +11934,367 @@ document.getElementById('pdImageFile').addEventListener('change', async e=>{
 });
 document.getElementById('pdDeleteSel').addEventListener('click', ()=>{ if(pdSelId) pdDeleteBlock(pdSelId); });
 document.getElementById('pdSheet').addEventListener('pointerdown', e=>{ if(e.target.id==='pdSheet') pdSelect(null); });
+
+/* =========================================================
+   Exportação do layout (Imprimir/PDF e PNG)
+   ---------------------------------------------------------
+   Sem dependência nova: PDF sai pelo diálogo de impressão nativo
+   do navegador (o usuário escolhe "Salvar como PDF"); PNG sai por
+   um SVG com <foreignObject> rasterizado em <canvas> — mesma
+   filosofia "nativo em vez de biblioteca" do resto do projeto.
+   ========================================================= */
+/* cópia limpa da folha (sem barra de ferramentas do bloco, alças de
+   redimensionar, contorno de seleção nem contenteditable) — base
+   compartilhada tanto pela impressão quanto pelo PNG */
+function pdBuildCleanSheet(){
+  const src = document.getElementById('pdSheet');
+  const clone = src.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.remove('sel');
+  clone.querySelectorAll('.pd-bar, .pd-handle, .pd-grid-drag-overlay').forEach(n=>n.remove());
+  clone.querySelectorAll('.pd-block').forEach(n=>{
+    n.classList.remove('sel', 'grid-edit');
+    n.style.border = 'none';
+    n.style.cursor = 'default';
+    const inner = n.querySelector('[contenteditable]');
+    if(inner) inner.removeAttribute('contenteditable');
+  });
+  return clone;
+}
+function pdPrintLayout(){
+  const dims = paperDims(printLayout.paperSize, printLayout.orientation);
+  const clean = pdBuildCleanSheet();
+  clean.id = 'pdPrintSheet';
+  clean.style.width = dims.w+'mm';
+  clean.style.height = dims.h+'mm';
+  clean.style.boxShadow = 'none';
+  document.querySelectorAll('#pdPrintSheet').forEach(n=>n.remove());
+  document.body.appendChild(clean);
+  let styleEl = document.getElementById('pdPrintPageStyle');
+  if(!styleEl){ styleEl = document.createElement('style'); styleEl.id = 'pdPrintPageStyle'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `@page{size:${printLayout.paperSize} ${printLayout.orientation}; margin:0}`;
+  document.body.classList.add('print-pd');
+  setTimeout(()=>window.print(), 50);
+}
+window.addEventListener('afterprint', ()=>{
+  document.body.classList.remove('print-pd');
+  document.querySelectorAll('#pdPrintSheet').forEach(n=>n.remove());
+});
+/* ---------- PNG: rasterizador nativo por bloco, direto em <canvas> ----------
+   Por que não "serializar a folha inteira como SVG e desenhar num <img>": um
+   <canvas> onde se desenhou uma imagem de SVG que contém <foreignObject> (HTML
+   embutido) fica "tainted" e todo toDataURL()/toBlob() lança SecurityError —
+   confirmado na prática, mesmo com toda imagem já embutida como dataURL. A
+   única saída sem depender de biblioteca é desenhar cada bloco com as
+   primitivas do Canvas 2D (fillText, fillRect, arc, drawImage de <img>/SVG
+   *sem* foreignObject) — nunca colocar HTML dentro de um SVG usado como <img>. */
+function pdRoundRectPath(ctx, x, y, w, h, r){
+  r = Math.max(0, Math.min(r, w/2, h/2));
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function pdLoadImage(src){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = ()=>res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+/* SVG puro (só path/rect/circle/text — nunca <foreignObject>) rasterizado via <img>;
+   seguro para canvas.toBlob() porque não carrega nenhum recurso externo */
+function pdSvgToImage(svgMarkup){
+  const url = URL.createObjectURL(new Blob([svgMarkup], {type:'image/svg+xml'}));
+  return pdLoadImage(url).finally(()=>URL.revokeObjectURL(url));
+}
+function pdDrawContainImage(ctx, img, w, h){
+  const iw = img.naturalWidth||img.width, ih = img.naturalHeight||img.height;
+  if(!iw || !ih) return;
+  const scale = Math.min(w/iw, h/ih);
+  const dw = iw*scale, dh = ih*scale;
+  ctx.drawImage(img, (w-dw)/2, (h-dh)/2, dw, dh);
+}
+function pdSetDash(ctx, style, dashPx, gapPx){
+  if(style==='dashed') ctx.setLineDash([dashPx, gapPx]);
+  else if(style==='dotted') ctx.setLineDash([dashPx*0.4, gapPx*0.6]);
+  else ctx.setLineDash([]);
+}
+function pdWrapLine(ctx, text, maxWidth){
+  if(!text) return [''];
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  words.forEach(word=>{
+    const test = cur ? cur+' '+word : word;
+    if(ctx.measureText(test).width > maxWidth && cur){ lines.push(cur); cur = word; }
+    else cur = test;
+  });
+  lines.push(cur);
+  return lines;
+}
+function pdHtmlToLines(html){
+  const tmp = document.createElement('div');
+  tmp.innerHTML = (html||'').replace(/<\/(div|p)>/gi, '\n').replace(/<br\s*\/?>/gi, '\n');
+  return (tmp.textContent||'').split('\n');
+}
+function pdDrawTextBlock(ctx, b, w, h, mm, px, pt){
+  const p = b.props;
+  const fontPx = pt(p.fontSize||11);
+  const radius = px(p.borderRadius||0);
+  pdRoundRectPath(ctx, 0, 0, w, h, radius);
+  if(p.bgColor){ ctx.fillStyle = hexWithAlpha(p.bgColor, p.bgOpacity); ctx.fill(); }
+  if((p.borderWidth||0)>0 && p.borderColor){
+    ctx.lineWidth = px(p.borderWidth);
+    ctx.strokeStyle = p.borderColor;
+    pdSetDash(ctx, p.borderStyle, px(6), px(4));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.save();
+  pdRoundRectPath(ctx, 0, 0, w, h, radius);
+  ctx.clip();
+  const padding = mm(2);
+  const fontParts = [];
+  if(p.italic) fontParts.push('italic');
+  if(p.bold) fontParts.push('bold');
+  fontParts.push(Math.round(fontPx)+'px');
+  fontParts.push(p.fontFamily||'Arial, sans-serif');
+  ctx.font = fontParts.join(' ');
+  ctx.fillStyle = p.color||'#000';
+  ctx.textBaseline = 'top';
+  const align = p.align==='justify' ? 'left' : (p.align||'left');
+  const maxWidth = Math.max(1, w - padding*2);
+  const allLines = [];
+  pdHtmlToLines(p.html).forEach(l=>{
+    pdWrapLine(ctx, p.uppercase ? l.toUpperCase() : l, maxWidth).forEach(x=>allLines.push(x));
+  });
+  const lineHeight = fontPx * 1.35;
+  const tx0 = padding, txC = w/2, txR = w-padding;
+  let ty = padding;
+  allLines.forEach(line=>{
+    const tx = align==='center' ? txC : align==='right' ? txR : tx0;
+    ctx.textAlign = align==='center' ? 'center' : align==='right' ? 'right' : 'left';
+    ctx.fillText(line, tx, ty);
+    if(p.underline || p.strike){
+      const lw = ctx.measureText(line).width;
+      const lx0 = align==='center' ? txC-lw/2 : align==='right' ? txR-lw : tx0;
+      ctx.save();
+      ctx.strokeStyle = p.color||'#000';
+      ctx.lineWidth = Math.max(1, fontPx*0.06);
+      if(p.underline){ const uy = ty+fontPx*0.95; ctx.beginPath(); ctx.moveTo(lx0,uy); ctx.lineTo(lx0+lw,uy); ctx.stroke(); }
+      if(p.strike){ const sy = ty+fontPx*0.55; ctx.beginPath(); ctx.moveTo(lx0,sy); ctx.lineTo(lx0+lw,sy); ctx.stroke(); }
+      ctx.restore();
+    }
+    ty += lineHeight;
+  });
+  ctx.restore();
+}
+function pdDrawRectBlock(ctx, b, w, h, px){
+  const p = b.props;
+  const radius = px(p.borderRadius||0);
+  pdRoundRectPath(ctx, 0, 0, w, h, radius);
+  if(p.fillColor){ ctx.fillStyle = hexWithAlpha(p.fillColor, p.fillOpacity); ctx.fill(); }
+  if((p.borderWidth||0)>0 && p.borderColor){
+    ctx.lineWidth = px(p.borderWidth);
+    ctx.strokeStyle = p.borderColor;
+    pdSetDash(ctx, p.borderStyle, px(6), px(4));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+function pdDrawLineBlock(ctx, b, w, h, px){
+  const p = b.props;
+  ctx.lineWidth = px(p.width||1);
+  ctx.strokeStyle = p.color||'#000';
+  pdSetDash(ctx, p.style, px(6), px(4));
+  ctx.beginPath();
+  ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+async function pdDrawScaleBlock(ctx, b, w, h, mm, px, pt){
+  const html = pdScaleHtml(b);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const inner = tmp.firstElementChild;
+  let cy = 0;
+  const svgEl = inner && inner.querySelector('svg');
+  if(svgEl){
+    const svgWmm = parseFloat(svgEl.getAttribute('width'))||0;
+    const svgHmm = parseFloat(svgEl.getAttribute('height'))||0;
+    try{
+      const img = await pdSvgToImage(new XMLSerializer().serializeToString(svgEl));
+      ctx.drawImage(img, 0, 0, mm(svgWmm), mm(svgHmm));
+    }catch(e){ console.warn('pdDrawScaleBlock', e); }
+    cy = mm(svgHmm) + mm(1);
+  }
+  const textDiv = inner && inner.querySelector('div');
+  if(textDiv && textDiv.textContent){
+    ctx.font = Math.round(pt(8))+'px Arial, sans-serif';
+    ctx.fillStyle = '#111';
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.fillText(textDiv.textContent, 0, cy);
+  }
+}
+/* mesma fonte de dados do painel/da folha (modo custom usa b.props, modo auto
+   espelha o estado ao vivo via legendAutoItems()) — achatada em linhas prontas
+   pra desenhar, cabeçalho de grupo + itens */
+function pdLegendRows(b){
+  const data = (b.props.mode==='custom') ? {groups:b.props.groups||[], items:b.props.items||[]} : legendAutoItems();
+  const rows = [];
+  data.items.filter(it=>!it.groupId).forEach(it=>rows.push(Object.assign({indent:false}, it)));
+  data.groups.forEach(g=>{
+    const gi = data.items.filter(it=>it.groupId===g.id);
+    if(!gi.length) return;
+    rows.push({isHeader:true, label:g.name, color:g.color});
+    gi.forEach(it=>rows.push(Object.assign({indent:true}, it)));
+  });
+  return rows;
+}
+function pdDrawLegendSwatch(ctx, row, iconCache, x, y, size){
+  if(row.iconAsset && iconCache.has(row.iconAsset)){
+    const img = iconCache.get(row.iconAsset);
+    if(img) ctx.drawImage(img, x, y, size, size);
+    return;
+  }
+  const fill = row.color || '#888';
+  if(row.geomType==='raster'){
+    ctx.fillStyle = '#ccc'; ctx.fillRect(x, y, size, size*0.66);
+    ctx.strokeStyle = '#888'; ctx.strokeRect(x, y, size, size*0.66);
+  } else if(row.geomType==='base'){
+    ctx.fillStyle = fill; ctx.fillRect(x, y, size, size*0.66);
+    ctx.strokeStyle = '#000'; ctx.strokeRect(x, y, size, size*0.66);
+  } else if(row.geomType==='measure'){
+    ctx.strokeStyle = fill; ctx.lineWidth = Math.max(2, size*0.15);
+    ctx.beginPath(); ctx.moveTo(x, y+size*0.4); ctx.lineTo(x+size, y+size*0.4); ctx.stroke();
+  } else if(row.geomType==='line'){
+    ctx.strokeStyle = fill; ctx.lineWidth = Math.max(2, size*0.15);
+    ctx.beginPath(); ctx.moveTo(x, y+size*0.7); ctx.lineTo(x+size, y+size*0.3); ctx.stroke();
+  } else if(row.geomType==='point'){
+    const cx = x+size/2, cy = y+size/2, r = size/2;
+    ctx.fillStyle = fill; ctx.strokeStyle = fill;
+    if(row.shape==='cross'){
+      ctx.lineWidth = Math.max(2, size*0.18);
+      ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(cx,y+size); ctx.moveTo(x,cy); ctx.lineTo(x+size,cy); ctx.stroke();
+      return;
+    }
+    ctx.beginPath();
+    if(row.shape==='square') ctx.rect(x, y, size, size);
+    else if(row.shape==='triangle'){ ctx.moveTo(cx,y); ctx.lineTo(x+size,y+size); ctx.lineTo(x,y+size); ctx.closePath(); }
+    else if(row.shape==='diamond'){ ctx.moveTo(cx,y); ctx.lineTo(x+size,cy); ctx.lineTo(cx,y+size); ctx.lineTo(x,cy); ctx.closePath(); }
+    else ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.fill();
+  } else {
+    // polígono (padrão)
+    ctx.globalAlpha = 0.45; ctx.fillStyle = fill; ctx.fillRect(x, y, size, size*0.7); ctx.globalAlpha = 1;
+    ctx.strokeStyle = fill; ctx.strokeRect(x, y, size, size*0.7);
+  }
+}
+async function pdDrawLegendBlock(ctx, b, w, h, mm, px, pt){
+  const rows = pdLegendRows(b);
+  const iconCache = new Map();
+  for(const row of rows){
+    if(row.iconAsset && !iconCache.has(row.iconAsset)){
+      const src = assetURL(row.iconAsset);
+      try{ iconCache.set(row.iconAsset, src ? await pdLoadImage(src) : null); }
+      catch(e){ iconCache.set(row.iconAsset, null); }
+    }
+  }
+  ctx.save();
+  pdRoundRectPath(ctx, 0, 0, w, h, 0);
+  ctx.clip();
+  const fontPx = Math.round(pt(8));
+  const padX = mm(2);
+  let y = mm(2);
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  ctx.font = 'bold '+fontPx+'px Arial, sans-serif';
+  ctx.fillStyle = '#000';
+  ctx.fillText('LEGENDA', padX, y);
+  y += fontPx*1.3;
+  ctx.strokeStyle = '#000'; ctx.lineWidth = Math.max(1, px(1));
+  ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(w-padX, y); ctx.stroke();
+  y += mm(1);
+  const rowH = fontPx*1.6, swSize = mm(3.5);
+  for(const row of rows){
+    if(y > h - rowH) break; // mesmo corte por overflow:hidden do bloco na tela
+    const x0 = padX + (row.indent ? mm(4) : 0);
+    if(row.isHeader){
+      ctx.font = 'bold '+fontPx+'px Arial, sans-serif';
+      ctx.fillStyle = row.color||'#000';
+      ctx.fillText(row.label, x0, y+mm(1));
+    } else {
+      pdDrawLegendSwatch(ctx, row, iconCache, x0, y+(rowH-swSize)/2, swSize);
+      ctx.font = fontPx+'px Arial, sans-serif';
+      ctx.fillStyle = '#000';
+      ctx.fillText(row.label, x0+swSize+mm(1.5), y+(rowH-fontPx)/2);
+    }
+    y += rowH;
+  }
+  ctx.restore();
+}
+async function pdDrawBlockToCanvas(ctx, b, mm, px, pt){
+  const x = mm(b.x), y = mm(b.y), w = mm(b.w), h = mm(b.h);
+  ctx.save();
+  ctx.translate(x+w/2, y+h/2);
+  ctx.rotate((b.rot||0) * Math.PI/180);
+  ctx.scale(b.flipH?-1:1, b.flipV?-1:1);
+  ctx.translate(-w/2, -h/2);
+  try{
+    if(b.type==='text') pdDrawTextBlock(ctx, b, w, h, mm, px, pt);
+    else if(b.type==='rect') pdDrawRectBlock(ctx, b, w, h, px);
+    else if(b.type==='line') pdDrawLineBlock(ctx, b, w, h, px);
+    else if(b.type==='image' && b.props.asset){
+      const src = assetURL(b.props.asset);
+      if(src) pdDrawContainImage(ctx, await pdLoadImage(src), w, h);
+    } else if(b.type==='map'){
+      if(b.props.preview) pdDrawContainImage(ctx, await pdLoadImage(b.props.preview), w, h);
+      else { ctx.fillStyle = '#e8e8e8'; ctx.fillRect(0, 0, w, h); }
+    } else if(b.type==='north'){
+      const img = await pdSvgToImage(pdNorthSvg(b.props.style, b.props));
+      ctx.drawImage(img, 0, 0, w, h);
+    } else if(b.type==='scale'){
+      await pdDrawScaleBlock(ctx, b, w, h, mm, px, pt);
+    } else if(b.type==='legend'){
+      await pdDrawLegendBlock(ctx, b, w, h, mm, px, pt);
+    }
+  }catch(e){ console.warn('pdDrawBlockToCanvas', b.type, e); }
+  ctx.restore();
+}
+async function pdExportPNG(){
+  status('Gerando PNG…');
+  try{
+    const dims = paperDims(printLayout.paperSize, printLayout.orientation);
+    const DPI = 150;
+    const mm = v => v * DPI/25.4;     // medidas do modelo de blocos (x/y/w/h), sempre em mm
+    const px = v => v * DPI/96;       // medidas em px CSS (borda, raio de canto)
+    const pt = v => v * DPI/72;       // tamanho de fonte, sempre definido em pt no modelo
+    const pxW = Math.round(mm(dims.w)), pxH = Math.round(mm(dims.h));
+    const canvas = document.createElement('canvas');
+    canvas.width = pxW; canvas.height = pxH;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH);
+    const blocks = printLayout.blocks.slice().sort((a,b)=>a.z-b.z);
+    for(const b of blocks){ await pdDrawBlockToCanvas(ctx, b, mm, px, pt); }
+    canvas.toBlob(blob=>{
+      if(!blob){ status('Falha ao gerar PNG.'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'layout-impressao.png';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      status('');
+    }, 'image/png');
+  }catch(e){ console.error(e); status('Falha ao gerar PNG.'); }
+}
+document.getElementById('pdPrint').addEventListener('click', pdPrintLayout);
+document.getElementById('pdExportPng').addEventListener('click', pdExportPNG);
 
 /* O Leaflet aplica setOpacity() no CONTÊINER da camada, não em cada tile —
    para a captura respeitar a transparência, acumula a opacidade dos ancestrais. */

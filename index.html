@@ -101,6 +101,11 @@
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)}
+/* <select>/<option> nativos ignoram a cor herdada do tema no popup de opções
+   em alguns navegadores (renderizam com preto puro do sistema em vez de
+   var(--text)) — sem isto, no tema claro o popup nativo destoa do resto da
+   UI, que nunca usa preto puro (var(--text) claro é #1B1C1D, chumbo escuro). */
+select, option{ color:var(--text); background:var(--field); }
 /* altura dinâmica: compensa a barra de endereço que aparece/some no mobile */
 @supports (height:100dvh){ html,body{height:100dvh} }
 #map{position:absolute; inset:0; background:var(--map-bg)}
@@ -322,6 +327,17 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #elevStats{font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:6px}
 #elevStats b{color:var(--text)}
 #elevCanvas{width:100%; height:140px; display:block; background:var(--panel2); border-radius:6px}
+/* Painel de resultado de corte/aterro (medição 3D) — mesmo padrão visual de #elevPanel */
+#v3dVolPanel{
+  position:absolute; right:12px; bottom:100px; z-index:1250;
+  width:min(320px, 92vw); background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; box-shadow:0 8px 30px var(--shadow-strong); padding:10px 12px;
+}
+#v3dVolHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+#v3dVolHead span:first-child{font-size:13px; font-weight:600}
+#v3dVolHead #v3dVolClose{background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px}
+#v3dVolStats{font-size:12px; color:var(--muted); line-height:1.6}
+#v3dVolStats b{color:var(--text)}
 /* Vista 3D (terreno, MapLibre GL): palco sobreposto ao mapa 2D.
    z-index 1050: acima do #map, abaixo de toolbar/painel (1100),
    topbar/status (1200), #elevPanel (1250), #drawBar (1300) e modais
@@ -380,9 +396,10 @@ body.split3d #v3dDivider{ display:block }
   font-size:13px; font-weight:600;
 }
 #v3dBarBody{
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  display:flex; flex-direction:column; align-items:stretch; gap:8px;
   padding:8px 12px; max-height:38vh; overflow-y:auto;
 }
+.v3d-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
 #v3dLayout{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
 .v3d-seg{
   border:none; background:transparent; color:var(--muted); font-size:11.5px;
@@ -391,9 +408,25 @@ body.split3d #v3dDivider{ display:block }
 .v3d-seg.active{ background:var(--accent-soft); color:var(--text) }
 #v3dBarBody label{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; flex:none }
 #v3dExagWrap input, #v3dPitchWrap input{ width:70px; accent-color:var(--accent) }
+#v3dDemWrap{ display:flex; align-items:center; gap:6px; flex:none }
 #v3dBarBody select{
   background:var(--field); border:1px solid var(--line); color:var(--text);
   border-radius:999px; padding:4px 8px; font-size:12px; max-width:140px; flex:none;
+}
+.v3d-info{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:50%; color:var(--muted);
+  cursor:help; flex:none;
+}
+.v3d-info:hover, .v3d-info:focus-visible{ color:var(--accent); outline:none }
+.v3d-info .ic{ width:15px; height:15px }
+#v3dMTools{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
+.v3d-mactions{ display:none; align-items:center; gap:6px; flex-wrap:wrap }
+.v3d-mactions.on{ display:flex }
+.v3d-mhint{ font-size:11.5px; color:var(--muted) }
+#v3dVolRef, #v3dVolRefCustom{
+  background:var(--field); border:1px solid var(--line); color:var(--text);
+  border-radius:999px; padding:4px 8px; font-size:12px; max-width:110px; flex:none;
 }
 #v3dHud{
   position:absolute; left:12px; top:12px; z-index:1070;
@@ -1420,26 +1453,66 @@ body.split3d #v3dDivider{ display:block }
     <button class="tb-btn modal-x" id="v3dClose" title="Fechar" data-icon="close"></button>
   </div>
   <div id="v3dBarBody">
-    <div id="v3dLayout" role="group" aria-label="Layout da vista 3D">
-      <button class="v3d-seg active" data-layout="full" title="Tela cheia">Cheia</button>
-      <button class="v3d-seg" data-layout="split" title="Lado a lado com o mapa 2D">Dividida</button>
-      <button class="v3d-seg" data-layout="panel" title="Painel flutuante">Flutuante</button>
+    <div class="v3d-row">
+      <div id="v3dLayout" role="group" aria-label="Layout da vista 3D">
+        <button class="v3d-seg active" data-layout="full" title="Tela cheia">Cheia</button>
+        <button class="v3d-seg" data-layout="split" title="Lado a lado com o mapa 2D">Dividida</button>
+        <button class="v3d-seg" data-layout="panel" title="Painel flutuante">Flutuante</button>
+      </div>
+      <label id="v3dExagWrap" title="Exagero vertical do relevo">
+        <span data-icon="cube3d"></span>
+        <input type="range" id="v3dExag" min="1" max="5" step="0.1" value="1.5">
+        <span id="v3dExagV">1.5×</span>
+      </label>
+      <label id="v3dPitchWrap" title="Inclinação da câmera">
+        <input type="range" id="v3dPitch" min="0" max="85" step="1" value="60">
+        <span id="v3dPitchV">60°</span>
+      </label>
+      <button class="tb-btn" id="v3dNorth" title="Resetar para o norte"><span data-icon="compass"></span> <span id="v3dBearingV">0°</span></button>
+      <span id="v3dDemWrap">
+        <select id="v3dDemSel" title="DEM usado como terreno"></select>
+        <span class="v3d-info" id="v3dDemInfo" data-icon="info" tabindex="0" role="img"
+          title="Se você carregou um DEM depois de abrir a vista 3D, ele não entra sozinho nesta lista — feche a vista 3D (✕) e abra de novo para atualizar."></span>
+      </span>
     </div>
-    <label id="v3dExagWrap" title="Exagero vertical do relevo">
-      <span data-icon="cube3d"></span>
-      <input type="range" id="v3dExag" min="1" max="5" step="0.1" value="1.5">
-      <span id="v3dExagV">1.5×</span>
-    </label>
-    <label id="v3dPitchWrap" title="Inclinação da câmera">
-      <input type="range" id="v3dPitch" min="0" max="85" step="1" value="60">
-      <span id="v3dPitchV">60°</span>
-    </label>
-    <button class="tb-btn" id="v3dNorth" title="Resetar para o norte"><span data-icon="compass"></span> <span id="v3dBearingV">0°</span></button>
-    <label id="v3dTerrainWrap" title="Ligar/desligar relevo 3D"><input type="checkbox" id="v3dTerrainOn" checked> Terreno</label>
-    <label id="v3dHillWrap" title="Sombreamento sobre o relevo"><input type="checkbox" id="v3dHillOn"> Sombreado</label>
-    <label id="v3dSkyWrap" title="Céu/atmosfera"><input type="checkbox" id="v3dSkyOn" checked> Céu</label>
-    <select id="v3dDemSel" title="DEM usado como terreno"></select>
+    <div class="v3d-row">
+      <label id="v3dTerrainWrap" title="Ligar/desligar relevo 3D"><input type="checkbox" id="v3dTerrainOn" checked> Terreno</label>
+      <label id="v3dHillWrap" title="Sombreamento sobre o relevo"><input type="checkbox" id="v3dHillOn"> Sombreado</label>
+      <label id="v3dSkyWrap" title="Céu/atmosfera"><input type="checkbox" id="v3dSkyOn" checked> Céu</label>
+    </div>
+    <div class="v3d-row">
+      <div id="v3dMTools" role="group" aria-label="Ferramentas de medição 3D">
+        <button class="v3d-seg v3d-mtool" data-mtool="dist" title="Distância 3D"><span data-icon="ruler"></span></button>
+        <button class="v3d-seg v3d-mtool" data-mtool="volume" title="Corte/aterro"><span data-icon="volume3d"></span></button>
+      </div>
+      <span id="v3dDistActions" class="v3d-mactions">
+        <span class="v3d-mhint">Clique para marcar pontos · duplo-clique para concluir</span>
+        <button class="tb-btn primary" id="v3dDistFinish">✓ Concluir</button>
+        <button class="tb-btn" id="v3dDistCancel">Cancelar</button>
+      </span>
+      <span id="v3dVolActions" class="v3d-mactions">
+        <span class="v3d-mhint">Clique para marcar o polígono</span>
+        <select id="v3dVolRef" title="Plano de referência">
+          <option value="mean">Média</option>
+          <option value="min">Mínimo</option>
+          <option value="max">Máximo</option>
+          <option value="custom">Valor…</option>
+        </select>
+        <input type="number" id="v3dVolRefCustom" placeholder="cota (m)" style="display:none">
+        <button class="tb-btn primary" id="v3dVolFinish">✓ Concluir</button>
+        <button class="tb-btn" id="v3dVolCancel">Cancelar</button>
+      </span>
+    </div>
   </div>
+</div>
+
+<!-- ===== Painel: resultado de corte/aterro (medição 3D) ===== -->
+<div id="v3dVolPanel" style="display:none">
+  <div id="v3dVolHead">
+    <span>Corte / aterro</span>
+    <button id="v3dVolClose" title="Fechar" data-icon="close"></button>
+  </div>
+  <div id="v3dVolStats"></div>
 </div>
 
 <!-- ===== Barra: digitalização por GPS ===== -->
@@ -2416,7 +2489,8 @@ const ICONS = {
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.5-2.2"/>',
   cube3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
-  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>'
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>',
+  volume3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4"/><path d="M6 11.5 12 14.5 18 11.5" stroke-dasharray="2.5 2.5"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -7350,11 +7424,13 @@ function drawElevProfile(samples, stats){
   ctx.clearRect(0,0,w,h);
 
   const pts = samples.filter(s=>s.elev!=null);
+  canvas._profileMeta = null;
   if(pts.length<2) return;
   const minE = Math.min(...pts.map(p=>p.elev)), maxE = Math.max(...pts.map(p=>p.elev));
   const padL=44, padB=20, padT=10, padR=8;
   const plotW = Math.max(1, w-padL-padR), plotH = Math.max(1, h-padT-padB);
   const maxDist = pts[pts.length-1].dist || 1;
+  canvas._profileMeta = { pts, maxDist, padL, plotW };
   const eRange = (maxE-minE) || 1;
   const X = d => padL + (d/maxDist)*plotW;
   const Y = el => padT + plotH - ((el-minE)/eRange)*plotH;
@@ -7375,6 +7451,39 @@ function drawElevProfile(samples, stats){
   ctx.stroke();
 }
 document.getElementById('elevClose').addEventListener('click', ()=>{ document.getElementById('elevPanel').style.display='none'; });
+
+/* Crosshair: passar o mouse sobre o perfil destaca o ponto correspondente
+   no mapa 3D (marcador MapLibre — a medição pode não ter layer Leaflet,
+   pois run3DMeasure(null,...) não cria uma). Escopo é só o mapa 3D. */
+function showProfileCrosshair(p){
+  const m3 = SCENE3D.map3d;
+  if(!m3) return;
+  if(!m3.getSource('__v3d_crosshair')){
+    m3.addSource('__v3d_crosshair', { type:'geojson', data: emptyFC() });
+    m3.addLayer({ id:'__v3d_crosshair', type:'circle', source:'__v3d_crosshair',
+      paint:{ 'circle-radius':7, 'circle-color':'#ffb347', 'circle-stroke-color':'#0c1116', 'circle-stroke-width':2 } });
+  }
+  m3.getSource('__v3d_crosshair').setData({ type:'FeatureCollection',
+    features:[{ type:'Feature', geometry:{type:'Point', coordinates:[p.lng,p.lat]}, properties:{} }] });
+  m3.setLayoutProperty('__v3d_crosshair', 'visibility', 'visible');
+}
+function hideProfileCrosshair(){
+  const m3 = SCENE3D.map3d;
+  if(m3 && m3.getLayer('__v3d_crosshair')) m3.setLayoutProperty('__v3d_crosshair','visibility','none');
+}
+document.getElementById('elevCanvas').addEventListener('mousemove', e=>{
+  const canvas = e.currentTarget;
+  const meta = canvas._profileMeta;
+  if(!meta || !SCENE3D.map3d){ hideProfileCrosshair(); return; }
+  const rect = canvas.getBoundingClientRect();
+  const xCss = e.clientX - rect.left;
+  const dist = (xCss - meta.padL) / meta.plotW * meta.maxDist;
+  if(dist<0 || dist>meta.maxDist){ hideProfileCrosshair(); return; }
+  let best = meta.pts[0], bestDiff = Infinity;
+  for(const p of meta.pts){ const diff = Math.abs(p.dist-dist); if(diff<bestDiff){ bestDiff=diff; best=p; } }
+  showProfileCrosshair(best);
+});
+document.getElementById('elevCanvas').addEventListener('mouseleave', hideProfileCrosshair);
 
 /* criação de geometrias */
 map.on(L.Draw.Event.CREATED, e=>{
@@ -9468,7 +9577,11 @@ const SCENE3D = {
   exaggeration:1.5, terrainOn:true, hillshadeOn:false, skyOn:true,
   terrainDemName:null,
   mirrored:new Set(),      // ids de source/layer já injetados no style vivo
-  camLock:0, splitPct:50
+  camLock:0, splitPct:50,
+  // --- Medição 3D (Fase 2) ---
+  measureMode:null,        // null | 'dist' | 'volume'
+  measurePts:[],           // [{lat,lng}] vértices em progresso
+  measureResult:null       // {samples, stats} da última medição de distância concluída
 };
 
 /* ---------- Protocolos gmdem:// e gmcog:// ---------- */
@@ -9551,6 +9664,8 @@ async function ensureView3DMap(){
   });
   m3.on('moveend', ()=>{ clearTimeout(moveTO); moveTO=setTimeout(syncCam32,0); });
   m3.on('mousemove', onView3DMouseMove);
+  m3.on('click', v3dOnClick);
+  m3.on('dblclick', v3dOnDblClick);
   SCENE3D.map3d = m3;
   return m3;
 }
@@ -9568,13 +9683,31 @@ function syncCam32(){ // 3D -> 2D
   map.setView([c.lat,c.lng], Math.round(SCENE3D.map3d.getZoom()+1), {animate:false});
   SCENE3D.camLock--;
 }
+let _hudElevTO = null;
 function onView3DMouseMove(e){
   const hud = document.getElementById('v3dHud');
-  if(!SCENE3D.terrainOn){ hud.style.display='none'; return; }
-  const el = SCENE3D.map3d.queryTerrainElevation(e.lngLat);
-  if(el==null){ hud.style.display='none'; return; }
-  hud.style.display='block';
-  hud.innerHTML = 'Cota: <b>'+el.toFixed(1)+' m</b>';
+  if(SCENE3D.terrainOn){
+    const el = SCENE3D.map3d.queryTerrainElevation(e.lngLat);
+    if(el==null){ hud.style.display='none'; return; }
+    hud.style.display='block';
+    hud.innerHTML = 'Cota: <b>'+el.toFixed(1)+' m</b>';
+    return;
+  }
+  // terreno desligado: fallback assíncrono ao DEM selecionado no v3dDemSel,
+  // com debounce (mousemove dispara demais para chamar sampleElevationsAt sem isso)
+  clearTimeout(_hudElevTO);
+  const lngLat = e.lngLat;
+  _hudElevTO = setTimeout(async ()=>{
+    const rec = demLayers().find(r=>r.name===SCENE3D.terrainDemName);
+    if(!rec){ hud.style.display='none'; return; }
+    try{
+      const { samples } = await rec.layer.sampleElevationsAt([{lat:lngLat.lat, lng:lngLat.lng}]);
+      const el = samples[0] && samples[0].elev;
+      if(el==null){ hud.style.display='none'; return; }
+      hud.style.display='block';
+      hud.innerHTML = 'Cota: <b>'+el.toFixed(1)+' m</b> <span style="color:var(--muted)">(DEM, terreno off)</span>';
+    }catch(err){ hud.style.display='none'; }
+  }, 120);
 }
 function populateDemSelect(){
   const sel = document.getElementById('v3dDemSel');
@@ -9621,6 +9754,169 @@ function applySky(){
   const m3 = SCENE3D.map3d;
   if(typeof m3.setSky!=='function') return;
   m3.setSky(SCENE3D.skyOn ? { 'sky-color':'#1d252d', 'horizon-color':'#31404d', 'fog-color':'#141a20' } : null);
+}
+
+/* ---------- Medição 3D (Fase 2): distância e corte/aterro ---------- */
+/* Fonte/camadas GeoJSON de feedback das ferramentas de medição — adicionadas
+   direto no style do map3d, fora do ciclo de mirror3D (que só espelha estado
+   de camadas Leaflet, nunca UI transitória de ferramenta). */
+const V3D_MEASURE_SRC = '__v3d_measure';
+function emptyFC(){ return { type:'FeatureCollection', features:[] }; }
+function ensureMeasureLayers(){
+  const m3 = SCENE3D.map3d;
+  if(!m3 || m3.getSource(V3D_MEASURE_SRC)) return;
+  m3.addSource(V3D_MEASURE_SRC, { type:'geojson', data: emptyFC() });
+  m3.addLayer({ id:V3D_MEASURE_SRC+'_fill', type:'fill', source:V3D_MEASURE_SRC,
+    filter:['==','$type','Polygon'],
+    paint:{ 'fill-color':'#37c2a0', 'fill-opacity':0.25 } });
+  m3.addLayer({ id:V3D_MEASURE_SRC+'_line', type:'line', source:V3D_MEASURE_SRC,
+    filter:['in','$type','LineString','Polygon'],
+    paint:{ 'line-color':'#37c2a0', 'line-width':3 } });
+  m3.addLayer({ id:V3D_MEASURE_SRC+'_pts', type:'circle', source:V3D_MEASURE_SRC,
+    filter:['==','$type','Point'],
+    paint:{ 'circle-radius':5, 'circle-color':'#37c2a0', 'circle-stroke-color':'#0c1116', 'circle-stroke-width':1.5 } });
+}
+function setMeasureGeoJSON(fc){
+  const m3 = SCENE3D.map3d;
+  const src = m3 && m3.getSource(V3D_MEASURE_SRC);
+  if(src) src.setData(fc);
+}
+function v3dOnClick(e){
+  if(SCENE3D.measureMode==='dist') v3dDistAddVertex(e.lngLat);
+  else if(SCENE3D.measureMode==='volume') v3dVolAddVertex(e.lngLat);
+}
+function v3dOnDblClick(e){
+  if(SCENE3D.measureMode==='dist'){ e.preventDefault(); v3dDistFinish(); }
+}
+/* só um modo de medição ativo por vez — trocar cancela o anterior */
+function v3dSetMeasureMode(mode){
+  if(SCENE3D.measureMode==='dist' && mode!=='dist') v3dDistCancel();
+  if(SCENE3D.measureMode==='volume' && mode!=='volume') v3dVolCancel();
+  SCENE3D.measureMode = mode;
+  document.querySelectorAll('.v3d-mtool').forEach(b=>b.classList.toggle('active', b.dataset.mtool===mode));
+  document.getElementById('v3dDistActions').classList.toggle('on', mode==='dist');
+  document.getElementById('v3dVolActions').classList.toggle('on', mode==='volume');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && SCENE3D.active && SCENE3D.measureMode) v3dSetMeasureMode(null);
+});
+
+/* --- Distância 3D: reusa run3DMeasure(null, latlngs) para garantir paridade
+   exata com a medição 2D (mesmo pipeline de amostragem/perfil). --- */
+function v3dDistAddVertex(lngLat){
+  ensureMeasureLayers();
+  SCENE3D.measurePts.push({ lat:lngLat.lat, lng:lngLat.lng });
+  v3dRedrawMeasureLine();
+}
+function v3dRedrawMeasureLine(){
+  const pts = SCENE3D.measurePts;
+  const feats = pts.map(p=>({ type:'Feature', geometry:{type:'Point', coordinates:[p.lng,p.lat]}, properties:{} }));
+  if(pts.length>1) feats.push({ type:'Feature', geometry:{type:'LineString', coordinates:pts.map(p=>[p.lng,p.lat])}, properties:{} });
+  setMeasureGeoJSON({ type:'FeatureCollection', features:feats });
+}
+async function v3dDistFinish(){
+  if(SCENE3D.measurePts.length<2){ status('Medição 3D: marque ao menos 2 pontos.'); return; }
+  const latlngs = SCENE3D.measurePts.map(p=>L.latLng(p.lat,p.lng));
+  const res = await run3DMeasure(null, latlngs); // mesmo pipeline do 2D — garante paridade
+  SCENE3D.measureResult = res;
+  SCENE3D.measurePts = [];
+  v3dSetMeasureMode(null);
+}
+function v3dDistCancel(){
+  SCENE3D.measurePts = [];
+  setMeasureGeoJSON(emptyFC());
+}
+
+/* --- Corte/aterro: grade de amostras sobre o polígono via
+   sampleElevationsAt (fino->grosso, mesmo espírito de sampleElevationsMulti),
+   filtrada por turf.booleanPointInPolygon (turf já é lazy-loaded no arquivo). --- */
+function v3dVolAddVertex(lngLat){
+  ensureMeasureLayers();
+  SCENE3D.measurePts.push({ lat:lngLat.lat, lng:lngLat.lng });
+  v3dRedrawMeasurePolygon();
+}
+function v3dRedrawMeasurePolygon(){
+  const pts = SCENE3D.measurePts;
+  const feats = pts.map(p=>({ type:'Feature', geometry:{type:'Point', coordinates:[p.lng,p.lat]}, properties:{} }));
+  if(pts.length>2){
+    const ring = pts.map(p=>[p.lng,p.lat]); ring.push(ring[0]);
+    feats.push({ type:'Feature', geometry:{type:'Polygon', coordinates:[ring]}, properties:{} });
+  } else if(pts.length===2){
+    feats.push({ type:'Feature', geometry:{type:'LineString', coordinates:pts.map(p=>[p.lng,p.lat])}, properties:{} });
+  }
+  setMeasureGeoJSON({ type:'FeatureCollection', features:feats });
+}
+function v3dVolCancel(){
+  SCENE3D.measurePts = [];
+  setMeasureGeoJSON(emptyFC());
+}
+/* Volume de corte/aterro contra um plano de referência: soma
+   área_célula × |elevação - referência| por amostra, separando por sinal.
+   Limitação conhecida e aceitável: a área da célula é nominal (cellM²), sem
+   correção de latitude dentro do bbox — erro desprezível na escala de
+   talhão/obra a que esta ferramenta se destina. */
+async function computeVolume(latlngs, refMode, refValue){
+  const turf = await loadTurf();
+  const ring = latlngs.map(p=>[p.lng,p.lat]); ring.push(ring[0]);
+  const poly = turf.polygon([ring]);
+  const dems = await demsIntersecting(latlngs);
+  if(!dems.length) return null;
+  const cellM = dems[0].cellM;
+  const bounds = L.latLngBounds(latlngs);
+  const nx = Math.max(2, Math.min(300, Math.round(distM({lat:bounds.getNorth(),lng:bounds.getWest()},{lat:bounds.getNorth(),lng:bounds.getEast()})/cellM)));
+  const ny = Math.max(2, Math.min(300, Math.round(distM({lat:bounds.getNorth(),lng:bounds.getWest()},{lat:bounds.getSouth(),lng:bounds.getWest()})/cellM)));
+  const gridPts = [];
+  for(let iy=0; iy<ny; iy++){
+    for(let ix=0; ix<nx; ix++){
+      const lat = bounds.getSouth() + (bounds.getNorth()-bounds.getSouth())*(iy+0.5)/ny;
+      const lng = bounds.getWest()  + (bounds.getEast() -bounds.getWest())*(ix+0.5)/nx;
+      if(turf.booleanPointInPolygon(turf.point([lng,lat]), poly)) gridPts.push({lat,lng});
+    }
+  }
+  if(!gridPts.length) return null;
+  let samples = gridPts.map(p=>({...p, elev:null}));
+  for(const d of dems){
+    const { samples: s } = await d.layer.sampleElevationsAt(samples.map(p=>({lat:p.lat,lng:p.lng})));
+    samples = samples.map((p,i)=> p.elev==null && s[i].elev!=null ? {...p, elev:s[i].elev} : p);
+  }
+  const valid = samples.filter(s=>s.elev!=null);
+  if(valid.length<3) return null;
+  const cellArea = cellM*cellM;
+  let ref = refValue;
+  if(refMode==='mean') ref = valid.reduce((a,s)=>a+s.elev,0)/valid.length;
+  else if(refMode==='min') ref = Math.min(...valid.map(s=>s.elev));
+  else if(refMode==='max') ref = Math.max(...valid.map(s=>s.elev));
+  let cut=0, fill=0;
+  for(const s of valid){
+    const d = s.elev - ref;
+    if(d>0) cut += d*cellArea; else fill += -d*cellArea;
+  }
+  const areaTotal = valid.length*cellArea;
+  return { cut, fill, net:cut-fill, ref, areaTotal, nSamples:valid.length };
+}
+async function v3dVolFinish(){
+  if(SCENE3D.measurePts.length<3){ status('Volume 3D: marque ao menos 3 vértices.'); return; }
+  const refMode = document.getElementById('v3dVolRef').value;
+  const refValue = refMode==='custom' ? parseFloat(document.getElementById('v3dVolRefCustom').value) : null;
+  if(refMode==='custom' && !Number.isFinite(refValue)){ status('Volume 3D: informe uma cota de referência válida.'); return; }
+  status('Calculando volume (grade DEM)…');
+  const latlngs = SCENE3D.measurePts.map(p=>L.latLng(p.lat,p.lng));
+  const res = await computeVolume(latlngs, refMode, refValue);
+  if(!res){ status('Volume 3D: nenhum DEM cobre esta área ou dados insuficientes.'); v3dSetMeasureMode(null); return; }
+  showVolumePanel(res);
+  SCENE3D.measurePts = [];
+  v3dSetMeasureMode(null);
+  status('Volume 3D concluído.');
+}
+function showVolumePanel(res){
+  const panel = document.getElementById('v3dVolPanel');
+  const elevOpen = document.getElementById('elevPanel').style.display==='block';
+  panel.style.bottom = elevOpen ? '270px' : '100px';
+  document.getElementById('v3dVolStats').innerHTML =
+    `Corte: <b>${res.cut.toFixed(1)} m³</b> · Aterro: <b>${res.fill.toFixed(1)} m³</b><br>`+
+    `Saldo: <b>${res.net>=0?'+':''}${res.net.toFixed(1)} m³</b> (${res.net>=0?'excesso de material':'déficit de material'})<br>`+
+    `Referência: <b>${res.ref.toFixed(1)} m</b> · Área amostrada: <b>${(res.areaTotal/10000).toFixed(2)} ha</b> (${res.nSamples} amostras)`;
+  panel.style.display = 'block';
 }
 
 /* Espelha bases/rasters do Leaflet no style do MapLibre por DIFF —
@@ -9739,12 +10035,18 @@ async function open3D(){
     await applyTerrain();
     applySky();
     syncCam23();
+    ensureMeasureLayers();
   };
   if(m3.isStyleLoaded()) afterLoad(); else m3.once('load', afterLoad);
   status('Vista 3D ativa.');
 }
 function close3D(){
   SCENE3D.active = false;
+  v3dSetMeasureMode(null); // cancela vértices em progresso e esconde ações
+  SCENE3D.measureResult = null;
+  document.getElementById('v3dVolPanel').style.display = 'none';
+  // #elevPanel É INTENCIONALMENTE deixado aberto — mesmo comportamento já
+  // existente para medições 2D (o perfil persiste após fechar o 3D).
   view3dEl.classList.remove('on');
   document.getElementById('v3dBar').classList.remove('on');
   document.body.classList.remove('split3d');
@@ -9808,6 +10110,20 @@ document.getElementById('v3dTerrainOn').addEventListener('change', e=>{ SCENE3D.
 document.getElementById('v3dHillOn').addEventListener('change', e=>{ SCENE3D.hillshadeOn=e.target.checked; if(SCENE3D.map3d) applyTerrain(); });
 document.getElementById('v3dSkyOn').addEventListener('change', e=>{ SCENE3D.skyOn=e.target.checked; if(SCENE3D.map3d) applySky(); });
 document.getElementById('v3dDemSel').addEventListener('change', e=>{ SCENE3D.terrainDemName=e.target.value||null; if(SCENE3D.map3d) applyTerrain(); });
+document.querySelectorAll('.v3d-mtool').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const mode = b.dataset.mtool;
+    v3dSetMeasureMode(SCENE3D.measureMode===mode ? null : mode);
+  });
+});
+document.getElementById('v3dDistFinish').addEventListener('click', v3dDistFinish);
+document.getElementById('v3dDistCancel').addEventListener('click', ()=>v3dSetMeasureMode(null));
+document.getElementById('v3dVolFinish').addEventListener('click', v3dVolFinish);
+document.getElementById('v3dVolCancel').addEventListener('click', ()=>v3dSetMeasureMode(null));
+document.getElementById('v3dVolRef').addEventListener('change', e=>{
+  document.getElementById('v3dVolRefCustom').style.display = e.target.value==='custom' ? 'inline-block' : 'none';
+});
+document.getElementById('v3dVolClose').addEventListener('click', ()=>{ document.getElementById('v3dVolPanel').style.display='none'; });
 
 map.on('moveend', syncCam23);
 map.on('layeradd layerremove', scheduleMirror3D);

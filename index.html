@@ -2463,7 +2463,10 @@ body.split3d #v3dDivider{ display:block }
     <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
     <h3>Segmentação IA (SAM) <span style="font-size:11px;font-weight:400;color:var(--muted)">experimental</span></h3>
     <p class="sub">Contorna automaticamente um objeto a partir de um raster de imagem já adicionado ao projeto. Roda inteiramente no navegador (modelo SlimSAM, ≈40MB, baixado do Hugging Face na primeira vez e cacheado pelo navegador). Funciona apenas com rasters do tipo <b>Imagem</b> (upload local) — camadas WMS/XYZ de terceiros normalmente bloqueiam a leitura de pixels por CORS.</p>
+    <ol id="segTutorial" style="list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:4px;font-size:12px"></ol>
     <div class="field"><label>Raster de origem</label><select id="segRasterSel"></select></div>
+    <button class="tb-btn" id="segUseSample" style="width:100%;margin-top:6px">Usar imagem de exemplo</button>
+    <p class="sub" style="margin-top:4px">Sem uma foto à mão? O botão acima adiciona uma imagem de exemplo (copa de árvore sintética) já pronta para segmentar.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
       <button class="tb-btn" id="segLoadModel">Carregar modelo IA</button>
       <button class="tb-btn" id="segAnalyze" disabled>Analisar imagem</button>
@@ -5733,6 +5736,12 @@ let segPreviewOverlay=null;      // L.imageOverlay com a prévia da máscara
 let segLastMask=null;            // {data:Uint8Array, W, H, score}
 let segmentLayer=null;
 
+/* Imagem de exemplo (copa de árvore sintética, SVG embutido — nenhuma dependência
+   externa) e um bbox pequeno e plausível, para quem quer testar o SAM sem ter
+   uma foto própria à mão. */
+const SEG_SAMPLE_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzODQiIGhlaWdodD0iMzg0Ij48cmVjdCB3aWR0aD0iMzg0IiBoZWlnaHQ9IjM4NCIgZmlsbD0iIzhhNmQ0YiIvPjxyZWN0IHdpZHRoPSIzODQiIGhlaWdodD0iMzg0IiBmaWxsPSIjOWM3ZjU3IiBvcGFjaXR5PSIwLjUiLz48ZWxsaXBzZSBjeD0iMTkyIiBjeT0iMjEwIiByeD0iMTUwIiByeT0iNDAiIGZpbGw9IiM1YjQzMjciIG9wYWNpdHk9IjAuMzUiLz48Y2lyY2xlIGN4PSIxOTAiIGN5PSIxNzAiIHI9IjEyMCIgZmlsbD0iIzJmNmIzNCIvPjxjaXJjbGUgY3g9IjE0MCIgY3k9IjEzMCIgcj0iNTUiIGZpbGw9IiMzYTdkNDAiLz48Y2lyY2xlIGN4PSIyNDUiIGN5PSIxNTAiIHI9IjYwIiBmaWxsPSIjM2E3ZDQwIi8+PGNpcmNsZSBjeD0iMTkwIiBjeT0iOTUiIHI9IjU4IiBmaWxsPSIjNDU4YzRjIi8+PHJlY3QgeD0iMTc4IiB5PSIyNjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSI3MCIgcng9IjYiIGZpbGw9IiM1YTNkMjIiLz48L3N2Zz4=';
+const SEG_SAMPLE_BOUNDS = [[-23.601, -46.640], [-23.595, -46.634]];
+
 const SEGMENT_FIELDS=[
   {name:'tipo_objeto', type:'select', options:['Árvore/vegetação','Edificação','Outro'], required:false},
   {name:'confianca_iou', type:'number', options:[], required:false},
@@ -5759,6 +5768,29 @@ function segSetStatus(t, isErr){
   el.style.color = isErr ? '#e5673f' : 'var(--muted)';
 }
 
+const SEG_TUTORIAL_STEPS = [
+  'Carregar modelo IA',
+  'Escolher um raster (ou usar o exemplo)',
+  'Analisar imagem',
+  'Marcar pontos no mapa e confirmar o polígono'
+];
+function segUpdateTutorialState(){
+  const el = document.getElementById('segTutorial');
+  if(!el) return;
+  const raster = document.getElementById('segRasterSel');
+  const done = [
+    !!segModel,
+    !!(raster && raster.value),
+    !!segImageEmbeddings,
+    !!segLastMask
+  ];
+  el.innerHTML = SEG_TUTORIAL_STEPS.map((label,i)=>{
+    const isDone = done[i];
+    const mark = isDone ? icon('check',14) : (i+1)+'.';
+    return `<li style="display:flex;align-items:center;gap:6px;color:${isDone?'var(--text)':'var(--muted)'}"><span style="width:16px;flex:0 0 auto;display:inline-flex;justify-content:center;color:var(--accent)">${mark}</span>${label}</li>`;
+  }).join('');
+}
+
 function openSegmentModal(){
   const sel = document.getElementById('segRasterSel');
   const imgs = imageRasters();
@@ -5772,10 +5804,26 @@ function openSegmentModal(){
   const loadBtn = document.getElementById('segLoadModel');
   loadBtn.textContent = segModel ? 'Modelo carregado ✓' : 'Carregar modelo IA';
   loadBtn.disabled = !!segModel;
-  segSetStatus(segModel ? 'Modelo já carregado. Escolha o raster e toque em "Analisar imagem".' : 'Toque em "Carregar modelo IA" para começar (baixa ≈40MB na primeira vez).');
+  segSetStatus(segModel ? 'Modelo já carregado. Escolha o raster e toque em "Analisar imagem".' : 'Toque em "Carregar modelo IA" para começar (baixa ≈40MB na primeira vez), ou use a imagem de exemplo se ainda não tem um raster.');
   clearSegPreview();
+  segUpdateTutorialState();
   open('mSegment');
 }
+
+document.getElementById('segUseSample').addEventListener('click', ()=>{
+  addRasterFromDef({type:'img', name:'Exemplo SAM (copa de árvore)', dataUrl:SEG_SAMPLE_IMAGE, bounds:SEG_SAMPLE_BOUNDS, opacity:1}, true);
+  map.fitBounds(SEG_SAMPLE_BOUNDS);
+  const sel = document.getElementById('segRasterSel');
+  const imgs = imageRasters();
+  sel.innerHTML = imgs.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  const added = imgs[imgs.length-1];
+  if(added) sel.value = added.id;
+  document.getElementById('segAnalyze').disabled = !imgs.length || !segModel;
+  segSetStatus('Imagem de exemplo adicionada. '+(segModel ? 'Toque em "Analisar imagem".' : 'Toque em "Carregar modelo IA" para continuar.'));
+  segUpdateTutorialState();
+});
+
+document.getElementById('segRasterSel').addEventListener('change', segUpdateTutorialState);
 
 async function loadSamLib(){
   if(segLib) return segLib;
@@ -5810,6 +5858,7 @@ document.getElementById('segLoadModel').addEventListener('click', async ()=>{
     btn.disabled = true;
     segSetStatus('Modelo carregado ✓. Escolha o raster e toque em "Analisar imagem".');
     document.getElementById('segAnalyze').disabled = !imageRasters().length;
+    segUpdateTutorialState();
   }catch(err){
     console.error(err);
     btn.textContent = 'Carregar modelo IA';
@@ -5849,6 +5898,7 @@ document.getElementById('segAnalyze').addEventListener('click', async ()=>{
     clearSegPreview();
     segSetStatus('Pronto. Toque no mapa sobre o objeto, dentro da área do raster (Shift+toque = ponto negativo).');
     map.on('click', segMapClick);
+    segUpdateTutorialState();
   }catch(err){
     console.error(err);
     segSetStatus('Erro ao analisar a imagem: '+err.message, true);
@@ -5860,6 +5910,7 @@ document.getElementById('segClearPts').addEventListener('click', ()=>{
   clearSegPreview();
   document.getElementById('segConfirm').disabled = true;
   segSetStatus('Pontos limpos. Toque novamente sobre o objeto.');
+  segUpdateTutorialState();
 });
 
 function segLatLngToNorm(latlng, bounds){
@@ -5901,6 +5952,7 @@ async function segRunDecoder(){
     drawSegPreview();
     document.getElementById('segConfirm').disabled = false;
     segSetStatus(`Máscara atualizada — confiança ${(scores[best]*100).toFixed(1)}%.`);
+    segUpdateTutorialState();
   }catch(err){
     console.error(err);
     segSetStatus('Erro ao rodar a IA: '+err.message, true);
@@ -7166,13 +7218,8 @@ document.querySelectorAll('.tool[data-tool]').forEach(btn=>{
         showHint('Toque sobre uma feição da camada de catálogo para copiá-la (geometria + atributos) para uma camada local.');
         break;
       case 'segment':
-        if(!imageRasters().length){
-          status('Adicione um raster do tipo "Imagem" (Adicionar raster → Imagem) antes de usar a Segmentação IA.');
-          deactivate();
-          return;
-        }
         openSegmentModal();
-        showHint('Use o painel para carregar o modelo, analisar a imagem e depois tocar sobre o objeto no mapa.');
+        showHint('Use o painel para carregar o modelo, analisar a imagem e depois tocar sobre o objeto no mapa. Sem raster próprio? Use a imagem de exemplo dentro do painel.');
         break;
       case 'compare':
         cmpOpenPicker();

@@ -760,6 +760,23 @@ body.split3d #v3dDivider{ display:block }
 .attr-check{display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 0}
 .attr-check input{accent-color:var(--text2); width:16px; height:16px}
 
+/* Legenda personalizável (editor de layout de impressão) — linhas de item
+   reaproveitam a alça .fld-drag; grupos reaproveitam .grp-head/.gname/.gcolor */
+.leg-row{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  padding:6px; margin-bottom:4px; background:var(--panel2); border-radius:8px; cursor:grab;
+}
+.leg-row.leg-dragging{opacity:.5; cursor:grabbing}
+.leg-row.leg-dropmark{box-shadow:0 -2px 0 var(--accent)}
+.leg-row.leg-dropmark-after{box-shadow:0 2px 0 var(--accent)}
+.leg-row .leg-name{flex:1; min-width:60px; font-size:12.5px; cursor:text; border-bottom:1px dotted var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.leg-row .leg-name:hover{border-bottom-color:var(--accent); color:var(--accent)}
+.leg-row select{font-size:11px; max-width:88px; padding:2px 4px}
+.leg-row input[type=color]{width:26px; height:26px; padding:1px; border:1px solid var(--line); border-radius:5px; background:var(--field); cursor:pointer; flex:none}
+.leg-group-body{margin-left:6px; min-height:10px}
+.leg-group-body.leg-drop-hover{outline:2px dashed var(--accent); outline-offset:-2px; border-radius:8px}
+.leg-empty-hint{font-size:11px; color:var(--muted); padding:4px 6px}
+
 /* Editor de simbologia (modal mStyle) */
 .sty-tabs{display:flex; gap:4px; margin:10px 0 8px; flex-wrap:wrap}
 .sty-tab{
@@ -1000,9 +1017,9 @@ body.split3d #v3dDivider{ display:block }
   #printSheet .p-legend{flex:1; border:1px solid #000; padding:4mm; font-size:9pt}
   #printSheet .p-legend h4{font-size:10pt; margin:0 0 3mm; border-bottom:1px solid #000; padding-bottom:1.5mm; letter-spacing:1px}
   #printSheet .p-legend .li{display:flex; align-items:center; gap:3mm; margin-bottom:1.8mm}
-  #printSheet .p-legend .sw{width:6mm; height:4mm; border:1px solid #000; flex:none}
-  #printSheet .p-legend .sw.pt{width:4mm; height:4mm; border-radius:50%}
-  #printSheet .p-legend .sw.ln{height:1mm; border:none}
+  #printSheet .p-legend .pd-sw{width:6mm; height:4mm; border:1px solid #000; flex:none}
+  #printSheet .p-legend .pd-sw.pt{width:4mm; height:4mm; border-radius:50%}
+  #printSheet .p-legend .pd-sw.ln{height:1mm; border:none}
   /* miniaturas de símbolo geradas por symbolSwatchHtml() — no papel, fundo branco */
   #printSheet .p-legend .sty-preview{background:#fff; border:1px solid #bbb; flex:none}
   #printSheet .p-foot{margin-top:3mm; font-size:8pt; color:#333; display:flex; justify-content:space-between; font-family:Arial, sans-serif}
@@ -1121,7 +1138,8 @@ body.split3d #v3dDivider{ display:block }
 .pd-block:hover, .pd-block.sel{border-color:var(--accent)}
 .pd-block.sel{box-shadow:0 0 0 2px var(--accent-ring, var(--accent))}
 .pd-block .pd-inner{width:100%; height:100%; overflow:hidden; pointer-events:none}
-.pd-block.type-text .pd-inner{padding:2mm; font-family:Arial, sans-serif; color:#000; font-size:11pt; line-height:1.35; pointer-events:auto; overflow:auto}
+.pd-block.type-text .pd-inner{padding:2mm; line-height:1.35; pointer-events:auto; overflow:auto; box-sizing:border-box; width:100%; height:100%}
+.pd-block.type-line .pd-inner, .pd-block.type-rect .pd-inner{width:100%; height:100%; box-sizing:border-box}
 .pd-block.type-image .pd-inner img{width:100%; height:100%; object-fit:contain; display:block}
 .pd-block.type-map .pd-inner img{width:100%; height:100%; object-fit:contain; display:block; background:#fff}
 .pd-block.grid-edit{cursor:default}
@@ -1149,13 +1167,16 @@ body.split3d #v3dDivider{ display:block }
 .pd-handle.ne{right:-5px; top:-5px; cursor:nesw-resize}
 .pd-handle.sw{left:-5px; bottom:-5px; cursor:nesw-resize}
 .pd-handle.se{right:-5px; bottom:-5px; cursor:nwse-resize}
-/* miniaturas de legenda (mesmas classes .li/.sw usadas na folha de impressão) também
-   fora do @media print, para o bloco de legenda ficar legível dentro do editor */
+/* miniaturas de legenda (mesmas classes .li/.pd-sw usadas na folha de impressão) também
+   fora do @media print, para o bloco de legenda ficar legível dentro do editor.
+   Nome "pd-sw" (não só "sw") de propósito: a alça de redimensionar do canto sudoeste
+   já usa a classe "sw" (southwest) — reutilizar "sw" aqui a fazia herdar 6mm×4mm
+   e ficar maior que as outras três alças. */
 .pd-block.type-legend .pd-inner{overflow:auto}
 .pd-block .li{display:flex; align-items:center; gap:2mm; margin-bottom:1mm}
-.pd-block .sw{width:6mm; height:4mm; border:1px solid #000; flex:none; display:inline-block}
-.pd-block .sw.pt{width:4mm; height:4mm; border-radius:50%}
-.pd-block .sw.ln{height:1mm; border:none}
+.pd-block .pd-sw{width:6mm; height:4mm; border:1px solid #000; flex:none; display:inline-block}
+.pd-block .pd-sw.pt{width:4mm; height:4mm; border-radius:50%}
+.pd-block .pd-sw.ln{height:1mm; border:none}
 .pd-block .sty-preview{background:#fff; border:1px solid #bbb; flex:none}
 /* ---------- Medição por escala fotográfica ---------- */
 .ms-stage{position:relative; width:100%; height:44vh; min-height:240px; background:#000; border:1px solid var(--line); border-radius:10px; overflow:hidden; touch-action:none}
@@ -1792,6 +1813,8 @@ body.split3d #v3dDivider{ display:block }
       </div>
       <button class="tb-btn" id="pdAddText" data-icon="textBox">Texto</button>
       <button class="tb-btn" id="pdAddImage" data-icon="image">Imagem</button>
+      <button class="tb-btn" id="pdAddLine" data-icon="lineTool">Linha</button>
+      <button class="tb-btn" id="pdAddRect" data-icon="rectTool">Retângulo</button>
       <button class="tb-btn" id="pdAddNorth" data-icon="northArrow">Norte</button>
       <button class="tb-btn" id="pdAddScale" data-icon="ruler">Escala</button>
       <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
@@ -1826,7 +1849,86 @@ body.split3d #v3dDivider{ display:block }
     </div>
     <aside class="pd-side" id="pdSideProps">
       <div class="pd-side-head"><span class="pd-side-title">Propriedades</span><span class="pd-side-sub" id="pdSideSub">Nenhum bloco selecionado</span></div>
-      <div class="pd-side-empty" id="pdSideEmpty">Selecione um bloco no layout para editar suas propriedades. Blocos de <b>Norte</b> e <b>Mapa</b> têm opções específicas.</div>
+      <div class="pd-side-empty" id="pdSideEmpty">Selecione um bloco no layout para editar suas propriedades. Blocos de <b>Texto</b>, <b>Linha</b>, <b>Retângulo</b>, <b>Norte</b> e <b>Mapa</b> têm opções específicas.</div>
+    <div class="pd-side-section" id="pdTextStyleWrap" style="display:none">
+        <div class="field"><label>Fonte</label>
+          <select id="pdTextFont">
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+          </select>
+        </div>
+        <div class="pd-north-labelopts">
+          <div class="pd-grid-dims"><span>Tamanho (pt)</span><input type="number" id="pdTextSize" min="6" max="96" value="11"></div>
+          <div class="field pd-north-color"><label>Cor do texto</label><input type="color" id="pdTextColor" value="#000000"></div>
+        </div>
+        <div class="pd-north-labelopts">
+          <button type="button" class="tb-btn icon-only pd-text-toggle" data-key="bold" data-icon="bold" title="Negrito"></button>
+          <button type="button" class="tb-btn icon-only pd-text-toggle" data-key="italic" data-icon="italic" title="Itálico"></button>
+          <button type="button" class="tb-btn icon-only pd-text-toggle" data-key="underline" data-icon="underline" title="Sublinhado"></button>
+          <button type="button" class="tb-btn icon-only pd-text-toggle" data-key="strike" data-icon="strike" title="Riscado"></button>
+        </div>
+        <div class="pd-north-labelopts">
+          <button type="button" class="tb-btn icon-only pd-text-align" data-value="left" data-icon="alignLeft" title="Alinhar à esquerda"></button>
+          <button type="button" class="tb-btn icon-only pd-text-align" data-value="center" data-icon="alignCenter" title="Centralizar"></button>
+          <button type="button" class="tb-btn icon-only pd-text-align" data-value="right" data-icon="alignRight" title="Alinhar à direita"></button>
+          <button type="button" class="tb-btn icon-only pd-text-align" data-value="justify" data-icon="alignJustify" title="Justificar"></button>
+        </div>
+        <label class="pd-check"><input type="checkbox" id="pdTextUppercase">Caixa alta</label>
+        <div class="pd-north-labelopts">
+          <div class="field pd-north-color"><label>Preenchimento</label><input type="color" id="pdTextBg" value="#ffffff"></div>
+          <div class="pd-grid-dims"><span>Opacidade (%)</span><input type="number" id="pdTextBgOpacity" min="0" max="100" value="100"></div>
+        </div>
+        <div class="pd-north-labelopts">
+          <div class="field pd-north-color"><label>Cor da borda</label><input type="color" id="pdTextBorderColor" value="#000000"></div>
+          <div class="pd-grid-dims"><span>Espessura (px)</span><input type="number" id="pdTextBorderWidth" min="0" max="20" value="0"></div>
+        </div>
+        <div class="pd-north-labelopts">
+          <div class="field"><label>Estilo da borda</label>
+            <select id="pdTextBorderStyle">
+              <option value="solid">Sólida</option>
+              <option value="dashed">Tracejada</option>
+              <option value="dotted">Pontilhada</option>
+            </select>
+          </div>
+          <div class="pd-grid-dims"><span>Raio (px)</span><input type="number" id="pdTextBorderRadius" min="0" max="60" value="0"></div>
+        </div>
+      </div>
+    <div class="pd-side-section" id="pdLineStyleWrap" style="display:none">
+        <div class="field pd-north-color"><label>Cor da linha</label><input type="color" id="pdLineColor" value="#000000"></div>
+        <div class="pd-north-labelopts">
+          <div class="pd-grid-dims"><span>Espessura (px)</span><input type="number" id="pdLineWidth" min="1" max="20" value="1"></div>
+          <div class="field"><label>Estilo</label>
+            <select id="pdLineStyle">
+              <option value="solid">Sólida</option>
+              <option value="dashed">Tracejada</option>
+              <option value="dotted">Pontilhada</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    <div class="pd-side-section" id="pdRectStyleWrap" style="display:none">
+        <div class="pd-north-labelopts">
+          <div class="field pd-north-color"><label>Preenchimento</label><input type="color" id="pdRectFill" value="#ffffff"></div>
+          <div class="pd-grid-dims"><span>Opacidade (%)</span><input type="number" id="pdRectFillOpacity" min="0" max="100" value="0"></div>
+        </div>
+        <div class="pd-north-labelopts">
+          <div class="field pd-north-color"><label>Cor da borda</label><input type="color" id="pdRectBorderColor" value="#000000"></div>
+          <div class="pd-grid-dims"><span>Espessura (px)</span><input type="number" id="pdRectBorderWidth" min="0" max="20" value="1"></div>
+        </div>
+        <div class="pd-north-labelopts">
+          <div class="field"><label>Estilo da borda</label>
+            <select id="pdRectBorderStyle">
+              <option value="solid">Sólida</option>
+              <option value="dashed">Tracejada</option>
+              <option value="dotted">Pontilhada</option>
+            </select>
+          </div>
+          <div class="pd-grid-dims"><span>Raio (px)</span><input type="number" id="pdRectBorderRadius" min="0" max="60" value="0"></div>
+        </div>
+      </div>
     <div class="pd-side-section" id="pdNorthStyleWrap" style="display:none">
         <div class="field"><label>Estilo do norte</label>
           <select id="pdNorthStyle">
@@ -1846,6 +1948,20 @@ body.split3d #v3dDivider{ display:block }
           <div class="pd-grid-dims"><span>Tamanho</span><input type="number" id="pdNorthLabelSize" min="8" max="30" value="16"></div>
         </div>
       </div>
+    <div class="pd-side-section" id="pdLegendPanel" style="display:none">
+      <button class="tb-btn" id="pdLegendCustomize" data-icon="gear" title="Desliga a atualização automática e passa a permitir editar itens, ícones e grupos">Personalizar legenda</button>
+      <div id="pdLegendCustomWrap" style="display:none">
+        <div class="pd-north-labelopts">
+          <button class="tb-btn" id="pdLegendAuto" data-icon="refresh" title="Volta a espelhar as camadas ao vivo (a legenda personalizada fica guardada)">Voltar ao automático</button>
+        </div>
+        <div class="pd-north-labelopts">
+          <button class="tb-btn" id="pdLegendAddGroup" data-icon="folder">Novo grupo</button>
+          <button class="tb-btn" id="pdLegendAddItem" data-icon="plus">Novo item</button>
+        </div>
+        <input type="file" id="pdLegendIconFile" accept="image/*" style="display:none">
+        <div id="pdLegendList" style="display:flex; flex-direction:column; gap:2px; margin-top:4px"></div>
+      </div>
+    </div>
     <div class="pd-side-section" id="pdMapPanel" style="display:none">
       <button class="tb-btn" id="pdMapUseView" data-icon="target" title="Usa o centro/zoom/base atuais do mapa principal neste bloco">Fixar vista atual</button>
       <button class="tb-btn" id="pdMapSync" data-icon="refresh" title="Este bloco volta a acompanhar o mapa principal ao vivo">Sincronizar c/ mapa principal</button>
@@ -1988,6 +2104,21 @@ body.split3d #v3dDivider{ display:block }
     <div class="attr-check"><input type="checkbox" id="fldReq"><label for="fldReq" style="cursor:pointer">Obrigatório ao criar geometria</label></div>
     <div class="actions">
       <button class="tb-btn primary" id="fldAdd">Adicionar atributo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: extrusão 3D da camada (vetores em 3D) ===== -->
+<div class="modal-back" id="m3dExtrude">
+  <div class="modal" style="width:420px">
+    <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
+    <h3>Extrusão 3D</h3>
+    <p class="sub" id="extSub">Levanta os polígonos da camada na vista 3D, com altura proporcional a um atributo numérico.</p>
+    <div class="field"><label><input type="checkbox" id="extOn"> Ativar extrusão nesta camada</label></div>
+    <div class="field"><label>Atributo de altura</label><select id="extFieldSel"></select></div>
+    <div class="actions">
+      <button class="tb-btn" data-close>Cancelar</button>
+      <button class="tb-btn primary" id="extSave">Salvar</button>
     </div>
   </div>
 </div>
@@ -2490,7 +2621,17 @@ const ICONS = {
   unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.5-2.2"/>',
   cube3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
   compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>',
-  volume3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4"/><path d="M6 11.5 12 14.5 18 11.5" stroke-dasharray="2.5 2.5"/>'
+  volume3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4"/><path d="M6 11.5 12 14.5 18 11.5" stroke-dasharray="2.5 2.5"/>',
+  bold:'<path d="M6 4h7a4 4 0 0 1 0 8H6z"/><path d="M6 12h8a4 4 0 0 1 0 8H6z"/>',
+  italic:'<path d="M11 4h7M6 20h7M14 4 10 20"/>',
+  underline:'<path d="M6 4v7a6 6 0 0 0 12 0V4"/><path d="M5 20h14"/>',
+  strike:'<path d="M5 12h14"/><path d="M7 6.5C7.8 4.9 9.6 4 12 4c3 0 5 1.4 5 3.5 0 1.6-1.1 2.6-2.8 3.1"/><path d="M8.6 14c-.4.7-.6 1.4-.6 2.2 0 2.3 2 3.8 5 3.8 2.3 0 4-.9 4.7-2.2"/>',
+  alignLeft:'<path d="M4 6h16M4 11h10M4 16h14M4 21h8"/>',
+  alignCenter:'<path d="M4 6h16M7 11h10M5 16h14M8 21h8"/>',
+  alignRight:'<path d="M4 6h16M10 11h10M6 16h14M12 21h8"/>',
+  alignJustify:'<path d="M4 6h16M4 11h16M4 16h16M4 21h16"/>',
+  lineTool:'<path d="M4 20 20 4"/><circle cx="4" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.6" fill="currentColor" stroke="none"/>',
+  rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -2663,6 +2804,9 @@ function collectAssetRefs(p){
   }));
   ((p.printLayout && p.printLayout.blocks) || []).forEach(b=>{
     if(b.type==='image' && isAssetRef(b.props && b.props.asset)) set.add(b.props.asset);
+    if(b.type==='legend' && b.props && Array.isArray(b.props.items)){
+      b.props.items.forEach(it=>{ if(isAssetRef(it.iconAsset)) set.add(it.iconAsset); });
+    }
   });
   return set;
 }
@@ -3230,7 +3374,10 @@ function swapPointLayer(old, lyr){
 function refreshLayerStyles(lyr){
   lyr.group.eachLayer(l=>refreshFeatureStyle(l, lyr));
 }
-function bumpRulesVersion(lyr){ lyr.rulesVersion = (lyr.rulesVersion||0)+1; }
+function bumpRulesVersion(lyr){
+  lyr.rulesVersion = (lyr.rulesVersion||0)+1;
+  if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
+}
 map.on('zoomend', ()=>{
   vectorLayers.forEach(lyr=>{
     if(lyr.styleMode==='rules' && (lyr.rules||[]).some(r=>r.zoomMin!=null || r.zoomMax!=null)) refreshLayerStyles(lyr);
@@ -3519,6 +3666,7 @@ function setLayerOpacity(item, kind, op){
     item.opacity = op;
     refreshLayerStyles(item);
   }
+  if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
   scheduleSave();
 }
 function buildOpacityRow(item, kind){
@@ -3622,6 +3770,7 @@ function buildVectorRow(lyr){
      <button class="icon-btn zoom style" title="Simbologia da camada">${icon('palette')}</button>
      <button class="icon-btn zoom verify" title="Verificar camada">${icon('check')}</button>
      <button class="icon-btn zoom opa" title="Transparência da camada">${icon('contrast')}</button>
+     ${lyr.geomType==='polygon' ? `<button class="icon-btn zoom ext3d" title="Extrusão 3D">${icon('cube3d')}</button>` : ''}
      <button class="icon-btn" title="Remover">${icon('close')}</button>`;
   const [chk, colorIn] = [row.children[0], row.children[1]];
   row.querySelector('.name').addEventListener('click', ()=>{
@@ -3636,6 +3785,7 @@ function buildVectorRow(lyr){
   colorIn.addEventListener('input', ()=>{
     lyr.color = colorIn.value;
     refreshLayerStyles(lyr);
+    if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
     scheduleSave();
   });
   row.querySelector('.info').addEventListener('click', ()=>{ lyr.expanded = !lyr.expanded; renderVectorList(); });
@@ -3648,6 +3798,8 @@ function buildVectorRow(lyr){
   row.querySelector('.table').addEventListener('click', ()=>openAttrTable(lyr));
   row.querySelector('.verify').addEventListener('click', ()=>openVerifyPanel(lyr));
   row.querySelector('.opa').addEventListener('click', ()=>{ lyr.opacityOpen = !lyr.opacityOpen; renderVectorList(); });
+  const extBtn = row.querySelector('.ext3d');
+  if(extBtn) extBtn.addEventListener('click', ()=>openExtrudeModal(lyr));
   row.querySelector('.icon-btn:last-child').addEventListener('click', ()=>{
     if(lyr.group.getLayers().length && !confirm(`Remover a camada "${lyr.name}" e suas ${lyr.group.getLayers().length} geometrias?`)) return;
     map.removeLayer(lyr.group);
@@ -3979,6 +4131,10 @@ function recomputeDerived(layer, lyr){
   if(!layer || !lyr || !lyr.fields || !lyr.fields.length) return;
   const props = (layer.feature && layer.feature.properties) || null;
   if(!props) return;
+  // ponto único de recálculo (criação, attrSave, edição inline, edição de
+  // geometria, restauração do projeto) — reaproveitado para invalidar o
+  // espelhamento 3D sempre que algo que a vista 3D desenha pode ter mudado
+  if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
   const ll = layerLatLngs(layer);
   lyr.fields.forEach(f=>{ if(f.type==='geo') props[f.name] = geoValue(layer, f.geoKind, lyr); });
   const formulas = lyr.fields.filter(f=>f.type==='formula');
@@ -4598,6 +4754,27 @@ function fieldOptionsHtml(lyr, sel, numericOnly){
   if(!fs.length) return '<option value="">— sem atributos '+(numericOnly?'numéricos ':'')+'—</option>';
   return fs.map(f=>`<option value="${f.name}" ${f.name===sel?'selected':''}>${f.name}</option>`).join('');
 }
+/* Extrusão 3D (Fase 3): armazena só `lyr.extrudeField` (nome do atributo
+   numérico, ou null) — mirror3D() lê isso direto, sem estado adicional. */
+let extLayer = null;
+function openExtrudeModal(lyr){
+  extLayer = lyr;
+  document.getElementById('extSub').textContent =
+    'Levanta os polígonos de "'+lyr.name+'" na vista 3D, com altura proporcional a um atributo numérico.';
+  document.getElementById('extOn').checked = !!lyr.extrudeField;
+  document.getElementById('extFieldSel').innerHTML = fieldOptionsHtml(lyr, lyr.extrudeField||'', true);
+  open('m3dExtrude');
+}
+document.getElementById('extSave').addEventListener('click', ()=>{
+  if(!extLayer) return;
+  const on = document.getElementById('extOn').checked;
+  const field = document.getElementById('extFieldSel').value;
+  extLayer.extrudeField = (on && field) ? field : null;
+  close('m3dExtrude');
+  if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
+  scheduleSave();
+  status(extLayer.extrudeField ? 'Extrusão 3D ativada em "'+extLayer.name+'" ('+extLayer.extrudeField+').' : 'Extrusão 3D desativada em "'+extLayer.name+'".');
+});
 function openStyleEditor(lyr){
   styLayer = lyr;
   const symb = lyr.symb || { kind: lyr.styleMode==='rules' ? 'rules' : 'single' };
@@ -9928,6 +10105,119 @@ function baseTiles(name){
   const tiles = subs.map(s=>b._url.replace('{s}', s));
   return { tiles, maxzoom: (b.options && b.options.maxZoom) || 19 };
 }
+/* ---------- Vetores em 3D (Fase 3): drapejamento, extrusão e hastes ---------- */
+/* Bake por feição: avalia styleFor() (o MESMO avaliador do 2D — zero
+   divergência com o tempo) uma vez por feição e carimba o resultado nas
+   properties do GeoJSON, para o paint do MapLibre ler via ['get','__x'].
+   Degradação já documentada desde a V9: padrões SVG → cor plana
+   (_fillPlain), formas não-circulares → círculo (mesma filosofia aqui). */
+function bakeVectorGeoJSON(lyr){
+  const feats = [];
+  lyr.group.eachLayer(l=>{
+    if(!l.toGeoJSON) return;
+    const st = styleFor(lyr, l.feature);
+    if(!st.opacity && !st.fillOpacity) return; // regra oculta — some do 3D também
+    const gj = l.toGeoJSON();
+    const p = gj.properties = gj.properties || {};
+    p.__c = st.color; p.__fc = st._fillPlain || st.fillColor;
+    p.__w = st.weight!=null ? st.weight : 2;
+    p.__fo = st.fillOpacity!=null ? st.fillOpacity : 0.25;
+    p.__r = st.radius!=null ? st.radius : 7;
+    if(lyr.extrudeField){
+      const v = parseFloat(p[lyr.extrudeField]);
+      p.__h = isFinite(v) ? Math.max(0, v) : 0;
+    }
+    feats.push(gj);
+  });
+  return { type:'FeatureCollection', features:feats };
+}
+/* Hastes sintéticas do inventário arbóreo: MapLibre não tem cilindro, então
+   cada árvore vira uma LineString vertical do solo até solo+altura_m
+   (line-width proporcional ao DAP). Cota do solo via sampleElevationsAt em
+   lote no DEM selecionado como terreno (mesma fonte que applyTerrain() usa);
+   sem DEM selecionado, cai para solo=0 — degradação aceitável, mesmo
+   espírito do resto da vista 3D. */
+async function buildTreeHasteGeoJSON(lyr){
+  const layers = lyr.group.getLayers().filter(l=>l.getLatLng);
+  if(!layers.length) return emptyFC();
+  const rec = demLayers().find(r=>r.name===SCENE3D.terrainDemName);
+  let grounds = layers.map(()=>0);
+  if(rec){
+    try{
+      const { samples } = await rec.layer.sampleElevationsAt(layers.map(l=>{ const ll=l.getLatLng(); return {lat:ll.lat,lng:ll.lng}; }));
+      grounds = samples.map(s=>s.elev==null?0:s.elev);
+    }catch(err){ /* mantém solo=0 */ }
+  }
+  const feats = layers.map((l,i)=>{
+    const ll = l.getLatLng();
+    const props = (l.feature && l.feature.properties) || {};
+    const h = Math.max(0.3, parseFloat(props.altura_m)||2);
+    const dap = parseFloat(props.dap_cm)||15;
+    const ground = grounds[i];
+    return { type:'Feature',
+      geometry:{ type:'LineString', coordinates:[[ll.lng,ll.lat,ground],[ll.lng,ll.lat,ground+h]] },
+      properties:{ __w: Math.max(1.5, Math.min(10, dap/6)) } };
+  });
+  return { type:'FeatureCollection', features:feats };
+}
+/* Espelha vectorLayers no style do map3d, reaproveitando o padrão de diff
+   de mirror3D (ids somados ao mesmo `wanted` Set — a limpeza no final da
+   função-mãe cuida de remover o que não é mais pedido). Ao contrário dos
+   rasters, sempre reconstrói a source (setData) quando ela já existe: a
+   geometria/estilo de um vetor muda com muito mais frequência que a de um
+   raster, e mirror3D já roda debounced (150 ms via scheduleMirror3D). */
+async function mirrorVectorLayers(wanted){
+  const m3 = SCENE3D.map3d;
+  for(const l of vectorLayers){
+    const srcId = 'vec_'+l.id;
+    if(!l.visible){
+      ['_fill','_line','_pts','_extrude'].forEach(suf=>{ const id=srcId+suf; if(m3.getLayer(id)) m3.setLayoutProperty(id,'visibility','none'); });
+      if(m3.getLayer(srcId+'_haste_line')) m3.setLayoutProperty(srcId+'_haste_line','visibility','none');
+      continue;
+    }
+    if(l.inventory){
+      // inventário arbóreo: hastes em vez dos pontos normais — já representam a árvore
+      const hasteSrc = srcId+'_haste';
+      wanted.add(hasteSrc); wanted.add(hasteSrc+'_line');
+      const fc = await buildTreeHasteGeoJSON(l);
+      if(!m3.getSource(hasteSrc)){
+        m3.addSource(hasteSrc, { type:'geojson', data:fc });
+        m3.addLayer({ id:hasteSrc+'_line', type:'line', source:hasteSrc,
+          paint:{ 'line-color':l.color||'#6fd35e', 'line-width':['get','__w'] } });
+      } else {
+        m3.getSource(hasteSrc).setData(fc);
+        m3.setLayoutProperty(hasteSrc+'_line','visibility','visible');
+      }
+      continue;
+    }
+    wanted.add(srcId); wanted.add(srcId+'_fill'); wanted.add(srcId+'_line'); wanted.add(srcId+'_pts');
+    const fc = bakeVectorGeoJSON(l);
+    if(!m3.getSource(srcId)){
+      m3.addSource(srcId, { type:'geojson', data:fc });
+      m3.addLayer({ id:srcId+'_fill', type:'fill', source:srcId, filter:['==','$type','Polygon'],
+        paint:{ 'fill-color':['get','__fc'], 'fill-opacity':['get','__fo'] } });
+      m3.addLayer({ id:srcId+'_line', type:'line', source:srcId, filter:['in','$type','LineString','Polygon'],
+        paint:{ 'line-color':['get','__c'], 'line-width':['get','__w'] } });
+      m3.addLayer({ id:srcId+'_pts', type:'circle', source:srcId, filter:['==','$type','Point'],
+        paint:{ 'circle-radius':['get','__r'], 'circle-color':['get','__fc'], 'circle-stroke-color':['get','__c'], 'circle-stroke-width':['get','__w'] } });
+    } else {
+      m3.getSource(srcId).setData(fc);
+      ['_fill','_line','_pts'].forEach(suf=>{ if(m3.getLayer(srcId+suf)) m3.setLayoutProperty(srcId+suf,'visibility','visible'); });
+    }
+    // extrusão substitui o preenchimento plano (prática cartográfica usual) — só para polígonos com atributo escolhido em #m3dExtrude
+    if(l.extrudeField && l.geomType==='polygon'){
+      wanted.add(srcId+'_extrude');
+      if(!m3.getLayer(srcId+'_extrude')){
+        m3.addLayer({ id:srcId+'_extrude', type:'fill-extrusion', source:srcId, filter:['==','$type','Polygon'],
+          paint:{ 'fill-extrusion-color':['get','__fc'], 'fill-extrusion-height':['get','__h'], 'fill-extrusion-base':0, 'fill-extrusion-opacity':0.85 } });
+      }
+      if(m3.getLayer(srcId+'_fill')) m3.setLayoutProperty(srcId+'_fill','visibility','none');
+    } else if(m3.getLayer(srcId+'_extrude')){
+      m3.setLayoutProperty(srcId+'_extrude','visibility','none');
+      if(m3.getLayer(srcId+'_fill')) m3.setLayoutProperty(srcId+'_fill','visibility','visible');
+    }
+  }
+}
 async function mirror3D(){
   const m3 = SCENE3D.map3d;
   if(!m3 || !m3.isStyleLoaded()) return;
@@ -9976,10 +10266,20 @@ async function mirror3D(){
       paint:{ 'raster-opacity': r.def.opacity==null?1:r.def.opacity } });
   }
 
-  // remove o que não existe mais no Leaflet
+  await mirrorVectorLayers(wanted);
+
+  // remove o que não existe mais no Leaflet — duas passadas porque, ao
+  // contrário de bases/rasters (onde o mesmo id nomeia source e layer),
+  // um vetor tem UMA source ('vec_N') compartilhada por VÁRIAS layers
+  // ('vec_N_fill'/'_line'/'_pts'); remover a source antes das layers que
+  // ainda a referenciam faria o MapLibre recusar a remoção.
   SCENE3D.mirrored.forEach(id=>{
     if(!wanted.has(id) && !id.startsWith('base_')){
       if(m3.getLayer(id)) m3.removeLayer(id);
+    }
+  });
+  SCENE3D.mirrored.forEach(id=>{
+    if(!wanted.has(id) && !id.startsWith('base_')){
       if(m3.getSource(id)) m3.removeSource(id);
     }
   });
@@ -10160,11 +10460,15 @@ function pdMarkDirty(){ scheduleSave(); }
 function pdAddBlock(type, extra){
   const dims = paperDims(printLayout.paperSize, printLayout.orientation);
   const defaults = {
-    text:{w:80, h:30, props:{html:'Texto'}},
+    text:{w:80, h:30, props:{html:'Texto', fontFamily:'Arial, sans-serif', fontSize:11, color:'#000000',
+      bold:false, italic:false, underline:false, strike:false, uppercase:false, align:'left',
+      bgColor:'', bgOpacity:100, borderColor:'', borderWidth:0, borderStyle:'solid', borderRadius:0}},
     image:{w:40, h:40, props:{asset:null}},
+    line:{w:60, h:0, props:{color:'#000000', width:1, style:'solid'}},
+    rect:{w:60, h:40, props:{fillColor:'', fillOpacity:0, borderColor:'#000000', borderWidth:1, borderStyle:'solid', borderRadius:0}},
     north:{w:16, h:24, props:{style:'chevronMark', showLabel:true, labelColor:'#3a3a3a', labelBorderColor:'#ffffff', labelSize:16}},
     scale:{w:55, h:18, props:{showBar:true, showText:true}},
-    legend:{w:70, h:90, props:{}},
+    legend:{w:70, h:90, props:{mode:'auto', groups:[], items:[]}},
     map:{w:110, h:80, props:{center:null, zoom:null, base:null, layers:null, preview:null, contextOf:null,
       graticule:{on:false, crs:'geo', position:'inside',
         dirs:{top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
@@ -10207,10 +10511,53 @@ function pdSelect(id){
   const sub = document.getElementById('pdSideSub');
   const empty = document.getElementById('pdSideEmpty');
   if(sub){
-    const label = b ? ({text:'Texto', image:'Imagem', north:'Norte', scale:'Escala', legend:'Legenda', map:'Mapa'})[b.type]||b.type : 'Nenhum bloco selecionado';
+    const label = b ? ({text:'Texto', image:'Imagem', line:'Linha', rect:'Retângulo', north:'Norte', scale:'Escala', legend:'Legenda', map:'Mapa'})[b.type]||b.type : 'Nenhum bloco selecionado';
     sub.textContent = label;
   }
-  if(empty) empty.style.display = (b && (b.type==='north' || b.type==='map')) ? 'none' : '';
+  if(empty) empty.style.display = (b && (b.type==='north' || b.type==='map' || b.type==='text' || b.type==='line' || b.type==='rect' || b.type==='legend')) ? 'none' : '';
+  const textWrap = document.getElementById('pdTextStyleWrap');
+  if(b && b.type==='text'){
+    textWrap.style.display = '';
+    document.getElementById('pdTextFont').value = b.props.fontFamily || 'Arial, sans-serif';
+    document.getElementById('pdTextSize').value = b.props.fontSize || 11;
+    document.getElementById('pdTextColor').value = b.props.color || '#000000';
+    textWrap.querySelectorAll('.pd-text-toggle').forEach(btn=>{
+      btn.classList.toggle('primary', !!b.props[btn.getAttribute('data-key')]);
+    });
+    textWrap.querySelectorAll('.pd-text-align').forEach(btn=>{
+      btn.classList.toggle('primary', (b.props.align||'left')===btn.getAttribute('data-value'));
+    });
+    document.getElementById('pdTextUppercase').checked = !!b.props.uppercase;
+    document.getElementById('pdTextBg').value = b.props.bgColor || '#ffffff';
+    document.getElementById('pdTextBgOpacity').value = b.props.bgOpacity!=null ? b.props.bgOpacity : 100;
+    document.getElementById('pdTextBorderColor').value = b.props.borderColor || '#000000';
+    document.getElementById('pdTextBorderWidth').value = b.props.borderWidth || 0;
+    document.getElementById('pdTextBorderStyle').value = b.props.borderStyle || 'solid';
+    document.getElementById('pdTextBorderRadius').value = b.props.borderRadius || 0;
+  } else {
+    textWrap.style.display = 'none';
+  }
+  const lineWrap = document.getElementById('pdLineStyleWrap');
+  if(b && b.type==='line'){
+    lineWrap.style.display = '';
+    document.getElementById('pdLineColor').value = b.props.color || '#000000';
+    document.getElementById('pdLineWidth').value = b.props.width || 1;
+    document.getElementById('pdLineStyle').value = b.props.style || 'solid';
+  } else {
+    lineWrap.style.display = 'none';
+  }
+  const rectWrap = document.getElementById('pdRectStyleWrap');
+  if(b && b.type==='rect'){
+    rectWrap.style.display = '';
+    document.getElementById('pdRectFill').value = b.props.fillColor || '#ffffff';
+    document.getElementById('pdRectFillOpacity').value = b.props.fillOpacity!=null ? b.props.fillOpacity : 0;
+    document.getElementById('pdRectBorderColor').value = b.props.borderColor || '#000000';
+    document.getElementById('pdRectBorderWidth').value = b.props.borderWidth || 0;
+    document.getElementById('pdRectBorderStyle').value = b.props.borderStyle || 'solid';
+    document.getElementById('pdRectBorderRadius').value = b.props.borderRadius || 0;
+  } else {
+    rectWrap.style.display = 'none';
+  }
   const wrap = document.getElementById('pdNorthStyleWrap');
   if(b && b.type==='north'){
     wrap.style.display = '';
@@ -10227,6 +10574,16 @@ function pdSelect(id){
     document.getElementById('pdNorthLabelOpts').style.display = (!isRose && showLabel) ? '' : 'none';
   } else {
     wrap.style.display = 'none';
+  }
+  const legendPanel = document.getElementById('pdLegendPanel');
+  if(b && b.type==='legend'){
+    legendPanel.style.display = '';
+    const isCustom = b.props.mode==='custom';
+    document.getElementById('pdLegendCustomize').style.display = isCustom ? 'none' : '';
+    document.getElementById('pdLegendCustomWrap').style.display = isCustom ? '' : 'none';
+    if(isCustom) pdRenderLegendList(b);
+  } else {
+    legendPanel.style.display = 'none';
   }
   const mapPanel = document.getElementById('pdMapPanel');
   if(b && b.type==='map'){
@@ -10304,6 +10661,279 @@ function pdRenderMapLayerList(b){
       pdMarkDirty();
       pdAutoRefreshMap(b);
     });
+  });
+}
+
+/* lista de grupos+itens do bloco de legenda personalizado, no painel lateral —
+   pastas no estilo .grp-head/.gname/.gcolor já usado pela lista de camadas,
+   linhas no estilo .fld-row/.fld-drag já usado pela lista de atributos */
+let pdLegendIconTarget = null;
+function pdLegendRowHtml(it){
+  const isPoint = it.geomType==='point';
+  const hasColor = it.geomType==='point' || it.geomType==='line' || it.geomType==='polygon';
+  return `<div class="leg-row" data-id="${it.id}">
+    <button class="fld-drag" title="Arrastar para reordenar (ou use as setas para cima e para baixo)" aria-label="Reordenar ${it.label}">${icon('grip')}</button>
+    ${legendItemSwatch(it)}
+    <span class="leg-name" data-id="${it.id}" title="Clique para renomear">${it.label}</span>
+    ${hasColor ? `<input type="color" class="leg-color" data-id="${it.id}" value="${it.color||'#000000'}">` : ''}
+    ${isPoint && !it.iconAsset ? `<select class="leg-shape" data-id="${it.id}">${Object.entries(SHAPE_OPTS).map(([v,l])=>`<option value="${v}"${it.shape===v?' selected':''}>${l}</option>`).join('')}</select>` : ''}
+    ${isPoint ? `<button type="button" class="tb-btn icon-only leg-icon-upload" data-id="${it.id}" data-icon="image" title="Enviar ícone personalizado"></button>` : ''}
+    ${isPoint && it.iconAsset ? `<button type="button" class="tb-btn icon-only leg-icon-clear" data-id="${it.id}" data-icon="close" title="Remover ícone personalizado, volta para a forma"></button>` : ''}
+    <select class="leg-group" data-id="${it.id}" title="Grupo (pasta)"></select>
+    <button class="icon-btn leg-item-del" data-id="${it.id}" title="Remover item">${icon('close')}</button>
+  </div>`;
+}
+function pdRenderLegendList(b){
+  const root = document.getElementById('pdLegendList');
+  if(!root) return;
+  const items = b.props.items||[];
+  const groupsArr = b.props.groups||[];
+  const groupOptions = it => `<option value="">Sem grupo</option>` +
+    groupsArr.map(g=>`<option value="${g.id}"${it.groupId===g.id?' selected':''}>${g.name}</option>`).join('');
+  const groupBlock = g=>{
+    const gi = items.filter(it=>it.groupId===g.id);
+    return `<div class="grp-head" style="border-top-color:${g.color}">
+        <input type="color" class="gcolor leg-grp-color" data-gid="${g.id}" value="${g.color}">
+        <span class="gname leg-grp-name" data-gid="${g.id}" title="Clique para renomear">${g.name}</span>
+        <span class="gcount">${gi.length}</span>
+        <button class="icon-btn leg-grp-del" data-gid="${g.id}" title="Excluir grupo">${icon('close')}</button>
+      </div>
+      <div class="leg-group-body" data-gid="${g.id}">
+        ${gi.map(pdLegendRowHtml).join('') || '<div class="leg-empty-hint">Arraste itens para cá</div>'}
+      </div>`;
+  };
+  const ungrouped = items.filter(it=>!it.groupId);
+  root.innerHTML =
+    `<div class="leg-group-body" data-gid="">${ungrouped.map(pdLegendRowHtml).join('') || '<div class="leg-empty-hint">Nenhum item sem grupo</div>'}</div>` +
+    groupsArr.map(groupBlock).join('');
+  root.querySelectorAll('.leg-group').forEach(sel=>{
+    const it = items.find(x=>x.id===sel.getAttribute('data-id'));
+    if(it) sel.innerHTML = groupOptions(it);
+  });
+  root.querySelectorAll('[data-icon]').forEach(n=>{
+    if(n.querySelector('svg')) return;
+    n.insertAdjacentHTML('afterbegin', icon(n.getAttribute('data-icon'), 13));
+  });
+  pdWireLegendList(root, b);
+}
+function pdWireLegendList(root, b){
+  const rerender = ()=>{ pdRenderAll(); pdRenderLegendList(b); pdMarkDirty(); };
+  root.querySelectorAll('.leg-name').forEach(span=>{
+    span.addEventListener('click', ()=>{
+      const it = b.props.items.find(x=>x.id===span.getAttribute('data-id'));
+      if(!it) return;
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'fname-input'; inp.value = it.label; inp.maxLength = 60;
+      span.replaceWith(inp);
+      inp.focus(); inp.select();
+      let done = false;
+      const commit = ok=>{
+        if(done) return;
+        done = true;
+        const v = inp.value.trim();
+        if(ok && v) it.label = v;
+        rerender();
+      };
+      inp.addEventListener('keydown', e=>{
+        if(e.key==='Enter'){ e.preventDefault(); commit(true); }
+        else if(e.key==='Escape'){ e.preventDefault(); commit(false); }
+      });
+      inp.addEventListener('blur', ()=>commit(true));
+    });
+  });
+  root.querySelectorAll('.leg-color').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const it = b.props.items.find(x=>x.id===e.target.getAttribute('data-id'));
+      if(!it) return;
+      it.color = e.target.value;
+      pdRenderAll(); pdMarkDirty();
+    });
+  });
+  root.querySelectorAll('.leg-shape').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      const it = b.props.items.find(x=>x.id===e.target.getAttribute('data-id'));
+      if(!it) return;
+      it.shape = e.target.value;
+      pdRenderAll(); pdMarkDirty();
+    });
+  });
+  root.querySelectorAll('.leg-icon-upload').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      pdLegendIconTarget = { blockId:b.id, itemId:btn.getAttribute('data-id') };
+      document.getElementById('pdLegendIconFile').click();
+    });
+  });
+  root.querySelectorAll('.leg-icon-clear').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const it = b.props.items.find(x=>x.id===btn.getAttribute('data-id'));
+      if(!it) return;
+      it.iconAsset = null;
+      rerender();
+    });
+  });
+  root.querySelectorAll('.leg-group').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      const it = b.props.items.find(x=>x.id===e.target.getAttribute('data-id'));
+      if(!it) return;
+      it.groupId = e.target.value || null;
+      rerender();
+    });
+  });
+  root.querySelectorAll('.leg-item-del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-id');
+      b.props.items = b.props.items.filter(x=>x.id!==id);
+      rerender();
+    });
+  });
+  root.querySelectorAll('.leg-grp-name').forEach(span=>{
+    span.addEventListener('click', ()=>{
+      const g = b.props.groups.find(x=>x.id===span.getAttribute('data-gid'));
+      if(!g) return;
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'gname-input'; inp.value = g.name; inp.maxLength = 40;
+      span.replaceWith(inp);
+      inp.focus(); inp.select();
+      let done = false;
+      const commit = ok=>{
+        if(done) return;
+        done = true;
+        const v = inp.value.trim();
+        if(ok && v) g.name = v;
+        rerender();
+      };
+      inp.addEventListener('keydown', e=>{
+        if(e.key==='Enter'){ e.preventDefault(); commit(true); }
+        else if(e.key==='Escape'){ e.preventDefault(); commit(false); }
+      });
+      inp.addEventListener('blur', ()=>commit(true));
+    });
+  });
+  root.querySelectorAll('.leg-grp-color').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const g = b.props.groups.find(x=>x.id===e.target.getAttribute('data-gid'));
+      if(!g) return;
+      g.color = e.target.value;
+      pdRenderAll(); pdMarkDirty();
+    });
+  });
+  root.querySelectorAll('.leg-grp-del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const gid = btn.getAttribute('data-gid');
+      if(!confirm('Excluir este grupo da legenda? Os itens voltam para "Sem grupo".')) return;
+      b.props.items.forEach(it=>{ if(it.groupId===gid) it.groupId = null; });
+      b.props.groups = b.props.groups.filter(x=>x.id!==gid);
+      rerender();
+    });
+  });
+  pdWireLegendDrag(root, b);
+}
+/* Arraste dos itens da legenda: tanto pela alça (.fld-drag) quanto clicando e
+   segurando o corpo inteiro da linha (fora de campos interativos) — os dois
+   gatilhos chamam o mesmo início de arraste. Soltar sobre outro grupo também
+   reatribui item.groupId, além de reordenar (extensão do padrão de
+   wireFieldsSortable, que só reordena dentro de um único container). */
+function pdWireLegendDrag(root, b){
+  let st = null;
+  const rows = ()=>[...root.querySelectorAll('.leg-row')];
+  const clearMarks = ()=>{
+    rows().forEach(r=>r.classList.remove('leg-dropmark','leg-dropmark-after'));
+    root.querySelectorAll('.leg-group-body').forEach(g=>g.classList.remove('leg-drop-hover'));
+  };
+  const rowAt = (x,y)=>{
+    const t = document.elementFromPoint(x,y);
+    const r = t && t.closest('.leg-row');
+    return (r && root.contains(r)) ? r : null;
+  };
+  const groupBodyAt = (x,y)=>{
+    const t = document.elementFromPoint(x,y);
+    const g = t && t.closest('.leg-group-body');
+    return (g && root.contains(g)) ? g : null;
+  };
+  const start = (e, row)=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    e.preventDefault();
+    st = { row, itemId: row.getAttribute('data-id'), pid: e.pointerId };
+    row.classList.add('leg-dragging');
+    try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(err){}
+  };
+  const move = e=>{
+    if(!st || e.pointerId!==st.pid) return;
+    clearMarks();
+    const over = rowAt(e.clientX, e.clientY);
+    if(over && over!==st.row){
+      const r = over.getBoundingClientRect();
+      over.classList.add(e.clientY > r.top + r.height/2 ? 'leg-dropmark-after' : 'leg-dropmark');
+    } else if(!over){
+      const gb = groupBodyAt(e.clientX, e.clientY);
+      if(gb) gb.classList.add('leg-drop-hover');
+    }
+  };
+  const finish = e=>{
+    if(!st || e.pointerId!==st.pid) return;
+    const over = rowAt(e.clientX, e.clientY);
+    const gb = !over ? groupBodyAt(e.clientX, e.clientY) : null;
+    st.row.classList.remove('leg-dragging');
+    clearMarks();
+    const itemId = st.itemId;
+    st = null;
+    if(!over && !gb) return;
+    const items = b.props.items;
+    const fromIdx = items.findIndex(x=>x.id===itemId);
+    if(fromIdx<0) return;
+    const dragged = items[fromIdx];
+    items.splice(fromIdx,1);
+    let targetGid = null, insertIdx;
+    if(over){
+      const overIdx = items.findIndex(x=>x.id===over.getAttribute('data-id'));
+      const r = over.getBoundingClientRect();
+      insertIdx = (e.clientY > r.top + r.height/2) ? overIdx+1 : overIdx;
+      const bodyEl = over.closest('.leg-group-body');
+      targetGid = (bodyEl && bodyEl.getAttribute('data-gid')) || null;
+    } else {
+      targetGid = gb.getAttribute('data-gid') || null;
+      let lastIdx = -1;
+      items.forEach((it,idx)=>{ if((it.groupId||null)===(targetGid||null)) lastIdx = idx; });
+      insertIdx = lastIdx>=0 ? lastIdx+1 : items.length;
+    }
+    dragged.groupId = targetGid || null;
+    items.splice(insertIdx, 0, dragged);
+    pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
+  };
+  root.querySelectorAll('.fld-drag').forEach(h=>{
+    h.addEventListener('pointerdown', e=>start(e, h.closest('.leg-row')));
+    h.addEventListener('pointermove', move);
+    h.addEventListener('pointerup', finish);
+    h.addEventListener('pointercancel', ()=>{ if(st){ st.row.classList.remove('leg-dragging'); clearMarks(); st=null; } });
+    h.addEventListener('keydown', e=>{
+      if(e.key!=='ArrowUp' && e.key!=='ArrowDown') return;
+      e.preventDefault();
+      const row = h.closest('.leg-row');
+      const items = b.props.items;
+      const from = items.findIndex(x=>x.id===row.getAttribute('data-id'));
+      if(from<0) return;
+      const it = items[from];
+      const siblings = rows().filter(r=>r.closest('.leg-group-body')===row.closest('.leg-group-body'));
+      const pos = siblings.indexOf(row);
+      const targetRow = siblings[pos + (e.key==='ArrowUp'?-1:1)];
+      if(!targetRow) return;
+      const targetId = targetRow.getAttribute('data-id');
+      items.splice(from,1);
+      items.splice(items.findIndex(x=>x.id===targetId), 0, it);
+      pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
+      const nextHandle = root.querySelector('.leg-row[data-id="'+it.id+'"] .fld-drag');
+      if(nextHandle) nextHandle.focus();
+    });
+  });
+  // clicar e segurar o corpo da linha (fora de campos interativos) também arrasta
+  root.querySelectorAll('.leg-row').forEach(row=>{
+    row.addEventListener('pointerdown', e=>{
+      if(e.target.closest('input, select, button, .fld-drag')) return;
+      start(e, row);
+    });
+    row.addEventListener('pointermove', move);
+    row.addEventListener('pointerup', finish);
+    row.addEventListener('pointercancel', ()=>{ if(st){ st.row.classList.remove('leg-dragging'); clearMarks(); st=null; } });
   });
 }
 
@@ -10453,13 +11083,42 @@ function pdScaleHtml(b){
     : '';
   return `<div class="pd-inner" style="pointer-events:none">${bar}${text}</div>`;
 }
+function hexWithAlpha(hex, pct){
+  const h = (hex||'#000000').replace('#','');
+  const r = parseInt(h.substring(0,2)||'00',16), g = parseInt(h.substring(2,4)||'00',16), bl = parseInt(h.substring(4,6)||'00',16);
+  const a = Math.max(0, Math.min(100, pct==null?100:pct))/100;
+  return `rgba(${r},${g},${bl},${a})`;
+}
 function pdBlockHtml(b){
   if(b.type==='text'){
-    return `<div class="pd-inner" contenteditable="true" spellcheck="false">${b.props.html||''}</div>`;
+    const p = b.props;
+    const style = [
+      `font-family:${p.fontFamily||'Arial, sans-serif'}`,
+      `font-size:${p.fontSize||11}pt`,
+      `color:${p.color||'#000'}`,
+      `font-weight:${p.bold?'700':'400'}`,
+      `font-style:${p.italic?'italic':'normal'}`,
+      `text-decoration:${[p.underline&&'underline', p.strike&&'line-through'].filter(Boolean).join(' ')||'none'}`,
+      `text-transform:${p.uppercase?'uppercase':'none'}`,
+      `text-align:${p.align||'left'}`,
+      `background:${p.bgColor ? hexWithAlpha(p.bgColor, p.bgOpacity) : 'transparent'}`,
+      `border:${p.borderWidth||0}px ${p.borderStyle||'solid'} ${p.borderColor||'transparent'}`,
+      `border-radius:${p.borderRadius||0}px`
+    ].join(';');
+    return `<div class="pd-inner" contenteditable="true" spellcheck="false" style="${style}">${p.html||''}</div>`;
   }
   if(b.type==='image'){
     const src = b.props.asset ? assetURL(b.props.asset) : '';
     return `<div class="pd-inner">${src?`<img src="${src}">`:''}</div>`;
+  }
+  if(b.type==='line'){
+    const p = b.props;
+    return `<div class="pd-inner" style="border-top:${p.width||1}px ${p.style||'solid'} ${p.color||'#000'}"></div>`;
+  }
+  if(b.type==='rect'){
+    const p = b.props;
+    const bg = p.fillColor ? hexWithAlpha(p.fillColor, p.fillOpacity) : 'transparent';
+    return `<div class="pd-inner" style="background:${bg};border:${p.borderWidth||0}px ${p.borderStyle||'solid'} ${p.borderColor||'transparent'};border-radius:${p.borderRadius||0}px"></div>`;
   }
   if(b.type==='north'){
     return `<div class="pd-inner">${pdNorthSvg(b.props.style, b.props)}</div>`;
@@ -10474,9 +11133,10 @@ function pdBlockHtml(b){
     return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Mapa sem prévia — selecione e clique em "Atualizar prévia"</div>`;
   }
   if(b.type==='legend'){
+    const body = (b.props.mode==='custom') ? legendItemsHtml(b) : buildLegendHtml();
     return `<div class="pd-inner" style="background:#fff; color:#000; padding:2mm; font-family:Arial, sans-serif; font-size:8pt">
       <b style="display:block; border-bottom:1px solid #000; padding-bottom:1mm; margin-bottom:1mm; letter-spacing:1px">LEGENDA</b>
-      ${buildLegendHtml()}
+      ${body}
     </div>`;
   }
   return '<div class="pd-inner"></div>';
@@ -10759,6 +11419,71 @@ document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   });
 })();
 document.getElementById('pdAddText').addEventListener('click', ()=>pdAddBlock('text'));
+document.getElementById('pdAddLine').addEventListener('click', ()=>pdAddBlock('line'));
+document.getElementById('pdAddRect').addEventListener('click', ()=>pdAddBlock('rect'));
+
+function pdTextField(id, key, opts){
+  document.getElementById(id).addEventListener(opts&&opts.evt||'input', e=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    if(!b) return;
+    let v = e.target.type==='checkbox' ? e.target.checked : e.target.value;
+    if(opts && opts.num) v = opts.clamp ? opts.clamp(parseFloat(v)||0) : (parseFloat(v)||0);
+    b.props[key] = v;
+    pdRenderAll();
+    pdMarkDirty();
+  });
+}
+pdTextField('pdTextFont','fontFamily',{evt:'change'});
+pdTextField('pdTextSize','fontSize',{num:true, clamp:v=>Math.max(6, Math.min(96, v||11))});
+pdTextField('pdTextColor','color');
+pdTextField('pdTextUppercase','uppercase',{evt:'change'});
+pdTextField('pdTextBg','bgColor');
+pdTextField('pdTextBgOpacity','bgOpacity',{num:true, clamp:v=>Math.max(0, Math.min(100, v))});
+pdTextField('pdTextBorderColor','borderColor');
+pdTextField('pdTextBorderWidth','borderWidth',{num:true, clamp:v=>Math.max(0, Math.min(20, v))});
+pdTextField('pdTextBorderStyle','borderStyle',{evt:'change'});
+pdTextField('pdTextBorderRadius','borderRadius',{num:true, clamp:v=>Math.max(0, Math.min(60, v))});
+document.querySelectorAll('#pdTextStyleWrap .pd-text-toggle').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    if(!b) return;
+    const key = btn.getAttribute('data-key');
+    b.props[key] = !b.props[key];
+    btn.classList.toggle('primary', !!b.props[key]);
+    pdRenderAll();
+    pdMarkDirty();
+  });
+});
+document.querySelectorAll('#pdTextStyleWrap .pd-text-align').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    if(!b) return;
+    b.props.align = btn.getAttribute('data-value');
+    document.querySelectorAll('#pdTextStyleWrap .pd-text-align').forEach(x=>x.classList.toggle('primary', x===btn));
+    pdRenderAll();
+    pdMarkDirty();
+  });
+});
+function pdLineField(id, key, opts){
+  document.getElementById(id).addEventListener(opts&&opts.evt||'input', e=>{
+    const b = printLayout.blocks.find(x=>x.id===pdSelId);
+    if(!b) return;
+    let v = e.target.value;
+    if(opts && opts.num) v = opts.clamp ? opts.clamp(parseFloat(v)||0) : (parseFloat(v)||0);
+    b.props[key] = v;
+    pdRenderAll();
+    pdMarkDirty();
+  });
+}
+pdLineField('pdLineColor','color');
+pdLineField('pdLineWidth','width',{num:true, clamp:v=>Math.max(1, Math.min(20, v||1))});
+pdLineField('pdLineStyle','style',{evt:'change'});
+pdLineField('pdRectFill','fillColor');
+pdLineField('pdRectFillOpacity','fillOpacity',{num:true, clamp:v=>Math.max(0, Math.min(100, v))});
+pdLineField('pdRectBorderColor','borderColor');
+pdLineField('pdRectBorderWidth','borderWidth',{num:true, clamp:v=>Math.max(0, Math.min(20, v))});
+pdLineField('pdRectBorderStyle','borderStyle',{evt:'change'});
+pdLineField('pdRectBorderRadius','borderRadius',{num:true, clamp:v=>Math.max(0, Math.min(60, v))});
 document.getElementById('pdAddNorth').addEventListener('click', ()=>pdAddBlock('north'));
 document.getElementById('pdNorthStyle').addEventListener('change', e=>{
   const b = printLayout.blocks.find(x=>x.id===pdSelId);
@@ -10800,6 +11525,47 @@ document.getElementById('pdNorthLabelSize').addEventListener('input', e=>{
 document.getElementById('pdAddScale').addEventListener('click', ()=>pdAddBlock('scale'));
 document.getElementById('pdAddLegend').addEventListener('click', ()=>pdAddBlock('legend'));
 document.getElementById('pdAddMap').addEventListener('click', ()=>pdAddBlock('map'));
+document.getElementById('pdLegendCustomize').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b || b.type!=='legend') return;
+  const seed = legendAutoItems();
+  b.props.groups = seed.groups;
+  b.props.items = seed.items;
+  b.props.mode = 'custom';
+  pdRenderAll(); pdSelect(b.id); pdMarkDirty();
+});
+document.getElementById('pdLegendAuto').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b || b.type!=='legend') return;
+  b.props.mode = 'auto';
+  pdRenderAll(); pdSelect(b.id); pdMarkDirty();
+});
+document.getElementById('pdLegendAddGroup').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b || b.type!=='legend') return;
+  const gid = 'lg'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
+  b.props.groups.push({id:gid, name:'Novo grupo', color:GRP_PALETTE[b.props.groups.length % GRP_PALETTE.length]});
+  pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
+});
+document.getElementById('pdLegendAddItem').addEventListener('click', ()=>{
+  const b = printLayout.blocks.find(x=>x.id===pdSelId);
+  if(!b || b.type!=='legend') return;
+  const id = 'li'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
+  b.props.items.push({id, label:'Novo item', geomType:'point', color:'#6C5CE7', shape:'circle', iconAsset:null, groupId:null});
+  pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
+});
+document.getElementById('pdLegendIconFile').addEventListener('change', async e=>{
+  const f = e.target.files[0];
+  e.target.value = '';
+  if(!f || !pdLegendIconTarget) return;
+  const b = printLayout.blocks.find(x=>x.id===pdLegendIconTarget.blockId);
+  const it = b && b.props.items.find(x=>x.id===pdLegendIconTarget.itemId);
+  pdLegendIconTarget = null;
+  if(!it) return;
+  const ref = await assetPut(f);
+  it.iconAsset = ref;
+  pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
+});
 document.getElementById('pdMapUseView').addEventListener('click', ()=>{
   const b = printLayout.blocks.find(x=>x.id===pdSelId); if(!b || b.type!=='map') return;
   const c = map.getCenter();
@@ -11249,16 +12015,16 @@ function captureMap(){ return captureMapInstance(map); }
 /* monta a legenda completa (base, rasters, grupos, camadas vetoriais, medições) como HTML —
    usado tanto pela folha de impressão fixa (#psLegend) quanto pelo bloco de legenda do editor */
 function buildLegendHtml(){
-  let html = `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`;
+  let html = `<div class="li"><span class="pd-sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`;
   rasterLayers.filter(r=>r.visible && !groupById(r.groupId)).forEach(r=>{
-    html += `<div class="li"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
+    html += `<div class="li"><span class="pd-sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
   });
   groups.forEach(g=>{
     const has = vectorLayers.some(l=>l.groupId===g.id && l.visible && l.group.getLayers().length) ||
                 rasterLayers.some(r=>r.groupId===g.id && r.visible);
     if(has) html += `<div class="li" style="margin-top:2mm"><b style="border-bottom:2px solid ${g.color}">${g.name}</b></div>`;
     rasterLayers.filter(r=>r.groupId===g.id && r.visible).forEach(r=>{
-      html += `<div class="li" style="margin-left:4mm"><span class="sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
+      html += `<div class="li" style="margin-left:4mm"><span class="pd-sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span> ${r.name} (raster)</div>`;
     });
     vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length).forEach(l=>{
       html += vectorLegendHtml(l, 'margin-left:4mm');
@@ -11268,7 +12034,7 @@ function buildLegendHtml(){
     html += vectorLegendHtml(l, '');
   });
   if(measureGroup.getLayers().length)
-    html += `<div class="li"><span class="sw ln" style="background:#f2d24b"></span> Medições</div>`;
+    html += `<div class="li"><span class="pd-sw ln" style="background:#f2d24b"></span> Medições</div>`;
   return html;
 }
 function vectorLegendHtml(l, indentStyle){
@@ -11286,6 +12052,87 @@ function vectorLegendHtml(l, indentStyle){
   }
   const t = GEOM_LABEL[l.geomType]?.toLowerCase() || 'vetorial';
   return `<div class="li" style="${indentStyle}">${sw(Object.assign({color:l.color}, l.single||{}))} ${l.name} <span style="color:#666">(${t})</span></div>`;
+}
+
+/* =========================================================
+   Legenda personalizável (bloco "legend" do editor de layout)
+   ---------------------------------------------------------
+   legendAutoItems() faz o mesmo percurso de buildLegendHtml/
+   vectorLegendHtml, mas devolve dados estruturados (não HTML) —
+   usado uma única vez, para semear b.props ao entrar no modo
+   'custom'. Dali em diante a legenda personalizada vive só em
+   b.props.groups/items, independente do estado ao vivo.
+   ========================================================= */
+function legendAutoItems(){
+  const gArr = [];
+  const items = [];
+  let seq = 0;
+  const nextId = pfx => pfx + Date.now().toString(36) + (seq++) + Math.random().toString(36).slice(2,4);
+  const gidMap = new Map();
+  function ensureGroup(pg){
+    if(!pg) return null;
+    if(gidMap.has(pg.id)) return gidMap.get(pg.id);
+    const gid = nextId('lg');
+    gArr.push({id:gid, name:pg.name, color:pg.color});
+    gidMap.set(pg.id, gid);
+    return gid;
+  }
+  function itemsFromLayer(l, gid){
+    if(l.styleMode==='rules' && ((l.rules||[]).length || l.rulesElse)){
+      (l.rules||[]).forEach(r=>{
+        if(r.hidden) return;
+        items.push({id:nextId('li'), label:r.label || (r.field+' '+(OP_LABEL[r.op]||r.op)+' '+r.value),
+          geomType:l.geomType, color:(r.style&&r.style.color)||l.color, shape:(r.style&&r.style.shape)||'circle', iconAsset:null, groupId:gid});
+      });
+      if(l.rulesElse) items.push({id:nextId('li'), label:l.rulesElse.label||'Outros',
+        geomType:l.geomType, color:(l.rulesElse.style&&l.rulesElse.style.color)||l.color, shape:(l.rulesElse.style&&l.rulesElse.style.shape)||'circle', iconAsset:null, groupId:gid});
+      return;
+    }
+    const single = l.single||{};
+    items.push({id:nextId('li'), label:l.name, geomType:l.geomType, color:single.color||l.color, shape:single.shape||'circle', iconAsset:null, groupId:gid});
+  }
+  items.push({id:nextId('li'), label:'Base: '+currentBaseName, geomType:'base', color:'#eee', groupId:null});
+  rasterLayers.filter(r=>r.visible && !groupById(r.groupId)).forEach(r=>{
+    items.push({id:nextId('li'), label:r.name+' (raster)', geomType:'raster', groupId:null});
+  });
+  groups.forEach(g=>{
+    const rasters = rasterLayers.filter(r=>r.groupId===g.id && r.visible);
+    const vects = vectorLayers.filter(l=>l.groupId===g.id && l.visible && l.group.getLayers().length);
+    if(!rasters.length && !vects.length) return;
+    const gid = ensureGroup(g);
+    rasters.forEach(r=>items.push({id:nextId('li'), label:r.name+' (raster)', geomType:'raster', groupId:gid}));
+    vects.forEach(l=>itemsFromLayer(l, gid));
+  });
+  vectorLayers.filter(l=>!groupById(l.groupId) && l.visible && l.group.getLayers().length).forEach(l=>itemsFromLayer(l, null));
+  if(measureGroup.getLayers().length) items.push({id:nextId('li'), label:'Medições', geomType:'measure', color:'#f2d24b', groupId:null});
+  return {groups:gArr, items};
+}
+/* miniatura de um item de legenda personalizado — mesmo symbolSwatchHtml para ponto/linha/polígono,
+   swatch dedicado para raster/base/medição, ou a imagem enviada pelo usuário (iconAsset) */
+function legendItemSwatch(it){
+  if(it.iconAsset){
+    const src = assetURL(it.iconAsset);
+    return `<span class="sty-preview" style="width:18px;height:18px">${src?`<img src="${src}" style="width:100%;height:100%;object-fit:contain">`:''}</span>`;
+  }
+  if(it.geomType==='raster') return `<span class="pd-sw" style="background:repeating-linear-gradient(45deg,#bbb,#bbb 2px,#eee 2px,#eee 4px)"></span>`;
+  if(it.geomType==='base') return `<span class="pd-sw" style="background:${it.color||'#eee'}"></span>`;
+  if(it.geomType==='measure') return `<span class="pd-sw ln" style="background:${it.color||'#f2d24b'}"></span>`;
+  return symbolSwatchHtml({color:it.color, shape:it.shape}, it.geomType, 26, 16);
+}
+function legendItemsHtml(b){
+  const items = b.props.items||[];
+  const groupsArr = b.props.groups||[];
+  let html = '';
+  items.filter(it=>!it.groupId).forEach(it=>{
+    html += `<div class="li">${legendItemSwatch(it)} ${it.label}</div>`;
+  });
+  groupsArr.forEach(g=>{
+    const gi = items.filter(it=>it.groupId===g.id);
+    if(!gi.length) return;
+    html += `<div class="li" style="margin-top:2mm"><b style="border-bottom:2px solid ${g.color}">${g.name}</b></div>`;
+    gi.forEach(it=>{ html += `<div class="li" style="margin-left:4mm">${legendItemSwatch(it)} ${it.label}</div>`; });
+  });
+  return html || '<div class="li" style="color:#999">Sem itens.</div>';
 }
 document.getElementById('pGo').addEventListener('click', async ()=>{
   close('mPrint');
@@ -11388,8 +12235,8 @@ document.getElementById('invGenMap').addEventListener('click', async ()=>{
   const enq = feats.filter(f=>f.p.enquadra_compensacao).length;
   const leg = document.getElementById('psLegend');
   leg.innerHTML =
-    `<div class="li"><span class="sw pt" style="background:#fff;border:2px solid #2e7d46"></span> Exemplar arbóreo (nº = ponto)</div>`+
-    `<div class="li"><span class="sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`+
+    `<div class="li"><span class="pd-sw pt" style="background:#fff;border:2px solid #2e7d46"></span> Exemplar arbóreo (nº = ponto)</div>`+
+    `<div class="li"><span class="pd-sw" style="background:#eee"></span> Base: ${currentBaseName}</div>`+
     `<div class="li" style="margin-top:2mm"><b>Nativas:</b>&nbsp;${nativas} &nbsp;·&nbsp; <b>Exóticas:</b>&nbsp;${exoticas}</div>`+
     `<div class="li"><b>Enquadram na compensação:</b>&nbsp;${enq}</div>`;
 
@@ -11821,7 +12668,7 @@ function serializeProject(){
     layers: vectorLayers.map(l=>({
       name:l.name, geomType:l.geomType, color:l.color, visible:l.visible, fields:l.fields, groupId:l.groupId||null, meta:l.meta||null, inventory:!!l.inventory,
       styleMode:l.styleMode||'single', rules:l.rules||[], rulesElse:l.rulesElse||null, opacity:layerAlpha(l),
-      symb:l.symb||null, single:l.single||null,
+      symb:l.symb||null, single:l.single||null, extrudeField:l.extrudeField||null,
       features:{ type:'FeatureCollection',
         features: l.group.getLayers().map(x=>{
           let g = x.toGeoJSON();
@@ -11922,6 +12769,7 @@ async function applyProject(p){
     lyr.rules = ld.rules || [];
     lyr.rulesElse = ld.rulesElse || null;
     lyr.single = ld.single || null;
+    lyr.extrudeField = ld.extrudeField || null;
     // projetos anteriores à simbologia em abas não têm symb — deduz do styleMode
     lyr.symb = ld.symb || { kind: lyr.styleMode==='rules' ? 'rules' : 'single' };
     const gl = L.geoJSON(ld.features, {

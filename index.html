@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — WebGIS</title>
+<title>GeoMatias — WebGIS para P&D e estudo de UI</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -322,6 +322,99 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 #elevStats{font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:6px}
 #elevStats b{color:var(--text)}
 #elevCanvas{width:100%; height:140px; display:block; background:var(--panel2); border-radius:6px}
+/* Vista 3D (terreno, MapLibre GL): palco sobreposto ao mapa 2D.
+   z-index 1050: acima do #map, abaixo de toolbar/painel (1100),
+   topbar/status (1200), #elevPanel (1250), #drawBar (1300) e modais
+   (2000) — assim toda a UI existente continua funcionando por cima. */
+#view3d{
+  position:absolute; inset:0; z-index:1050; display:none;
+}
+#view3d.on{ display:block }
+#v3dPanelHead{ display:none }
+/* modo flutuante: janela independente, móvel (alça no topo) e
+   redimensionável (resize:both nativo) — nunca fica sob o #v3dBar,
+   que permanece fixo e central em qualquer layout */
+#view3d.mode-panel{
+  inset:auto; top:70px; left:12px; right:auto; bottom:auto;
+  width:min(560px, 92vw); height:min(420px, 60vh);
+  min-width:280px; min-height:180px; max-width:96vw; max-height:86vh;
+  border:1px solid var(--line); border-radius:var(--radius, 10px); overflow:hidden;
+  box-shadow:0 8px 30px var(--shadow-strong); resize:both;
+}
+#view3d.mode-panel #v3dPanelHead{
+  display:flex; align-items:center; justify-content:space-between;
+  height:32px; padding:0 4px 0 12px; background:var(--panel);
+  border-bottom:1px solid var(--line); cursor:move; user-select:none;
+  font-size:12px; font-weight:600; color:var(--text); touch-action:none;
+}
+#view3d.mode-panel #v3dCanvas{ top:32px }
+#view3d.mode-panel #v3dHud{ top:40px }
+body.split3d #map{ position:absolute; inset:0; right:auto; width:50% }
+body.split3d #view3d.mode-split{ left:50%; right:0 }
+/* linha divisória discreta, fixa em 50/50 — não é um arraste de recorte */
+#v3dDivider{
+  position:absolute; top:0; bottom:0; left:50%; width:1px;
+  background:var(--line); z-index:1060; display:none; pointer-events:none;
+}
+body.split3d #v3dDivider{ display:block }
+@media (max-width:760px){
+  body.split3d #map{ inset:0; right:0; bottom:50%; width:auto }
+  body.split3d #view3d.mode-split{ left:0; top:50%; bottom:0 }
+  #v3dDivider{ top:50%; left:0; right:0; bottom:auto; width:auto; height:1px }
+}
+#v3dCanvas{ position:absolute; inset:0 }
+/* Painel de controle: retângulo com cantos arredondados, mesmo estilo
+   de #elevPanel (cabeçalho + fechar em X); fixo e central em qualquer
+   layout — nunca preso ao painel/janela do 3D. */
+#v3dBar{
+  position:absolute; left:50%; bottom:16px; transform:translateX(-50%);
+  z-index:1070; width:min(640px, 94vw); display:none;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius, 10px); box-shadow:0 8px 30px var(--shadow-strong);
+  overflow:hidden;
+}
+#v3dBar.on{ display:block }
+#v3dBarHead{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 8px 8px 12px; border-bottom:1px solid var(--line);
+  font-size:13px; font-weight:600;
+}
+#v3dBarBody{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:8px 12px; max-height:38vh; overflow-y:auto;
+}
+#v3dLayout{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
+.v3d-seg{
+  border:none; background:transparent; color:var(--muted); font-size:11.5px;
+  padding:4px 10px; border-radius:999px; cursor:pointer;
+}
+.v3d-seg.active{ background:var(--accent-soft); color:var(--text) }
+#v3dBarBody label{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; flex:none }
+#v3dExagWrap input, #v3dPitchWrap input{ width:70px; accent-color:var(--accent) }
+#v3dBarBody select{
+  background:var(--field); border:1px solid var(--line); color:var(--text);
+  border-radius:999px; padding:4px 8px; font-size:12px; max-width:140px; flex:none;
+}
+#v3dHud{
+  position:absolute; left:12px; top:12px; z-index:1070;
+  background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  padding:6px 10px; font-size:12px; color:var(--muted); display:none;
+}
+#v3dHud b{ color:var(--text) }
+@media (max-width:760px){
+  #view3d.mode-panel{ width:auto; left:8px; right:8px; top:56px }
+  #v3dBar{ bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)); left:8px; right:8px; transform:none; width:auto }
+  #v3dBarBody{ justify-content:center }
+}
+/* MapLibre embute cores fixas claras nos popups/controles — sem isto ficam
+   brancos sobre o painel escuro do tema. */
+.maplibregl-popup-content{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 30px var(--shadow-strong) }
+.maplibregl-popup-tip{ border-top-color:var(--panel); border-bottom-color:var(--panel) }
+.maplibregl-ctrl-group{ background:var(--panel2); box-shadow:0 2px 8px var(--shadow) }
+.maplibregl-ctrl-group button{ background:transparent }
+.maplibregl-ctrl-group button:not(:disabled):hover{ background:var(--field) }
+.maplibregl-ctrl-icon{ filter:invert(1) }
+
 @media (max-width:760px){
   #elevPanel{ left:8px; right:8px; width:auto; bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)) }
 }
@@ -1155,7 +1248,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </button>
   <div id="brand">
     <img src="icon.png" width="44" height="44" alt="GeoMatias" style="border-radius:50%; object-fit:cover">
-    <div><b>GeoMatias</b><small>WEBGIS</small></div>
+    <div><b>GeoMatias</b><small>WEBGIS PARA P&D E ESTUDO DE UI</small></div>
   </div>
   <div class="spacer"></div>
   <div id="tbActions">
@@ -1246,6 +1339,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   <button class="tool" data-tool="capture"><svg viewBox="0 0 24 24"><path d="M4.5 19.5 13 11"/><circle cx="4.2" cy="19.8" r="1.3" fill="currentColor" stroke="none"/><path d="M17 3l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="currentColor" stroke="none"/><path d="M20 13v2.4M18.8 14.2h2.4" stroke-width="1.4"/><path d="M6 4v2M5 5h2" stroke-width="1.4"/></svg><span class="tip">Capturar geometria da camada para o projeto</span></button>
   <button class="tool" data-tool="segment"><span class="tool-text">SAM</span><span class="tip">Segmentação IA (SAM, experimental) — contorna um objeto a partir de um raster de imagem</span></button>
   <button class="tool" data-tool="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tip">Comparar (cortina) — revela/oculta uma camada raster ou mapa base</span></button>
+  <button class="tool" id="btn3D"><svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg><span class="tip">Vista 3D — relevo em perspectiva a partir de um DEM carregado</span></button>
   <div class="tool-sep"></div>
   <button class="tool" data-tool="point"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><span class="tip">Ponto</span></button>
   <button class="tool" data-tool="line"><svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/><path d="M5.5 18.5 18.5 5.5"/></svg><span class="tip">Reta (ponto a ponto)</span></button>
@@ -1309,6 +1403,43 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
   <div id="elevStats"></div>
   <canvas id="elevCanvas" width="600" height="140"></canvas>
+</div>
+
+<!-- ===== Vista 3D (terreno, MapLibre GL) ===== -->
+<div id="view3d">
+  <div id="v3dPanelHead">
+    <span>Vista 3D</span>
+    <button class="tb-btn modal-x" id="v3dPanelClose" title="Fechar" data-icon="close"></button>
+  </div>
+  <div id="v3dCanvas"></div>
+  <div id="v3dHud"></div>
+</div>
+<div id="v3dBar">
+  <div id="v3dBarHead">
+    <span>Vista 3D</span>
+    <button class="tb-btn modal-x" id="v3dClose" title="Fechar" data-icon="close"></button>
+  </div>
+  <div id="v3dBarBody">
+    <div id="v3dLayout" role="group" aria-label="Layout da vista 3D">
+      <button class="v3d-seg active" data-layout="full" title="Tela cheia">Cheia</button>
+      <button class="v3d-seg" data-layout="split" title="Lado a lado com o mapa 2D">Dividida</button>
+      <button class="v3d-seg" data-layout="panel" title="Painel flutuante">Flutuante</button>
+    </div>
+    <label id="v3dExagWrap" title="Exagero vertical do relevo">
+      <span data-icon="cube3d"></span>
+      <input type="range" id="v3dExag" min="1" max="5" step="0.1" value="1.5">
+      <span id="v3dExagV">1.5×</span>
+    </label>
+    <label id="v3dPitchWrap" title="Inclinação da câmera">
+      <input type="range" id="v3dPitch" min="0" max="85" step="1" value="60">
+      <span id="v3dPitchV">60°</span>
+    </label>
+    <button class="tb-btn" id="v3dNorth" title="Resetar para o norte"><span data-icon="compass"></span> <span id="v3dBearingV">0°</span></button>
+    <label id="v3dTerrainWrap" title="Ligar/desligar relevo 3D"><input type="checkbox" id="v3dTerrainOn" checked> Terreno</label>
+    <label id="v3dHillWrap" title="Sombreamento sobre o relevo"><input type="checkbox" id="v3dHillOn"> Sombreado</label>
+    <label id="v3dSkyWrap" title="Céu/atmosfera"><input type="checkbox" id="v3dSkyOn" checked> Céu</label>
+    <select id="v3dDemSel" title="DEM usado como terreno"></select>
+  </div>
 </div>
 
 <!-- ===== Barra: digitalização por GPS ===== -->
@@ -1520,8 +1651,10 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
     <div id="rDEM" style="display:none">
       <p class="sub" style="margin-bottom:10px">Modelo digital de elevação (MDT/MDS) em GeoTIFF de <b>banda única</b>. Usado como raster de fundo (hillshade/rampa de cinza) e como fonte de elevação para a medição de distância 3D (terreno).</p>
       <div class="field">
-        <button type="button" class="tb-btn" id="rDemSample" style="width:100%">🇧🇷 Usar DEM de exemplo — Serra do Mar / Grande São Paulo (SRTM)</button>
-        <p class="sub" style="margin-top:6px">Preenche a URL abaixo com um recorte público (AWS Terrain Tiles, dados SRTM, ~30 m/pixel) cobrindo a escarpada da Serra do Mar — desnível de ~300 m, bom para testar a medição 3D. Servidor com CORS liberado, testado e funcional direto do navegador.</p>
+        <label>DEM de exemplo (recorte público, SRTM ~30 m/pixel)</label>
+        <select id="rDemSampleSel"></select>
+        <button type="button" class="tb-btn" id="rDemSample" style="width:100%; margin-top:6px">Usar este exemplo</button>
+        <p class="sub" style="margin-top:6px" id="rDemSampleDesc"></p>
       </div>
       <div class="field"><label>Arquivo local (.tif / .tiff)</label><input type="file" id="rDemFile" accept=".tif,.tiff,image/tiff"></div>
       <div class="field"><label>…ou URL de um DEM/COG remoto (servidor precisa aceitar Range + CORS)</label><input type="text" id="rDemUrl" placeholder="https://…/mdt.tif"></div>
@@ -1595,8 +1728,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
       <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
       <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
       <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
-        <span>Colunas</span><input type="number" id="pdGridCols" min="1" max="60" value="10">
-        <span>Linhas</span><input type="number" id="pdGridRows" min="1" max="60" value="10">
+        <span>Espaçamento (mm)</span><input type="number" id="pdGridSize" min="1" max="100" value="10">
       </div>
     </div>
     <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
@@ -2223,7 +2355,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
   </div>
   <div class="p-foot">
     <span id="psAuthor"></span>
-    <span id="psSRC">Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias WebGIS</span>
+    <span id="psSRC">Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias — WebGIS para P&D e estudo de UI</span>
   </div>
 </div>
 
@@ -2232,7 +2364,7 @@ html,body{height:100%; overflow:hidden; background:var(--ink); color:var(--text)
 
 <script>
 /* =========================================================
-   GeoAtlas WebGIS — arquivo único
+   GeoMatias — WebGIS para P&D e estudo de UI — arquivo único
    ========================================================= */
 'use strict';
 
@@ -2282,7 +2414,9 @@ const ICONS = {
   flipH:'<path d="M12 3v18"/><path d="M7 7l-3 5 3 5"/><path d="M17 7l3 5-3 5"/>',
   flipV:'<path d="M3 12h18"/><path d="M7 7l5-3 5 3"/><path d="M7 17l5 3 5-3"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-  unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.5-2.2"/>'
+  unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.5-2.2"/>',
+  cube3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -8804,24 +8938,63 @@ document.getElementById('rDemRender').addEventListener('change', e=>{
   document.getElementById('rDemLight').style.display = e.target.value==='hillshade' ? '' : 'none';
 });
 
-/* DEM de exemplo (Brasil): AWS Terrain Tiles ("elevation-tiles-prod"),
-   formato geotiff (SRTM reamostrado), tile z11/x760/y1162 — cobre a
-   Serra do Mar na divisa com a Grande São Paulo (~740–1040 m de cota,
-   desnível de ~300 m). Ao contrário de outros buckets públicos de DEM
+/* DEMs de exemplo (Brasil): AWS Terrain Tiles ("elevation-tiles-prod"),
+   formato geotiff (SRTM reamostrado, z11, ~30 m/pixel), um recorte por
+   grande região do país. Ao contrário de outros buckets públicos de DEM
    (ex.: copernicus-dem-30m, que responde ao GET normal mas nega o
    preflight OPTIONS com 403 e por isso trava no navegador por CORS),
    este bucket publica Access-Control-Allow-Origin: * e funciona direto
-   do cliente, sem proxy. Verificado via curl -X OPTIONS antes de fixar. */
-const DEM_SAMPLE_BR = {
-  name: 'DEM exemplo — Serra do Mar/SP (SRTM, AWS Terrain Tiles)',
-  url: 'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/760/1162.tif'
-};
+   do cliente, sem proxy. Cada tile abaixo foi conferido (curl -X OPTIONS
+   e GET por faixa de bytes, HTTP 206 com Content-Length > 0) antes de
+   entrar na lista. */
+const DEM_SAMPLES_BR = [
+  { name:'Serra do Mar / Grande São Paulo — SP (Sudeste)',
+    desc:'Escarpada entre o planalto e a baixada santista — ~740–1040 m de cota, desnível de ~300 m. Bom teste geral de hillshade/declividade.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/760/1162.tif' },
+  { name:'Itatiaia / Serra da Mantiqueira — RJ/MG (Sudeste)',
+    desc:'Maciço do Itatiaia, Agulhas Negras (~2.790 m) — o relevo mais acidentado da lista, bom para exagero vertical alto.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/769/1154.tif' },
+  { name:'Aparados da Serra / Cambará do Sul — RS (Sul)',
+    desc:'Borda do planalto com os cânions do Itaimbezinho/Fortaleza — paredões quase verticais, bom teste de ruptura abrupta de relevo.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/738/1197.tif' },
+  { name:'Chapada dos Guimarães — MT (Centro-Oeste)',
+    desc:'Borda do planalto dos Guimarães sobre a baixada cuiabana — relevo de chapada, com paredões e platôs.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/706/1113.tif' },
+  { name:'Chapada Diamantina — BA (Nordeste)',
+    desc:'Serra do Sincorá, região de Lençóis — vales encaixados e serras da Bahia, relevo mais irregular que o do litoral nordestino.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/788/1096.tif' },
+  { name:'Manaus — AM (Norte, baixo relevo)',
+    desc:'Planície amazônica — relevo quase plano (poucas dezenas de metros de desnível). Útil para testar o app num extremo oposto ao das serras.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/682/1041.tif' },
+  { name:'Santos / Baixada Santista — SP (litoral, bem plano)',
+    desc:'Planície costeira ao nível do mar, logo abaixo da escarpada da Serra do Mar — relevo quase nulo, bom contraste com o exemplo da Serra do Mar/SP.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/760/1164.tif' },
+  { name:'Serra da Cantareira / Capital — SP (Grande São Paulo)',
+    desc:'Franja florestada dentro da mancha urbana da capital paulista — relevo moderado (~750–1.200 m) misturado a área construída, útil para testar drapejamento de base urbana sobre terreno.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/758/1161.tif' },
+  { name:'Planalto de São Carlos — SP (interior, chapada agrícola)',
+    desc:'Planalto ocidental paulista — cota alta (~800–900 m) mas relevo suave, típico de área agrícola do interior; contraste com o relevo acidentado do litoral.',
+    url:'https://elevation-tiles-prod.s3.amazonaws.com/geotiff/11/751/1152.tif' }
+];
+const demSampleSel = document.getElementById('rDemSampleSel');
+DEM_SAMPLES_BR.forEach((d,i)=>{
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = d.name;
+  demSampleSel.appendChild(opt);
+});
+function renderDemSampleDesc(){
+  const d = DEM_SAMPLES_BR[+demSampleSel.value] || DEM_SAMPLES_BR[0];
+  document.getElementById('rDemSampleDesc').textContent = d.desc + ' Fonte: AWS Terrain Tiles (SRTM, ~30 m/pixel). Servidor com CORS liberado, testado e funcional direto do navegador.';
+}
+demSampleSel.addEventListener('change', renderDemSampleDesc);
+renderDemSampleDesc();
 document.getElementById('rDemSample').addEventListener('click', ()=>{
+  const d = DEM_SAMPLES_BR[+demSampleSel.value] || DEM_SAMPLES_BR[0];
   const radio = document.querySelector('input[name=rType][value=dem]');
   radio.checked = true;
   radio.dispatchEvent(new Event('change'));
-  document.getElementById('rName').value = DEM_SAMPLE_BR.name;
-  document.getElementById('rDemUrl').value = DEM_SAMPLE_BR.url;
+  document.getElementById('rName').value = 'DEM exemplo — '+d.name+' (SRTM)';
+  document.getElementById('rDemUrl').value = d.url;
   document.getElementById('rDemFile').value = '';
   status('URL do DEM de exemplo preenchida — clique em "Adicionar" para carregar. Se o servidor bloquear CORS, baixe o arquivo por essa mesma URL e importe como "Arquivo local".');
 });
@@ -9138,6 +9311,513 @@ document.getElementById('cmpCloseX').addEventListener('click', ()=>{
   };
   dv.addEventListener('pointerup', end);
   dv.addEventListener('pointercancel', end);
+})();
+
+/* =========================================================
+   PASSO 4 — VISTA 3D (terreno, MapLibre GL)
+   ---------------------------------------------------------
+   Segundo motor de VISUALIZAÇÃO, carregado sob demanda — o Leaflet
+   continua sendo a fonte única da verdade sobre os dados (camadas,
+   projeto, persistência). A vista 3D é reconstruída a partir do
+   estado do Leaflet por mirror3D(), nunca editada direto.
+
+   A peça central é o protocolo customizado gmdem://<rasterId>/{z}/{x}/{y}:
+   reaproveita _openDem()/tileWindowRead() (já existentes, seção PASSO 3)
+   para servir qualquer DEM do usuário como fonte raster-dem do MapLibre,
+   codificado em Terrarium. createImageBitmap do MapLibre exige bytes PNG
+   reais — por isso um encoder PNG nativo (deflate "stored", sem
+   compressão) em vez de puxar uma lib de CDN só para isso.
+
+   Regra crítica de zoom: o MapLibre define o mundo como 512·2^Z px;
+   o Leaflet, 256·2^L px. Com tileSize:256 nas fontes, o MapLibre pede
+   z = Z+1 = zoom do Leaflet — por isso a sincronia de câmera usa
+   zoomLeaflet = zoomMapLibre + 1 nos dois sentidos.
+   ========================================================= */
+
+/* ---------- Encoder PNG nativo (deflate stored) + Terrarium ---------- */
+function _pngMakeCrcTable(){
+  const t = new Uint32Array(256);
+  for(let n=0;n<256;n++){
+    let c = n;
+    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[n] = c>>>0;
+  }
+  return t;
+}
+const _pngCrcTable = _pngMakeCrcTable();
+function _pngCrc32(buf){
+  let crc = 0xFFFFFFFF;
+  for(let i=0;i<buf.length;i++) crc = _pngCrcTable[(crc^buf[i])&0xFF] ^ (crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function _pngAdler32(buf){
+  let a=1, b=0; const MOD=65521;
+  for(let i=0;i<buf.length;i++){ a=(a+buf[i])%MOD; b=(b+a)%MOD; }
+  return ((b<<16)|a)>>>0;
+}
+/* PNG RGB8 (colorType 2, sem paleta/alfa) a partir de um Uint8Array RGB
+   intercalado. Deflate "stored" (BTYPE=00): sem compressão, ~0,2 ms/tile,
+   zero dependência — mesma filosofia do escritor de shapefile nativo. */
+function encodePNG_RGB8(rgb, w, h){
+  const lineSize = 1 + w*3;
+  const rawData = new Uint8Array(lineSize*h);
+  let idx=0;
+  for(let y=0;y<h;y++){
+    rawData[idx++] = 0; // filtro "none"
+    const rowStart = y*w*3;
+    for(let i=0;i<w*3;i++) rawData[idx++] = rgb[rowStart+i];
+  }
+  const blocks=[], maxBlockSize=65535;
+  for(let offset=0; offset<rawData.length; offset+=maxBlockSize){
+    const bfinal = (offset+maxBlockSize>=rawData.length) ? 1 : 0;
+    const blockSize = Math.min(maxBlockSize, rawData.length-offset);
+    const blockData = rawData.slice(offset, offset+blockSize);
+    const blockBuf = new Uint8Array(1+4+blockSize);
+    blockBuf[0]=bfinal;
+    blockBuf[1]=blockSize&0xFF; blockBuf[2]=(blockSize>>>8)&0xFF;
+    const nlen=(~blockSize)&0xFFFF;
+    blockBuf[3]=nlen&0xFF; blockBuf[4]=(nlen>>>8)&0xFF;
+    blockBuf.set(blockData,5);
+    blocks.push(blockBuf);
+  }
+  const adler = _pngAdler32(rawData);
+  const zlibBuf = new Uint8Array(2 + blocks.reduce((s,b)=>s+b.length,0) + 4);
+  zlibBuf[0]=0x78; zlibBuf[1]=0x01;
+  let pos=2; for(const blk of blocks){ zlibBuf.set(blk,pos); pos+=blk.length; }
+  zlibBuf[pos++]=(adler>>>24)&0xFF; zlibBuf[pos++]=(adler>>>16)&0xFF; zlibBuf[pos++]=(adler>>>8)&0xFF; zlibBuf[pos++]=adler&0xFF;
+  const pngSize = 8 + (4+4+13+4) + (4+4+zlibBuf.length+4) + (4+4+0+4);
+  const png = new Uint8Array(pngSize);
+  let p=0;
+  [137,80,78,71,13,10,26,10].forEach(b=>png[p++]=b);
+  png[p++]=0;png[p++]=0;png[p++]=0;png[p++]=13;
+  png[p++]=73;png[p++]=72;png[p++]=68;png[p++]=82; // IHDR
+  const ihdrStart=p;
+  png[p++]=(w>>>24)&0xFF;png[p++]=(w>>>16)&0xFF;png[p++]=(w>>>8)&0xFF;png[p++]=w&0xFF;
+  png[p++]=(h>>>24)&0xFF;png[p++]=(h>>>16)&0xFF;png[p++]=(h>>>8)&0xFF;png[p++]=h&0xFF;
+  png[p++]=8;png[p++]=2;png[p++]=0;png[p++]=0;png[p++]=0;
+  const ihdrTD=new Uint8Array(17); ihdrTD.set([73,72,68,82],0); for(let i=0;i<13;i++) ihdrTD[4+i]=png[ihdrStart+i];
+  const ihdrCrc=_pngCrc32(ihdrTD);
+  png[p++]=(ihdrCrc>>>24)&0xFF;png[p++]=(ihdrCrc>>>16)&0xFF;png[p++]=(ihdrCrc>>>8)&0xFF;png[p++]=ihdrCrc&0xFF;
+  const idatLen=zlibBuf.length;
+  png[p++]=(idatLen>>>24)&0xFF;png[p++]=(idatLen>>>16)&0xFF;png[p++]=(idatLen>>>8)&0xFF;png[p++]=idatLen&0xFF;
+  png[p++]=73;png[p++]=68;png[p++]=65;png[p++]=84; // IDAT
+  png.set(zlibBuf,p); p+=zlibBuf.length;
+  const idatTD=new Uint8Array(4+zlibBuf.length); idatTD.set([73,68,65,84],0); idatTD.set(zlibBuf,4);
+  const idatCrc=_pngCrc32(idatTD);
+  png[p++]=(idatCrc>>>24)&0xFF;png[p++]=(idatCrc>>>16)&0xFF;png[p++]=(idatCrc>>>8)&0xFF;png[p++]=idatCrc&0xFF;
+  png[p++]=0;png[p++]=0;png[p++]=0;png[p++]=0;
+  png[p++]=73;png[p++]=69;png[p++]=78;png[p++]=68; // IEND
+  const iendCrc=_pngCrc32(new Uint8Array([73,69,78,68]));
+  png[p++]=(iendCrc>>>24)&0xFF;png[p++]=(iendCrc>>>16)&0xFF;png[p++]=(iendCrc>>>8)&0xFF;png[p++]=iendCrc&0xFF;
+  return png.buffer;
+}
+/* Codifica elevações no esquema Terrarium (Mapzen/AWS Terrain Tiles,
+   encoding:'terrarium' do MapLibre): v=elev+32768; R=v>>8; G=v&255;
+   B=fração(v)*256. Precisão de 1/256 m — folgada para qualquer MDT. */
+function terrariumEncode(band, w, h, isNoDataFn){
+  const rgb = new Uint8Array(w*h*3);
+  for(let i=0;i<w*h;i++){
+    let elev = band[i];
+    if(isNoDataFn && isNoDataFn(elev)) elev = 0;
+    const v = elev + 32768;
+    const fv = Math.floor(v);
+    rgb[i*3]   = Math.floor(v/256)&0xFF;
+    rgb[i*3+1] = fv&0xFF;
+    rgb[i*3+2] = Math.floor((v-fv)*256)&0xFF;
+  }
+  return rgb;
+}
+
+/* ---------- Carregamento sob demanda do MapLibre ---------- */
+let _mlLib = null;
+function ensureCss(url){
+  if(document.querySelector('link[data-css-src="'+url+'"]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet'; link.href = url; link.dataset.cssSrc = url;
+  document.head.appendChild(link);
+}
+function loadScriptOnce(url){
+  return new Promise((res, rej)=>{
+    if(document.querySelector('script[data-src="'+url+'"]')){ res(); return; }
+    const s = document.createElement('script');
+    s.src = url; s.dataset.src = url;
+    s.onload = ()=>res(); s.onerror = ()=>rej(new Error('Falha ao carregar '+url));
+    document.head.appendChild(s);
+  });
+}
+const MAPLIBRE_VERSION = '5.24.0';
+async function loadMapLibre(){
+  if(_mlLib) return _mlLib;
+  ensureCss(`https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`);
+  await loadScriptOnce(`https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js`);
+  if(!window.maplibregl) throw new Error('maplibre-gl não carregou');
+  _mlLib = window.maplibregl;
+  return _mlLib;
+}
+function has3D(){
+  try{
+    const c = document.createElement('canvas');
+    return !!(c.getContext('webgl2') || c.getContext('webgl'));
+  }catch(e){ return false; }
+}
+
+/* ---------- Estado da cena 3D ---------- */
+const SCENE3D = {
+  active:false, map3d:null, layout:'full',
+  cam:{ pitch:60, bearing:0 },
+  exaggeration:1.5, terrainOn:true, hillshadeOn:false, skyOn:true,
+  terrainDemName:null,
+  mirrored:new Set(),      // ids de source/layer já injetados no style vivo
+  camLock:0, splitPct:50
+};
+
+/* ---------- Protocolos gmdem:// e gmcog:// ---------- */
+function parseGmUrl(url){
+  // gmdem://<id>/<z>/<x>/<y>
+  const m = /^gm(?:dem|cog):\/\/([^/]+)\/(\d+)\/(\d+)\/(\d+)/.exec(url);
+  if(!m) return null;
+  return { id:+m[1], z:+m[2], x:+m[3], y:+m[4] };
+}
+function tileBBoxWGS(z,x,y){
+  const n = Math.pow(2,z);
+  const lon1 = x/n*360-180, lon2 = (x+1)/n*360-180;
+  const lat1 = Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
+  const lat2 = Math.atan(Math.sinh(Math.PI*(1-2*(y+1)/n)))*180/Math.PI;
+  return [lon1, lat2, lon2, lat1]; // w,s,e,n
+}
+async function gmdemHandler(params, abortController){
+  const parsed = parseGmUrl(params.url);
+  if(!parsed) throw new Error('URL gmdem inválida: '+params.url);
+  const rec = rasterLayers.find(r=>r.id===parsed.id);
+  if(!rec || !(rec.layer instanceof L.GridLayer.DEM)) throw new Error('DEM não encontrado (id '+parsed.id+')');
+  const info = await rec.layer._openDem();
+  if(abortController.signal.aborted) throw new Error('aborted');
+  const S = 256;
+  const r = await tileWindowRead(info, tileBBoxWGS(parsed.z,parsed.x,parsed.y), S, S, { resample:'bilinear', fill:NaN });
+  if(abortController.signal.aborted) throw new Error('aborted');
+  const band = r ? r.data[0] : new Float32Array(S*S).fill(0);
+  const isNo = v => (v==null) || Number.isNaN(v) || (r && r.nodata!=null && v===r.nodata);
+  const rgb = terrariumEncode(band, S, S, isNo);
+  return { data: encodePNG_RGB8(rgb, S, S) };
+}
+async function gmcogHandler(params, abortController){
+  const parsed = parseGmUrl(params.url);
+  if(!parsed) throw new Error('URL gmcog inválida: '+params.url);
+  const rec = rasterLayers.find(r=>r.id===parsed.id);
+  if(!rec || !(rec.layer instanceof L.GridLayer.COG)) throw new Error('COG não encontrado (id '+parsed.id+')');
+  const info = await rec.layer._open();
+  if(abortController.signal.aborted) throw new Error('aborted');
+  const S = 256;
+  const r = await tileWindowRead(info, tileBBoxWGS(parsed.z,parsed.x,parsed.y), S, S, { resample:'nearest', fill:0 });
+  if(abortController.signal.aborted) throw new Error('aborted');
+  // encodePNG_RGB8 não suporta alfa — pixels nodata saem opacos (limitação
+  // conhecida da Fase 1; a base do mapa por baixo não aparece através deles).
+  const rgb = new Uint8Array(S*S*3);
+  if(r){
+    const data = r.data, ns = data.length;
+    for(let i=0;i<S*S;i++){
+      if(ns>=3){ rgb[i*3]=data[0][i]; rgb[i*3+1]=data[1][i]; rgb[i*3+2]=data[2][i]; }
+      else { rgb[i*3]=rgb[i*3+1]=rgb[i*3+2]=data[0][i]; }
+    }
+  }
+  return { data: encodePNG_RGB8(rgb, S, S) };
+}
+let _protocolsRegistered = false;
+function registerProtocols(ML){
+  if(_protocolsRegistered) return;
+  ML.addProtocol('gmdem', gmdemHandler);
+  ML.addProtocol('gmcog', gmcogHandler);
+  _protocolsRegistered = true;
+}
+
+/* ---------- Abrir/fechar a vista 3D ---------- */
+const view3dEl = document.getElementById('view3d');
+async function ensureView3DMap(){
+  if(SCENE3D.map3d) return SCENE3D.map3d;
+  const ML = await loadMapLibre();
+  registerProtocols(ML);
+  const c = map.getCenter(), z = Math.max(0, map.getZoom()-1);
+  const m3 = new ML.Map({
+    container:'v3dCanvas', center:[c.lng,c.lat], zoom:z,
+    pitch:SCENE3D.cam.pitch, bearing:SCENE3D.cam.bearing, maxPitch:85,
+    style:{ version:8, sources:{}, layers:[] },
+    attributionControl:false, preserveDrawingBuffer:true
+  });
+  m3.on('error', e=>console.warn('[3D]', e && e.error));
+  m3.on('webglcontextlost', ()=>status('Vista 3D: contexto gráfico perdido — feche e reabra o 3D.'));
+  let moveTO=null;
+  m3.on('move', ()=>{ SCENE3D.cam.pitch=m3.getPitch(); SCENE3D.cam.bearing=m3.getBearing();
+    document.getElementById('v3dBearingV').textContent = Math.round(((m3.getBearing()%360)+360)%360)+'°';
+  });
+  m3.on('moveend', ()=>{ clearTimeout(moveTO); moveTO=setTimeout(syncCam32,0); });
+  m3.on('mousemove', onView3DMouseMove);
+  SCENE3D.map3d = m3;
+  return m3;
+}
+function syncCam23(){ // 2D -> 3D
+  if(!SCENE3D.map3d || SCENE3D.camLock) return;
+  SCENE3D.camLock++;
+  const c = map.getCenter();
+  SCENE3D.map3d.jumpTo({ center:[c.lng,c.lat], zoom:Math.max(0, map.getZoom()-1) });
+  SCENE3D.camLock--;
+}
+function syncCam32(){ // 3D -> 2D
+  if(!SCENE3D.map3d || !SCENE3D.active || SCENE3D.camLock) return;
+  SCENE3D.camLock++;
+  const c = SCENE3D.map3d.getCenter();
+  map.setView([c.lat,c.lng], Math.round(SCENE3D.map3d.getZoom()+1), {animate:false});
+  SCENE3D.camLock--;
+}
+function onView3DMouseMove(e){
+  const hud = document.getElementById('v3dHud');
+  if(!SCENE3D.terrainOn){ hud.style.display='none'; return; }
+  const el = SCENE3D.map3d.queryTerrainElevation(e.lngLat);
+  if(el==null){ hud.style.display='none'; return; }
+  hud.style.display='block';
+  hud.innerHTML = 'Cota: <b>'+el.toFixed(1)+' m</b>';
+}
+function populateDemSelect(){
+  const sel = document.getElementById('v3dDemSel');
+  const dems = demLayers();
+  const prev = sel.value;
+  sel.innerHTML = dems.length ? '' : '<option value="">nenhum DEM carregado</option>';
+  dems.forEach(r=>{
+    const o = document.createElement('option');
+    o.value = r.name; o.textContent = r.name;
+    sel.appendChild(o);
+  });
+  if(dems.some(r=>r.name===prev)) sel.value = prev;
+  else if(dems.length) sel.value = dems[0].name;
+  SCENE3D.terrainDemName = sel.value || null;
+}
+async function applyTerrain(){
+  const m3 = SCENE3D.map3d;
+  const rec = demLayers().find(r=>r.name===SCENE3D.terrainDemName);
+  if(!rec || !SCENE3D.terrainOn){
+    m3.setTerrain(null);
+    const hl = m3.getLayer('__v3d_hillshade'); if(hl) m3.setLayoutProperty('__v3d_hillshade','visibility','none');
+    return;
+  }
+  const info = await rec.layer._openDem();
+  const b = info.latLngBounds;
+  const srcId = 'gmdem_'+rec.id;
+  if(!m3.getSource(srcId)){
+    m3.addSource(srcId, {
+      type:'raster-dem', encoding:'terrarium', tileSize:256,
+      tiles:['gmdem://'+rec.id+'/{z}/{x}/{y}'],
+      bounds:[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()], maxzoom:18
+    });
+  }
+  m3.setTerrain({ source:srcId, exaggeration:SCENE3D.exaggeration });
+  if(!m3.getLayer('__v3d_hillshade')){
+    m3.addLayer({ id:'__v3d_hillshade', type:'hillshade', source:srcId,
+      layout:{ visibility: SCENE3D.hillshadeOn?'visible':'none' },
+      paint:{ 'hillshade-shadow-color':'#2a2f38' } });
+  } else {
+    m3.setLayoutProperty('__v3d_hillshade','visibility', SCENE3D.hillshadeOn?'visible':'none');
+  }
+}
+function applySky(){
+  const m3 = SCENE3D.map3d;
+  if(typeof m3.setSky!=='function') return;
+  m3.setSky(SCENE3D.skyOn ? { 'sky-color':'#1d252d', 'horizon-color':'#31404d', 'fog-color':'#141a20' } : null);
+}
+
+/* Espelha bases/rasters do Leaflet no style do MapLibre por DIFF —
+   nunca setStyle() completo, que perderia câmera e rebaixaria tudo. */
+function baseTiles(name){
+  const b = bases[name];
+  if(!b || !b._url) return null;
+  const subs = (b.options && b.options.subdomains) || [''];
+  const tiles = subs.map(s=>b._url.replace('{s}', s));
+  return { tiles, maxzoom: (b.options && b.options.maxZoom) || 19 };
+}
+async function mirror3D(){
+  const m3 = SCENE3D.map3d;
+  if(!m3 || !m3.isStyleLoaded()) return;
+  const wanted = new Set();
+
+  // base ativa
+  if(currentBaseName && currentBaseName!=='Sem base'){
+    const bt = baseTiles(currentBaseName);
+    if(bt){
+      const id = 'base_'+currentBaseName.replace(/\W+/g,'_');
+      wanted.add(id);
+      if(!m3.getSource(id)) m3.addSource(id, { type:'raster', tiles:bt.tiles, tileSize:256, maxzoom:bt.maxzoom });
+      if(!m3.getLayer(id)) m3.addLayer({ id, type:'raster', source:id }, m3.getLayer('__v3d_hillshade')?'__v3d_hillshade':undefined);
+    }
+  }
+
+  // rasters do usuário (xyz/wms/img/cog) — dem entra só via applyTerrain()
+  for(const r of rasterLayers){
+    if(!r.def || r.def.type==='dem') continue;
+    const id = 'ras_'+r.id;
+    if(!r.visible){ if(m3.getLayer(id)) m3.setLayoutProperty(id,'visibility','none'); continue; }
+    wanted.add(id);
+    if(m3.getSource(id)){
+      if(m3.getLayer(id)) m3.setLayoutProperty(id,'visibility','visible');
+      m3.setPaintProperty(id,'raster-opacity', r.def.opacity==null?1:r.def.opacity);
+      continue;
+    }
+    let src = null;
+    if(r.def.type==='xyz'){
+      src = { type:'raster', tiles:[r.def.url], tileSize:256 };
+    } else if(r.def.type==='wms'){
+      const url = r.def.url + (r.def.url.includes('?')?'&':'?') +
+        'SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&LAYERS='+
+        encodeURIComponent(r.def.layers)+'&BBOX={bbox-epsg-3857}';
+      src = { type:'raster', tiles:[url], tileSize:256 };
+    } else if(r.def.type==='img'){
+      const url = assetURL(r.def.asset) || r.def.dataUrl;
+      const b = r.def.bounds;
+      if(url && b) src = { type:'image', url, coordinates:[[b[0][1],b[0][0]],[b[1][1],b[0][0]],[b[1][1],b[1][0]],[b[0][1],b[1][0]]] };
+    } else if(r.def.type==='cog'){
+      src = { type:'raster', tiles:['gmcog://'+r.id+'/{z}/{x}/{y}'], tileSize:256, maxzoom:18 };
+    }
+    if(!src) continue;
+    m3.addSource(id, src);
+    m3.addLayer({ id, type:src.type==='image'?'raster':'raster', source:id,
+      paint:{ 'raster-opacity': r.def.opacity==null?1:r.def.opacity } });
+  }
+
+  // remove o que não existe mais no Leaflet
+  SCENE3D.mirrored.forEach(id=>{
+    if(!wanted.has(id) && !id.startsWith('base_')){
+      if(m3.getLayer(id)) m3.removeLayer(id);
+      if(m3.getSource(id)) m3.removeSource(id);
+    }
+  });
+  SCENE3D.mirrored = wanted;
+}
+let _mirrorTO = null;
+function scheduleMirror3D(){
+  clearTimeout(_mirrorTO);
+  _mirrorTO = setTimeout(()=>{ if(SCENE3D.active) mirror3D(); }, 150);
+}
+
+/* ---------- Layout (tela cheia / dividido / flutuante) ---------- */
+function set3DLayout(mode){
+  if(window.innerWidth<760 && mode==='split') mode='full';
+  SCENE3D.layout = mode;
+  view3dEl.classList.remove('mode-full','mode-split','mode-panel');
+  view3dEl.classList.add('mode-'+mode);
+  document.body.classList.toggle('split3d', mode==='split');
+  document.querySelectorAll('.v3d-seg').forEach(b=>b.classList.toggle('active', b.dataset.layout===mode));
+  map.invalidateSize();
+  if(SCENE3D.map3d) setTimeout(()=>SCENE3D.map3d.resize(), 60);
+}
+async function open3D(){
+  if(!has3D()){ status('Vista 3D indisponível: este navegador/dispositivo não suporta WebGL.'); return; }
+  const btn = document.getElementById('btn3D');
+  btn.classList.add('active');
+  status('Carregando motor 3D…');
+  // mostra o palco (e aplica o layout) ANTES de criar o mapa: o MapLibre lê
+  // as dimensões do contêiner de forma síncrona na construção — se isso
+  // acontecer com #view3d ainda oculto (display:none), o canvas nasce 0×0
+  // e alguns tiles de terreno ficam com a cobertura errada mesmo depois de
+  // um resize() tardio (a causa do "buraco" preto visto no topo da vista).
+  view3dEl.classList.add('on');
+  document.getElementById('v3dBar').classList.add('on');
+  set3DLayout(SCENE3D.layout);
+  try{
+    await ensureView3DMap();
+  }catch(err){
+    console.error(err);
+    status('Falha ao carregar a vista 3D: '+err.message);
+    btn.classList.remove('active');
+    view3dEl.classList.remove('on');
+    document.getElementById('v3dBar').classList.remove('on');
+    document.body.classList.remove('split3d');
+    map.invalidateSize();
+    return;
+  }
+  SCENE3D.active = true;
+  populateDemSelect();
+  const m3 = SCENE3D.map3d;
+  const afterLoad = async ()=>{
+    await mirror3D();
+    await applyTerrain();
+    applySky();
+    syncCam23();
+  };
+  if(m3.isStyleLoaded()) afterLoad(); else m3.once('load', afterLoad);
+  status('Vista 3D ativa.');
+}
+function close3D(){
+  SCENE3D.active = false;
+  view3dEl.classList.remove('on');
+  document.getElementById('v3dBar').classList.remove('on');
+  document.body.classList.remove('split3d');
+  document.getElementById('btn3D').classList.remove('active');
+  document.getElementById('v3dHud').style.display = 'none';
+  map.invalidateSize();
+}
+document.getElementById('btn3D').addEventListener('click', ()=>{ SCENE3D.active ? close3D() : open3D(); });
+if(!has3D()){
+  const b = document.getElementById('btn3D');
+  b.disabled = true; b.style.opacity = '.4'; b.style.cursor = 'not-allowed';
+  const tip = b.querySelector('.tip'); if(tip) tip.textContent = 'Vista 3D indisponível — este navegador/dispositivo não suporta WebGL.';
+}
+document.getElementById('v3dClose').addEventListener('click', close3D);
+document.getElementById('v3dPanelClose').addEventListener('click', close3D);
+/* mantém o WebGL sincronizado com o tamanho real do contêiner sempre que
+   ele mudar — troca de layout, redimensionamento nativo (resize:both) da
+   janela flutuante ou resize da própria janela do navegador. É a rede de
+   segurança que elimina qualquer descompasso entre o canvas e a caixa CSS. */
+if(window.ResizeObserver){
+  new ResizeObserver(()=>{ if(SCENE3D.map3d) SCENE3D.map3d.resize(); }).observe(view3dEl);
+}
+/* arraste da alça do modo flutuante (só ativa nesse layout) */
+(function v3dPanelDragEngine(){
+  const head = document.getElementById('v3dPanelHead');
+  let dragging=false, pid=null, sx=0, sy=0, ox=0, oy=0;
+  head.addEventListener('pointerdown', e=>{
+    if(SCENE3D.layout!=='panel') return;
+    dragging=true; pid=e.pointerId;
+    try{ head.setPointerCapture(pid); }catch(err){}
+    const r = view3dEl.getBoundingClientRect();
+    sx=e.clientX; sy=e.clientY; ox=r.left; oy=r.top;
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove', e=>{
+    if(!dragging || e.pointerId!==pid) return;
+    const w = view3dEl.offsetWidth, h = view3dEl.offsetHeight;
+    let nx = ox + (e.clientX-sx), ny = oy + (e.clientY-sy);
+    nx = Math.max(4, Math.min(window.innerWidth - w - 4, nx));
+    ny = Math.max(4, Math.min(window.innerHeight - h - 4, ny));
+    view3dEl.style.left = nx+'px'; view3dEl.style.top = ny+'px';
+  });
+  const end = e=>{ if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; } };
+  head.addEventListener('pointerup', end);
+  head.addEventListener('pointercancel', end);
+})();
+document.querySelectorAll('.v3d-seg').forEach(b=>b.addEventListener('click', ()=>set3DLayout(b.dataset.layout)));
+document.getElementById('v3dExag').addEventListener('input', e=>{
+  SCENE3D.exaggeration = +e.target.value;
+  document.getElementById('v3dExagV').textContent = SCENE3D.exaggeration.toFixed(1)+'×';
+  if(SCENE3D.map3d && SCENE3D.map3d.getTerrain()) SCENE3D.map3d.setTerrain({ source:SCENE3D.map3d.getTerrain().source, exaggeration:SCENE3D.exaggeration });
+});
+document.getElementById('v3dPitch').addEventListener('input', e=>{
+  document.getElementById('v3dPitchV').textContent = e.target.value+'°';
+  if(SCENE3D.map3d) SCENE3D.map3d.setPitch(+e.target.value);
+});
+document.getElementById('v3dNorth').addEventListener('click', ()=>{
+  if(SCENE3D.map3d) SCENE3D.map3d.easeTo({ bearing:0, pitch:60, duration:400 });
+});
+document.getElementById('v3dTerrainOn').addEventListener('change', e=>{ SCENE3D.terrainOn=e.target.checked; if(SCENE3D.map3d) applyTerrain(); });
+document.getElementById('v3dHillOn').addEventListener('change', e=>{ SCENE3D.hillshadeOn=e.target.checked; if(SCENE3D.map3d) applyTerrain(); });
+document.getElementById('v3dSkyOn').addEventListener('change', e=>{ SCENE3D.skyOn=e.target.checked; if(SCENE3D.map3d) applySky(); });
+document.getElementById('v3dDemSel').addEventListener('change', e=>{ SCENE3D.terrainDemName=e.target.value||null; if(SCENE3D.map3d) applyTerrain(); });
+
+map.on('moveend', syncCam23);
+map.on('layeradd layerremove', scheduleMirror3D);
+
+/* divisória do modo "dividido": só uma linha discreta e fixa em 50/50 —
+   não é a ferramenta de recorte (cmpDragEngine); sem alça, sem arraste. */
+(function v3dDividerInit(){
+  const dv = document.createElement('div');
+  dv.id = 'v3dDivider';
+  view3dEl.parentNode.insertBefore(dv, view3dEl);
 })();
 
 /* ---------- IMPRESSÃO ---------- */
@@ -9589,19 +10269,17 @@ function pdRenderRulers(dims){
   vR.innerHTML = vHtml;
 }
 
-/* grade de alinhamento sobre a folha — colunas/linhas configuráveis, apenas visual */
+/* grade de alinhamento sobre a folha — espaçamento fixo em mm, igual nos dois eixos, apenas visual */
 function pdUpdateGridOverlay(){
   const overlay = document.getElementById('pdGridOverlay');
   if(!overlay) return;
   const on = document.getElementById('pdShowGrid').checked;
   overlay.classList.toggle('on', on);
   if(!on) return;
-  const cols = Math.max(1, parseInt(document.getElementById('pdGridCols').value, 10) || 10);
-  const rows = Math.max(1, parseInt(document.getElementById('pdGridRows').value, 10) || 10);
-  const colPct = 100/cols, rowPct = 100/rows;
+  const size = Math.max(1, parseFloat(document.getElementById('pdGridSize').value) || 10);
   overlay.style.backgroundImage =
-    `repeating-linear-gradient(to right, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${colPct}%),`+
-    `repeating-linear-gradient(to bottom, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${rowPct}%)`;
+    `repeating-linear-gradient(to right, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${size}mm),`+
+    `repeating-linear-gradient(to bottom, rgba(90,120,220,.5) 0, rgba(90,120,220,.5) 1px, transparent 1px, transparent ${size}mm)`;
 }
 
 /* arrastar (pelo corpo do bloco ou pela alça dedicada "mover") — mesma lógica para os dois gatilhos */
@@ -9731,19 +10409,17 @@ document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   pdFitDeferred();
 });
 
-/* réguas (mm) e grade de alinhamento (colunas/linhas) — só no editor, preferência local */
+/* réguas (mm) e grade de alinhamento (espaçamento fixo em mm) — só no editor, preferência local */
 (function pdRulerGridInit(){
   const rulersChk = document.getElementById('pdShowRulers');
   const gridChk = document.getElementById('pdShowGrid');
   const gridDimsWrap = document.getElementById('pdGridDimsWrap');
-  const colsInp = document.getElementById('pdGridCols');
-  const rowsInp = document.getElementById('pdGridRows');
+  const sizeInp = document.getElementById('pdGridSize');
   const wrap = document.getElementById('pdSheetWrap');
 
   rulersChk.checked = localStorage.getItem('geomatias_pd_rulers') === '1';
   gridChk.checked = localStorage.getItem('geomatias_pd_grid') === '1';
-  colsInp.value = localStorage.getItem('geomatias_pd_gridcols') || '10';
-  rowsInp.value = localStorage.getItem('geomatias_pd_gridrows') || '10';
+  sizeInp.value = localStorage.getItem('geomatias_pd_gridsize') || '10';
   wrap.classList.toggle('no-rulers', !rulersChk.checked);
   gridDimsWrap.style.display = gridChk.checked ? '' : 'none';
 
@@ -9761,12 +10437,9 @@ document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
     pdFitDeferred();
     pdUpdateGridOverlay();
   });
-  [colsInp, rowsInp].forEach(inp=>{
-    inp.addEventListener('input', ()=>{
-      localStorage.setItem('geomatias_pd_gridcols', colsInp.value);
-      localStorage.setItem('geomatias_pd_gridrows', rowsInp.value);
-      pdUpdateGridOverlay();
-    });
+  sizeInp.addEventListener('input', ()=>{
+    localStorage.setItem('geomatias_pd_gridsize', sizeInp.value);
+    pdUpdateGridOverlay();
   });
 })();
 document.getElementById('pdAddText').addEventListener('click', ()=>pdAddBlock('text'));
@@ -10304,7 +10977,7 @@ document.getElementById('pGo').addEventListener('click', async ()=>{
   document.getElementById('psTitle').textContent = document.getElementById('pTitle').value || 'Mapa sem título';
   document.getElementById('psDesc').textContent = document.getElementById('pDesc').value || '';
   document.getElementById('psAuthor').textContent = document.getElementById('pAuthor').value ? 'Responsável: '+document.getElementById('pAuthor').value : '';
-  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias WebGIS';
+  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias — WebGIS para P&D e estudo de UI';
   const c = map.getCenter();
   document.getElementById('psMeta').innerHTML =
     `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
@@ -10383,7 +11056,7 @@ document.getElementById('invGenMap').addEventListener('click', async ()=>{
   document.getElementById('psTitle').textContent = document.getElementById('invTitle').value || 'Exemplares arbóreos georreferenciados';
   const author = document.getElementById('invAuthor').value;
   document.getElementById('psAuthor').textContent = author ? 'Responsável: '+author : '';
-  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias WebGIS';
+  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias — WebGIS para P&D e estudo de UI';
   const c = map.getCenter();
   document.getElementById('psMeta').innerHTML =
     `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
@@ -10503,7 +11176,7 @@ function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function buildInventoryCards(feats, title, author){
   const sheet = document.getElementById('inventorySheet');
   const head = `<div class="iv-head"><h1>${esc(title)}</h1>`+
-    `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoMatias WebGIS</div></div>`;
+    `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoMatias — WebGIS para P&D e estudo de UI</div></div>`;
   const cards = feats.map(f=>{
     const p = f.p;
     const foto = p.foto ? `<figure><img src="${assetURL(p.foto)}" alt="indivíduo"><figcaption>Indivíduo</figcaption></figure>`
@@ -10537,7 +11210,7 @@ function buildInventoryCards(feats, title, author){
     return `<div class="iv-card">${foto}${tronco}<div class="iv-attrs">${attrs}</div></div>`;
   }).join('');
   const foot = `<div class="iv-foot"><span>${author?'Responsável: '+esc(author):''}</span>`+
-    `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoMatias WebGIS</span></div>`;
+    `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoMatias — WebGIS para P&D e estudo de UI</span></div>`;
   sheet.innerHTML = head + cards + foot;
 }
 
@@ -10823,6 +11496,9 @@ function serializeProject(){
     crs: currentCRS.epsg,
     base: currentBaseName,
     printLayout: printLayout,
+    view3d: { layout:SCENE3D.layout, exaggeration:SCENE3D.exaggeration, pitch:SCENE3D.cam.pitch,
+      bearing:SCENE3D.cam.bearing, terrainOn:SCENE3D.terrainOn, hillshadeOn:SCENE3D.hillshadeOn,
+      skyOn:SCENE3D.skyOn, terrainDemName:SCENE3D.terrainDemName },
     groups: groups.map(g=>({id:g.id, name:g.name, color:g.color, collapsed:!!g.collapsed})),
     customCatalogs: catalogs.filter(c=>c.custom).map(c=>({name:c.name, url:c.url})),
     rasters: rasterLayers.filter(r=>!(r.def && r.def._volatile)).map(r=>({ ...r.def, name:r.name, visible:r.visible, groupId:r.groupId||null })),
@@ -10966,6 +11642,25 @@ async function applyProject(p){
   vectorLayers.forEach(recomputeLayerDerived);
   renderVectorList();
   renderRasterList();
+  // restaura as configurações da vista 3D, mas não a abre automaticamente
+  // (evita gastar contexto WebGL/banda a cada carga de projeto)
+  if(p.view3d){
+    SCENE3D.layout = p.view3d.layout || 'full';
+    SCENE3D.exaggeration = p.view3d.exaggeration || 1.5;
+    SCENE3D.cam.pitch = p.view3d.pitch!=null ? p.view3d.pitch : 60;
+    SCENE3D.cam.bearing = p.view3d.bearing || 0;
+    SCENE3D.terrainOn = p.view3d.terrainOn!==false;
+    SCENE3D.hillshadeOn = !!p.view3d.hillshadeOn;
+    SCENE3D.skyOn = p.view3d.skyOn!==false;
+    SCENE3D.terrainDemName = p.view3d.terrainDemName || null;
+    const exagEl = document.getElementById('v3dExag'); if(exagEl) exagEl.value = SCENE3D.exaggeration;
+    const exagV = document.getElementById('v3dExagV'); if(exagV) exagV.textContent = SCENE3D.exaggeration.toFixed(1)+'×';
+    const pitchEl = document.getElementById('v3dPitch'); if(pitchEl) pitchEl.value = SCENE3D.cam.pitch;
+    const pitchV = document.getElementById('v3dPitchV'); if(pitchV) pitchV.textContent = SCENE3D.cam.pitch+'°';
+    const tOn = document.getElementById('v3dTerrainOn'); if(tOn) tOn.checked = SCENE3D.terrainOn;
+    const hOn = document.getElementById('v3dHillOn'); if(hOn) hOn.checked = SCENE3D.hillshadeOn;
+    const sOn = document.getElementById('v3dSkyOn'); if(sOn) sOn.checked = SCENE3D.skyOn;
+  }
 }
 
 /* restaura ao abrir — IndexedDB, com migração automática do localStorage antigo */

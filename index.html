@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -30,8 +30,8 @@
   --text:#ECECEC;
   --text2:#B4B6B9;
   --muted:#8A8D91;
-  --accent:#8B7DF5;
-  --accent2:#7666E8;
+  --accent:#22D3C0;
+  --accent2:#16B8A8;
   --on-accent:#0F1011;  /* texto sobre o accent */
   --danger:#e5673f;
   --map-bg:#0B0C0D;     /* fundo do mapa antes dos tiles */
@@ -45,11 +45,11 @@
   --tip-bg:#1E2022;             /* tooltips */
   --sub-bg:rgba(255,255,255,.028);   /* faixas internas do painel */
   --swatch-bd:rgba(255,255,255,.35);
-  --accent-soft:rgba(139,125,245,.09);
-  --accent-soft2:rgba(139,125,245,.06);
-  --accent-bd:rgba(139,125,245,.50);
-  --accent-ring:rgba(139,125,245,.38);
-  --accent-bright:#8B7DF5; /* accent sobre superfície escura (tooltips do mapa) */
+  --accent-soft:rgba(34,211,192,.09);
+  --accent-soft2:rgba(34,211,192,.06);
+  --accent-bd:rgba(34,211,192,.50);
+  --accent-ring:rgba(34,211,192,.38);
+  --accent-bright:#22D3C0; /* accent sobre superfície escura (tooltips do mapa) */
   --warn:#e5a13f;
   --warn-soft:rgba(229,161,63,.12);
   --warn-bd:rgba(229,161,63,.4);
@@ -74,8 +74,8 @@
   --text:#1B1C1D;
   --text2:#46484B;
   --muted:#6E7175;
-  --accent:#5B47D6;
-  --accent2:#4C39C4;
+  --accent:#0F9488;
+  --accent2:#0C7A70;
   --on-accent:#ffffff;   /* texto sobre o accent */
   --danger:#c4432a;
   --map-bg:#e6ebef;
@@ -89,11 +89,11 @@
   --tip-bg:#26323d;      /* tooltip permanece escuro: contraste sobre o mapa */
   --sub-bg:rgba(20,40,60,.05);
   --swatch-bd:rgba(0,0,0,.28);
-  --accent-soft:rgba(91,71,214,.10);
-  --accent-soft2:rgba(91,71,214,.06);
-  --accent-bd:rgba(91,71,214,.38);
-  --accent-ring:rgba(91,71,214,.35);
-  --accent-bright:#8B7DF5; /* permanece brilhante: fica sobre fundo escuro */
+  --accent-soft:rgba(15,148,136,.10);
+  --accent-soft2:rgba(15,148,136,.06);
+  --accent-bd:rgba(15,148,136,.38);
+  --accent-ring:rgba(15,148,136,.35);
+  --accent-bright:#22D3C0; /* permanece brilhante: fica sobre fundo escuro */
   --warn:#9d672c;
   --warn-soft:rgba(157,103,44,.12);
   --warn-bd:rgba(157,103,44,.38);
@@ -129,8 +129,6 @@ select, option{ color:var(--text); background:var(--field); }
 #tbActions::-webkit-scrollbar{display:none}
 #tbActions .tb-btn{flex:none; scroll-snap-align:end}
 .tb-btn.icon-only{width:34px; padding:0; justify-content:center; flex:none}
-#pOpenDesigner{color:var(--accent)}
-#pOpenDesigner:hover{color:var(--accent); background:var(--panel2)}
 .tb-btn.icon-only svg{width:16px; height:16px}
 /* transição suave ao trocar de tema (desligada para quem prefere menos movimento) */
 @media (prefers-reduced-motion:no-preference){
@@ -674,10 +672,10 @@ body.split3d #v3dDivider{ display:block }
 .gm-scale-decticks span{width:11px; text-align:center}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .measure-label{
-  background:linear-gradient(135deg, #8B7DF5 0%, #5a4bd6 100%); 
+  background:linear-gradient(135deg, #22D3C0 0%, #16B8A8 100%); 
   color:var(--on-accent); border:2px solid #fff;
   border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; white-space:nowrap;
-  box-shadow:0 6px 16px rgba(139, 125, 245, 0.5), 0 0 12px rgba(139, 125, 245, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow:0 6px 16px rgba(34, 211, 192, 0.5), 0 0 12px rgba(34, 211, 192, 0.7), inset 0 1px 0 rgba(255,255,255,0.3);
   text-shadow:0 1px 2px rgba(0,0,0,0.2);
   letter-spacing:0.5px;
 }
@@ -688,16 +686,16 @@ body.split3d #v3dDivider{ display:block }
   width:13px!important; height:13px!important;
   margin-left:-7px!important; margin-top:-7px!important;
   background:rgba(13,18,22,.55)!important;
-  border:2px solid #8B7DF5!important;
+  border:2px solid #22D3C0!important;
   border-radius:50%!important;
   box-shadow:0 0 0 1.5px var(--shadow);
 }
-.leaflet-editing-icon:hover{background:#8B7DF5!important}
+.leaflet-editing-icon:hover{background:#22D3C0!important}
 .leaflet-touch .leaflet-editing-icon{width:17px!important; height:17px!important; margin-left:-9px!important; margin-top:-9px!important}
 .leaflet-draw-tooltip{
   background:rgba(13, 18, 22, 0.95); border:2px solid var(--accent-bright); color:var(--accent-bright);
   border-radius:8px; font-family:inherit; font-size:13px; padding:8px 12px;
-  box-shadow:0 4px 12px rgba(139, 125, 245, 0.3);
+  box-shadow:0 4px 12px rgba(34, 211, 192, 0.3);
   font-weight:600;
 }
 .leaflet-draw-tooltip:before{border-right-color:rgba(13, 18, 22, 0.95)}
@@ -705,8 +703,8 @@ body.split3d #v3dDivider{ display:block }
 
 /* Melhoria para linhas e polígonos de medição */
 .leaflet-pane .leaflet-path-measure{
-  stroke:#8B7DF5 !important; stroke-width:3 !important; opacity:1 !important;
-  filter:drop-shadow(0 2px 4px rgba(139, 125, 245, 0.5));
+  stroke:#22D3C0 !important; stroke-width:3 !important; opacity:1 !important;
+  filter:drop-shadow(0 2px 4px rgba(34, 211, 192, 0.5));
 }
 
 /* Retângulo de demarcação de área (busca inteligente) */
@@ -718,7 +716,7 @@ body.split3d #v3dDivider{ display:block }
 
 /* Vértices de medição */
 .leaflet-pane .measure-vertex{
-  fill:#8B7DF5 !important; stroke:#fff !important; stroke-width:2 !important;
+  fill:#22D3C0 !important; stroke:#fff !important; stroke-width:2 !important;
   filter:drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 }
 
@@ -975,7 +973,7 @@ body.split3d #v3dDivider{ display:block }
 /* ---------- Print layout ---------- */
 #printSheet{display:none}
 /* Linhas e polígonos de medição com maior contraste */
-.leaflet-pane svg path[stroke="#8B7DF5"],
+.leaflet-pane svg path[stroke="#22D3C0"],
 .leaflet-pane svg path[stroke="#e8c34a"] {
   stroke-width: 3 !important;
   opacity: 0.95 !important;
@@ -990,14 +988,14 @@ body.split3d #v3dDivider{ display:block }
 
 /* Vértices de desenho mais visíveis */
 .leaflet-editing-icon {
-  background: #8B7DF5 !important;
+  background: #22D3C0 !important;
   border: 3px solid #fff !important;
-  box-shadow: 0 0 0 2px #8B7DF5, 0 2px 6px rgba(139, 125, 245, 0.5) !important;
+  box-shadow: 0 0 0 2px #22D3C0, 0 2px 6px rgba(34, 211, 192, 0.5) !important;
 }
 
 .leaflet-editing-icon:hover {
-  background: #5a4bd6 !important;
-  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(139, 125, 245, 0.7) !important;
+  background: #16B8A8 !important;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(34, 211, 192, 0.7) !important;
 }
 
 #inventorySheet{display:none}
@@ -1058,6 +1056,7 @@ body.split3d #v3dDivider{ display:block }
    precisa de posicionamento absoluto explícito para ficar ancorado no canto superior direito */
 .modal.m-designer{width:min(98vw, 1500px); max-width:98vw; height:min(95vh, 900px); display:flex; flex-direction:column; position:relative; padding-top:44px}
 .modal.m-designer .modal-x{position:absolute; top:10px; right:14px; float:none; margin:0}
+.pd-header-actions{position:absolute; top:10px; right:90px; display:flex; gap:6px}
 .pd-toolbar-toggle{
   position:absolute; top:10px; right:52px; width:30px; height:30px;
   display:flex; align-items:center; justify-content:center;
@@ -1067,13 +1066,15 @@ body.split3d #v3dDivider{ display:block }
 .pd-toolbar-toggle svg{transition:transform .2s ease}
 .modal.m-designer.pd-collapsed .pd-toolbar, .modal.m-designer.pd-collapsed .pd-hint{display:none!important}
 .modal.m-designer.pd-collapsed .pd-toolbar-toggle svg{transform:rotate(180deg)}
-.pd-toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; padding:8px 0; border-bottom:1px solid var(--line)}
+.pd-toolbar{display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line)}
 .pd-toolbar .field{margin:0}
 .pd-toolbar select{padding:4px 6px}
+.pd-group{display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; padding:16px 12px 6px; position:relative; border:1px solid var(--line); border-radius:8px}
+.pd-group::before{content:attr(data-label); position:absolute; top:-8px; left:8px; padding:0 6px; background:var(--panel); font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.02em}
 .pd-hint{margin:6px 0 10px}
 .pd-sheet-tabs{display:flex; align-items:center; gap:4px; margin-bottom:8px; flex-wrap:wrap}
 .pd-sheet-tab{border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:6px 6px 0 0; padding:5px 12px; font-size:12.5px; cursor:pointer}
-.pd-sheet-tab.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+.pd-sheet-tab.active{background:var(--sel); border-color:var(--line-sel); color:var(--text); font-weight:600}
 .pd-check{display:flex; align-items:center; gap:6px; height:34px; font-size:12.5px; color:var(--text); cursor:pointer; white-space:nowrap; margin:0}
 .pd-check input{accent-color:var(--text2); width:15px; height:15px; margin:0; flex:none}
 .pd-north-panel{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:flex-end; flex-basis:100%; margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
@@ -1103,9 +1104,14 @@ body.split3d #v3dDivider{ display:block }
 .pd-side-section .tb-btn{justify-content:flex-start}
 .pd-side-section .pd-grat-sides{grid-template-columns:1fr 1fr}
 .pd-sheet-scaler{transform-origin:top left; flex:none}
+.pd-resizer{flex:none; position:relative; width:4px; margin:0 2px; cursor:col-resize; touch-action:none}
+.pd-resizer::after{content:''; position:absolute; top:50%; left:50%; width:2px; height:24px; transform:translate(-50%,-50%); background:var(--line); border-radius:2px}
+.pd-resizer:hover::after, .pd-resizer.dragging::after{background:var(--accent)}
 @media (max-width: 900px){
   .pd-main{flex-direction:column}
   .pd-side{width:auto; max-height:38vh}
+  .pd-resizer{width:auto; height:4px; margin:2px 0; cursor:row-resize}
+  .pd-resizer::after{width:24px; height:2px}
 }
 .pd-sheet-wrap{
   display:inline-grid; flex:none; margin:auto;
@@ -1201,14 +1207,14 @@ body.split3d #v3dDivider{ display:block }
 @supports (height:44dvh){ .ms-stage{height:44dvh} }
 .ms-stage video, .ms-stage canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block}
 .ms-level{position:absolute; left:8px; top:8px; z-index:3; font-size:12px; font-weight:700; padding:4px 9px; border-radius:999px; background:rgba(12,17,22,.82); color:#8fa3b3; border:1px solid var(--line)}
-.ms-level.ok{color:#8B7DF5; border-color:#8B7DF5}
+.ms-level.ok{color:#22D3C0; border-color:#22D3C0}
 .ms-level.warn{color:#e5a13f; border-color:#e5a13f}
 .ms-level.bad{color:#e5673f; border-color:#e5673f}
 .ms-horiz{position:absolute; left:0; right:0; top:50%; height:0; border-top:1px dashed rgba(255,255,255,.45); z-index:2; pointer-events:none}
 .ms-cross{position:absolute; left:50%; top:50%; width:60px; height:60px; margin:-30px 0 0 -30px; z-index:4; pointer-events:none}
-.ms-cross i{position:absolute; left:50%; top:0; bottom:0; width:0; border-left:1px solid #8B7DF5}
-.ms-cross b{position:absolute; top:50%; left:0; right:0; height:0; border-top:1px solid #8B7DF5}
-.ms-cross::after{content:''; position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border:1.5px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #8B7DF5}
+.ms-cross i{position:absolute; left:50%; top:0; bottom:0; width:0; border-left:1px solid #22D3C0}
+.ms-cross b{position:absolute; top:50%; left:0; right:0; height:0; border-top:1px solid #22D3C0}
+.ms-cross::after{content:''; position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border:1.5px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #22D3C0}
 .ms-zoom{position:absolute; right:8px; bottom:8px; z-index:3; font-size:11px; color:var(--muted); background:rgba(12,17,22,.82); border:1px solid var(--line); border-radius:999px; padding:3px 8px; font-variant-numeric:tabular-nums}
 .ms-step{font-size:12.5px; color:var(--text); background:var(--accent-soft); border:1px solid var(--accent-bd); border-radius:8px; padding:8px 10px; margin:8px 0}
 .ms-step b{color:var(--accent)}
@@ -1811,61 +1817,60 @@ body.split3d #v3dDivider{ display:block }
 </div>
 
 <!-- ===== Modal: print ===== -->
-<div class="modal-back" id="mPrint">
-  <div class="modal">
-    <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
-    <h3>Layout de impressão</h3>
-    <p class="sub">O mapa atual será capturado com título, descrição, legenda das camadas, norte e escala em folha A4 paisagem.</p>
-    <div class="field"><label>Título do mapa</label><input type="text" id="pTitle" placeholder="Ex.: Mapa de uso do solo — Fazenda Santa Rita"></div>
-    <div class="field"><label>Descrição / observações</label><textarea id="pDesc" placeholder="Texto livre que aparecerá abaixo do mapa."></textarea></div>
-    <div class="field"><label>Autor / responsável (opcional)</label><input type="text" id="pAuthor"></div>
-    <div class="actions">
-      <button class="tb-btn" id="pOpenDesigner" data-icon="layout" title="Editor de layout">Editor de layout avançado</button>
-      <button class="tb-btn primary" id="pGo">Gerar e imprimir</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== Modal: editor de layout de impressão ===== -->
 <div class="modal-back" id="mPrintDesigner">
   <div class="modal m-designer">
     <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
-    <button type="button" class="pd-toolbar-toggle" id="pdToolbarToggle" title="Minimizar/expandir a barra de ferramentas" data-icon="arrowDown"></button>
+    <div class="pd-header-actions">
+      <button class="tb-btn icon-only" id="pdPrint" data-icon="printer" title="Abre o diálogo de impressão do navegador — escolha &quot;Salvar como PDF&quot; para gerar um PDF"></button>
+      <button class="tb-btn icon-only" id="pdExportPng" data-icon="camera" title="Baixa este layout como imagem PNG"></button>
+    </div>
+    <button type="button" class="pd-toolbar-toggle" id="pdToolbarToggle" title="Minimizar/expandir a barra de ferramentas" data-icon="chevronDown"></button>
     <h3>Editor de layout de impressão</h3>
     <div class="pd-toolbar">
-      <div class="field"><label>Papel</label>
-        <select id="pdPaper">
-          <option value="A4">A4</option>
-          <option value="A3">A3</option>
-        </select>
+      <div class="pd-group" data-label="Arquivo">
+        <button class="tb-btn" id="pdTplNew" data-icon="plus" title="Limpa a folha atual do layout">Novo template</button>
+        <button class="tb-btn" id="pdTplSave" data-icon="save" title="Salva a posição dos blocos como template">Salvar template</button>
+        <button class="tb-btn" id="pdTplApply" data-icon="folder" title="Carrega um template de layout salvo">Carregar template</button>
       </div>
-      <div class="field"><label>Orientação</label>
-        <select id="pdOrient">
-          <option value="landscape">Paisagem</option>
-          <option value="portrait">Retrato</option>
-        </select>
+      <div class="pd-group" data-label="Geral">
+        <div class="field"><label>Papel</label>
+          <select id="pdPaper">
+            <option value="A4">A4</option>
+            <option value="A3">A3</option>
+          </select>
+        </div>
+        <div class="field"><label>Orientação</label>
+          <select id="pdOrient">
+            <option value="landscape">Paisagem</option>
+            <option value="portrait">Retrato</option>
+          </select>
+        </div>
+        <button class="tb-btn" id="pdAddText" data-icon="textBox">Texto</button>
+        <button class="tb-btn" id="pdAddImage" data-icon="image">Imagem</button>
+        <button class="tb-btn" id="pdAddLine" data-icon="lineTool">Linha</button>
+        <button class="tb-btn" id="pdAddRect" data-icon="rectTool">Retângulo</button>
+        <button class="tb-btn" id="pdAddNorth" data-icon="northArrow">Norte</button>
+        <button class="tb-btn" id="pdAddScale" data-icon="ruler">Escala</button>
+        <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
+        <button class="tb-btn" id="pdAddMeta" data-icon="info" title="CRS, data, centro/zoom, base e escala — atualizados automaticamente">Metadados</button>
+        <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
+        <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
+        <input type="file" id="pdImageFile" accept="image/*" style="display:none">
+        <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
+        <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
+        <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
+          <span>Espaçamento (mm)</span><input type="number" id="pdGridSize" min="1" max="100" value="10">
+        </div>
       </div>
-      <button class="tb-btn" id="pdAddText" data-icon="textBox">Texto</button>
-      <button class="tb-btn" id="pdAddImage" data-icon="image">Imagem</button>
-      <button class="tb-btn" id="pdAddLine" data-icon="lineTool">Linha</button>
-      <button class="tb-btn" id="pdAddRect" data-icon="rectTool">Retângulo</button>
-      <button class="tb-btn" id="pdAddNorth" data-icon="northArrow">Norte</button>
-      <button class="tb-btn" id="pdAddScale" data-icon="ruler">Escala</button>
-      <button class="tb-btn" id="pdAddLegend" data-icon="table">Legenda</button>
-      <button class="tb-btn" id="pdAddMap" data-icon="map">Mapa</button>
-      <button class="tb-btn" id="pdAddTreeCard" data-icon="treeIcon" title="Ficha de uma árvore do inventário">Ficha de árvore</button>
-      <button class="tb-btn" id="pdAddTreeTable" data-icon="table" title="Tabela com os indivíduos do inventário">Tabela do inventário</button>
-      <button class="tb-btn" id="pdAddView3D" data-icon="cube3d" title="Recorte (screenshot) da vista 3D">Recorte 3D</button>
-      <button class="tb-btn" id="pdAddElevProfile" data-icon="elevProfile" title="Imagem do perfil de elevação">Perfil de elevação</button>
-      <button class="tb-btn" id="pdAddMeasure3dInfo" data-icon="volume3d" title="Resumo em texto da última medição de distância/volume 3D">Info. medição 3D</button>
-      <button class="tb-btn" id="pdDeleteSel" data-icon="trash" title="Excluir selecionado">Excluir</button>
-      <button class="tb-btn" id="pdPrint" data-icon="printer" title="Abre o diálogo de impressão do navegador — escolha &quot;Salvar como PDF&quot; para gerar um PDF">Imprimir / PDF</button>
-      <button class="tb-btn" id="pdExportPng" data-icon="download" title="Baixa este layout como imagem PNG">Baixar PNG</button>
-      <input type="file" id="pdImageFile" accept="image/*" style="display:none">
-      <label class="pd-check"><input type="checkbox" id="pdShowRulers">Réguas</label>
-      <label class="pd-check"><input type="checkbox" id="pdShowGrid">Grade</label>
-      <div class="pd-grid-dims" id="pdGridDimsWrap" style="display:none">
-        <span>Espaçamento (mm)</span><input type="number" id="pdGridSize" min="1" max="100" value="10">
+      <div class="pd-group" data-label="I. Arbóreo">
+        <button class="tb-btn" id="pdAddTreeCard" data-icon="treeIcon" title="Ficha de uma árvore do inventário">Ficha de árvore</button>
+        <button class="tb-btn" id="pdAddTreeTable" data-icon="table" title="Tabela com os indivíduos do inventário">Tabela do inventário</button>
+      </div>
+      <div class="pd-group" data-label="3D">
+        <button class="tb-btn" id="pdAddView3D" data-icon="cube3d" title="Recorte (screenshot) da vista 3D">Recorte 3D</button>
+        <button class="tb-btn" id="pdAddElevProfile" data-icon="elevProfile" title="Imagem do perfil de elevação">Perfil de elevação</button>
+        <button class="tb-btn" id="pdAddMeasure3dInfo" data-icon="volume3d" title="Resumo em texto da última medição de distância/volume 3D">Info. medição 3D</button>
       </div>
     </div>
     <p class="sub pd-hint">Arraste para mover, alças nos cantos para redimensionar. Salvo automaticamente no projeto.</p>
@@ -1889,6 +1894,7 @@ body.split3d #v3dDivider{ display:block }
       </div>
       </div>
     </div>
+    <div class="pd-resizer" id="pdResizer" title="Arraste para ajustar o tamanho do painel"></div>
     <aside class="pd-side" id="pdSideProps">
       <div class="pd-side-head"><span class="pd-side-title">Propriedades</span><span class="pd-side-sub" id="pdSideSub">Nenhum bloco selecionado</span></div>
       <div class="pd-side-empty" id="pdSideEmpty">Selecione um bloco no layout para editar suas propriedades. Blocos de <b>Texto</b>, <b>Linha</b>, <b>Retângulo</b>, <b>Norte</b> e <b>Mapa</b> têm opções específicas.</div>
@@ -2088,6 +2094,28 @@ body.split3d #v3dDivider{ display:block }
       <div class="field" style="flex-basis:100%; margin-top:4px">
         <label>Colunas</label>
         <div id="pdTreeTableCols" style="display:flex; flex-wrap:wrap; gap:8px 14px; font-size:12.5px"></div>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Tamanho da fonte (pt)</label>
+        <input type="number" id="pdTreeTableFontSize" min="6" max="12" step="0.5" value="7.5">
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Densidade das linhas</label>
+        <select id="pdTreeTableRowScale">
+          <option value="0.8">Compacta</option>
+          <option value="1" selected>Normal</option>
+          <option value="1.3">Confortável</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Cor do cabeçalho</label>
+        <input type="color" id="pdTreeTableHeaderColor" value="#000000">
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label class="pd-check"><input type="checkbox" id="pdTreeTableZebra">Linhas alternadas (zebra)</label>
+      </div>
+      <div class="field" style="flex-basis:100%; margin-top:8px">
+        <button type="button" class="tb-btn" id="pdTreeTableAutoFit" title="Recalcula a altura do bloco para caber todos os indivíduos do filtro atual">Ajustar altura ao conteúdo</button>
       </div>
     </div>
     <div class="pd-side-section" id="pdView3DPanel" style="display:none">
@@ -2677,12 +2705,14 @@ const ICONS = {
   swap:'<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
   refresh:'<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>',
   arrowDown:'<path d="M12 4v14M6 13l6 6 6-6"/>',
+  chevronDown:'<path d="M6 9l6 6 6-6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   copy:'<rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
   crop:'<path d="M6 2v16h16M2 6h16v16"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 15l-5-5-9 9"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="4"/>',
   textBox:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 8h10M7 12h10M7 16h6"/>',
   northArrow:'<path d="M12 2l5 18-5-3-5 3 5-18Z" fill="currentColor" stroke="none"/>',
   layout:'<rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M9 9v12"/>',
@@ -2766,7 +2796,7 @@ function icon(name, size=15){
    string "a:xxxx" e vive em IndexedDB (ou OPFS, se grande).
    Trocar o backend = trocar um adapter, sem tocar no resto.
    ========================================================= */
-const DB_NAME = 'geomatias', DB_VER = 2;
+const DB_NAME = 'geomatias', DB_VER = 4;
 let _dbP = null;
 function idb(){
   if(_dbP) return _dbP;
@@ -2777,6 +2807,7 @@ function idb(){
       if(!d.objectStoreNames.contains('projects')) d.createObjectStore('projects');
       if(!d.objectStoreNames.contains('assets'))   d.createObjectStore('assets');
       if(!d.objectStoreNames.contains('stylePresets')) d.createObjectStore('stylePresets');
+      if(!d.objectStoreNames.contains('printLayoutTemplates')) d.createObjectStore('printLayoutTemplates');
     };
     rq.onsuccess = ()=>res(rq.result);
     rq.onerror   = ()=>rej(rq.error);
@@ -2938,19 +2969,19 @@ L.drawLocal.edit.handlers.remove.tooltip = { text:'Clique em uma feição para r
 const style = document.createElement('style');
 style.textContent = `
   .leaflet-draw-layer path {
-    stroke: #8B7DF5 !important;
+    stroke: #22D3C0 !important;
     stroke-width: 3 !important;
-    filter: drop-shadow(0 2px 6px rgba(139, 125, 245, 0.5));
+    filter: drop-shadow(0 2px 6px rgba(34, 211, 192, 0.5));
   }
   
   .leaflet-measure-line {
-    stroke: #8B7DF5 !important;
+    stroke: #22D3C0 !important;
     stroke-width: 3 !important;
     opacity: 0.95 !important;
   }
   
   .leaflet-editing-icon {
-    box-shadow: 0 0 0 3px rgba(139, 125, 245, 0.3), 0 0 0 1.5px #8B7DF5 !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 192, 0.3), 0 0 0 1.5px #22D3C0 !important;
   }
 `;
 document.head.appendChild(style);
@@ -3160,7 +3191,7 @@ function targetLayerFor(tool, geomOverride){
    diverging → desvios em torno de um centro; terreno → cartografia clássica. */
 const RAMPS = {
   qualitative: {
-    'GeoMatias': ['#6C5CE7','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c','#3ea8ff','#ff6f91','#a3d94a','#ffb454','#7fd4d4','#d47fd4'],
+    'GeoMatias': ['#22D3C0','#e5673f','#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#f08a3c','#3ea8ff','#ff6f91','#a3d94a','#ffb454','#7fd4d4','#d47fd4'],
     'Set2':      ['#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f','#e5c494','#b3b3b3'],
     'Dark2':     ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
     'Paired':    ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
@@ -3469,7 +3500,7 @@ map.on('zoomend', ()=>{
 /* ---------- Grupos (pastas de camadas) ---------- */
 const groups = []; // {id, name, color, collapsed, editing}
 let groupSeq = 0;
-const GRP_PALETTE = ['#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#6C5CE7','#e5673f','#f08a3c'];
+const GRP_PALETTE = ['#4f9cf0','#e8c34a','#b06ee8','#e05c8a','#6fd35e','#22D3C0','#e5673f','#f08a3c'];
 function groupById(id){ return groups.find(g=>g.id===id) || null; }
 
 /* cria grupo com edição do nome inline (sem popup) */
@@ -6599,7 +6630,7 @@ function minimizeAttrTableTemporarily(ms){
 
 function currentAccentColor(){
   const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-  return v || '#8B7DF5';
+  return v || '#22D3C0';
 }
 
 /* anel pulsante temporário sobre um ponto (~2s), sem alterar o marcador da feição */
@@ -8741,7 +8772,7 @@ function coordsToKml(c, depth){ // recursivo
 function featureToKml(f){
   const name = (f.properties && (f.properties.name||f.properties.camada)) || 'Feição';
   const st = f.__style;
-  const color = (st ? (st.color || st._fillPlain || '#8B7DF5') : ((f.properties&&(f.properties.stroke||f.properties.cor))||'#8B7DF5')).replace('#','');
+  const color = (st ? (st.color || st._fillPlain || '#22D3C0') : ((f.properties&&(f.properties.stroke||f.properties.cor))||'#22D3C0')).replace('#','');
   const abgr = 'cc' + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
   const fillOpHex = Math.round((st && st.fillOpacity!=null ? st.fillOpacity : 0.4)*255).toString(16).padStart(2,'0');
   const fillAbgr = fillOpHex + color.slice(4,6)+color.slice(2,4)+color.slice(0,2);
@@ -10710,8 +10741,8 @@ map.on('layeradd layerremove', scheduleMirror3D);
 })();
 
 /* ---------- IMPRESSÃO ---------- */
-document.getElementById('btnPrint').addEventListener('click', ()=>open('mPrint'));
-document.getElementById('btnPrintQuick').addEventListener('click', ()=>open('mPrint'));
+document.getElementById('btnPrint').addEventListener('click', ()=>openPrintDesigner());
+document.getElementById('btnPrintQuick').addEventListener('click', ()=>openPrintDesigner());
 
 /* =========================================================
    Editor de layout de impressão — motor de blocos
@@ -10793,10 +10824,12 @@ function pdAddBlock(type, extra){
         dirs:{top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'},
         offsetXmm:0, offsetYmm:0}}},
     treeCard:{w:90, h:60, props:{featureId:null}},
-    treeTable:{w:170, h:90, props:{filter:null, columns:INVENTORY_TABLE_COLUMNS.map(c=>c.key)}},
+    treeTable:{w:170, h:90, props:{filter:null, columns:INVENTORY_TABLE_COLUMNS.map(c=>c.key),
+      fontSize:7.5, rowScale:1, headerColor:'#000000', zebra:false}},
     view3d:{w:110, h:80, props:{preview:null}},
     elevProfile:{w:100, h:40, props:{preview:null}},
-    measure3dInfo:{w:80, h:30, props:{}}
+    measure3dInfo:{w:80, h:30, props:{}},
+    meta:{w:70, h:26, props:{}}
   }[type] || {w:40, h:40, props:{}};
   if(type==='map' && pdBlocks().filter(x=>x.type==='map').length>=5){
     status('Máximo de 5 blocos de mapa por layout.');
@@ -10942,6 +10975,10 @@ function pdSelect(id){
     treeTablePanel.style.display = '';
     document.getElementById('pdTreeTableFilter').value = b.props.filter || '';
     pdRenderTreeTableCols(b);
+    document.getElementById('pdTreeTableFontSize').value = b.props.fontSize || 7.5;
+    document.getElementById('pdTreeTableRowScale').value = b.props.rowScale || 1;
+    document.getElementById('pdTreeTableHeaderColor').value = b.props.headerColor || '#000000';
+    document.getElementById('pdTreeTableZebra').checked = !!b.props.zebra;
   } else {
     treeTablePanel.style.display = 'none';
   }
@@ -10984,6 +11021,42 @@ document.getElementById('pdTreeTableCols').addEventListener('change', e=>{
   const checked = Array.from(document.querySelectorAll('.pd-tt-col:checked')).map(c=>c.getAttribute('data-key'));
   b.props.columns = checked;
   pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableFontSize').addEventListener('change', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.fontSize = Math.max(6, Math.min(12, parseFloat(e.target.value) || 7.5));
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableRowScale').addEventListener('change', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.rowScale = parseFloat(e.target.value) || 1;
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableHeaderColor').addEventListener('input', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.headerColor = e.target.value;
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableZebra').addEventListener('change', e=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  b.props.zebra = e.target.checked;
+  pdRenderAll(); pdMarkDirty();
+});
+document.getElementById('pdTreeTableAutoFit').addEventListener('click', ()=>{
+  const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
+  if(!b) return;
+  const feats = inventoryFeatures(b.props.filter);
+  const fontPt = b.props.fontSize || 7.5;
+  const rowScale = b.props.rowScale || 1;
+  const rowHmm = fontPt * 0.3528 * 1.8 * rowScale; // pt->mm (1pt≈0.3528mm), mesma proporção de pdDrawTreeTableBlock
+  const headerHmm = rowHmm;
+  b.h = Math.max(20, Math.round(headerHmm + feats.length*rowHmm));
+  pdRenderAll(); pdSelect(b.id); pdMarkDirty();
+  status(`Altura ajustada para ${feats.length} indivíduo(s).`);
 });
 document.getElementById('pdView3DCapture').addEventListener('click', async ()=>{
   const b = pdSelId && pdBlocks().find(x=>x.id===pdSelId);
@@ -11343,6 +11416,19 @@ function pdWireLegendDrag(root, b){
 function pdScaleDenom(){
   return 591657550.5 / Math.pow(2, map.getZoom()-1) / 2;
 }
+/* bloco "meta": mesma informação que o antigo fluxo de impressão rápida preenchia estaticamente
+   (SRC/EPSG, data, centro/zoom, base, escala aproximada) — aqui recalculada a cada render, ao vivo */
+function metaAutoText(){
+  const c = map.getCenter();
+  return [
+    'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+')',
+    'Data: '+new Date().toLocaleDateString('pt-BR'),
+    'Centro: '+fmt(c.lat)+', '+fmt(c.lng)+' · Zoom '+map.getZoom(),
+    'Base: '+currentBaseName,
+    'Escala aproximada 1:'+Math.round(pdScaleDenom()).toLocaleString('pt-BR'),
+    'Gerado com GeoMatias — WebGIS para P&D e estudo de UI'
+  ].join('<br>');
+}
 /* arredonda para 1/2/5 x 10^n — números "redondos" de escala gráfica */
 function pdNiceNumber(x){
   if(x<=0) return 1;
@@ -11409,11 +11495,11 @@ function pdUpBoldSvg(props){
     <path d="M20,18 L34,38 L25,38 L25,55 L15,55 L15,38 L6,38 Z" fill="#111"/>
   </svg>`;
 }
-/* marca ^ (padrão do logo do projeto): chevron roxo no topo, "N" abaixo dele —
+/* marca ^ (padrão do logo do projeto): chevron na cor de destaque do app no topo, "N" abaixo dele —
    estilo/cor do "N" seguem os mesmos props das demais setas */
 function pdChevronMarkSvg(props){
   return `<svg viewBox="0 0 40 60" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet">
-    <path d="M8,33 L20,7 L32,33" fill="none" stroke="#6C5CE7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8,33 L20,7 L32,33" fill="none" stroke="#22D3C0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
     ${pdNorthLabelSvg(props, 54)}
   </svg>`;
 }
@@ -11541,6 +11627,9 @@ function pdBlockHtml(b){
       ${body}
     </div>`;
   }
+  if(b.type==='meta'){
+    return `<div class="pd-inner" style="background:#fff; color:#000; padding:2mm; font-family:Arial, sans-serif; font-size:7.5pt; line-height:1.4">${metaAutoText()}</div>`;
+  }
   if(b.type==='treeCard'){
     const feats = inventoryFeatures(null);
     const f = feats.find(x=>x.layer && x.layer._gaid===b.props.featureId);
@@ -11550,7 +11639,7 @@ function pdBlockHtml(b){
   if(b.type==='treeTable'){
     const feats = inventoryFeatures(b.props.filter);
     if(!feats.length) return `<div class="pd-inner" style="background:#e8e8e8; color:#666; display:flex; align-items:center; justify-content:center; text-align:center; font-family:Arial, sans-serif; font-size:8pt; padding:2mm">Nenhum indivíduo do inventário para exibir</div>`;
-    return `<div class="pd-inner">${buildInventoryTableHtml(feats, b.props.columns)}</div>`;
+    return `<div class="pd-inner">${buildInventoryTableHtml(feats, b.props.columns, {fontSize:b.props.fontSize, rowScale:b.props.rowScale, headerColor:b.props.headerColor, zebra:b.props.zebra})}</div>`;
   }
   if(b.type==='view3d'){
     if(b.props.preview){
@@ -11802,23 +11891,156 @@ function pdWireGridDrag(overlay, el, b){
   });
 }
 
-document.getElementById('pOpenDesigner').addEventListener('click', ()=>{
-  close('mPrint');
+function openPrintDesigner(){
   document.getElementById('pdPaper').value = printLayout.paperSize;
   document.getElementById('pdOrient').value = printLayout.orientation;
   pdRenderSheetTabs();
   pdRenderAll();
   open('mPrintDesigner');
   requestAnimationFrame(pdFit);
-});
+}
 document.getElementById('pdPaper').addEventListener('change', e=>{ printLayout.paperSize = e.target.value; pdRenderAll(); pdMarkDirty(); });
 document.getElementById('pdOrient').addEventListener('change', e=>{ printLayout.orientation = e.target.value; pdRenderAll(); pdMarkDirty(); });
+
+/* ---------- Templates de layout de impressão: só a posição dos blocos na folha,
+   biblioteca pessoal no IndexedDB (printLayoutTemplates), fora do projeto ---------- */
+function pdBlankLayout(){ return { paperSize:'A4', orientation:'landscape', sheets:[{blocks:[]}], activeSheet:0 }; }
+function pdApplyLayoutState(state){
+  printLayout = state;
+  if(!(printLayout.activeSheet>=0 && printLayout.activeSheet<printLayout.sheets.length)) printLayout.activeSheet = 0;
+  pdSeq = printLayout.sheets.reduce((m,s)=>(s.blocks||[]).reduce((m2,b)=>{
+    const n = parseInt(String(b.id).replace(/\D/g,''),10);
+    return isNaN(n) ? m2 : Math.max(m2, n+1);
+  }, m), 1);
+  pdSelId = null;
+  document.getElementById('pdPaper').value = printLayout.paperSize;
+  document.getElementById('pdOrient').value = printLayout.orientation;
+  pdRenderSheetTabs();
+  pdRenderAll();
+  pdSelect(null);
+  pdMarkDirty();
+}
+/* template embutido "Impressão rápida" — reproduz o antigo fluxo #pGo (título + descrição +
+   mapa + norte + escala + legenda), mas com blocos ao vivo em vez de captura estática; sempre
+   disponível em "Carregar template", semeado automaticamente se o usuário nunca criou nenhum */
+const PD_BUILTIN_TEMPLATE_NAME = 'Impressão rápida';
+function pdBuiltinQuickTemplate(){
+  return {
+    name: PD_BUILTIN_TEMPLATE_NAME, builtin:true, savedAt:new Date().toISOString(),
+    paperSize:'A4', orientation:'landscape',
+    sheets:[{blocks:[
+      { id:'pbtitle', type:'text', x:8, y:8, w:180, h:14, z:1, rot:0, flipH:false, flipV:false,
+        props:{ html:'Título do mapa', fontFamily:'Arial, sans-serif', fontSize:18, color:'#000000',
+          bold:true, italic:false, underline:false, strike:false, uppercase:false, align:'left' } },
+      { id:'pbdesc', type:'text', x:8, y:150, w:180, h:20, z:2, rot:0, flipH:false, flipV:false,
+        props:{ html:'Descrição / observações', fontFamily:'Arial, sans-serif', fontSize:10, color:'#000000',
+          bold:false, italic:false, underline:false, strike:false, uppercase:false, align:'left' } },
+      { id:'pbmap', type:'map', x:8, y:26, w:180, h:120, z:3, rot:0, flipH:false, flipV:false,
+        props:{ center:null, zoom:null, base:null, layers:null, preview:null, contextOf:null,
+          graticule:{on:false, crs:'geo', position:'inside', dirs:{top:'horizontal', bottom:'horizontal', left:'vertical-up', right:'vertical-up'}, offsetXmm:0, offsetYmm:0} } },
+      { id:'pbnorth', type:'north', x:192, y:8, w:16, h:24, z:4, rot:0, flipH:false, flipV:false,
+        props:{ style:'chevronMark', showLabel:true, labelColor:'#3a3a3a', labelBorderColor:'#ffffff', labelSize:16 } },
+      { id:'pbscale', type:'scale', x:192, y:36, w:55, h:18, z:5, rot:0, flipH:false, flipV:false,
+        props:{ showBar:true, showText:true } },
+      { id:'pblegend', type:'legend', x:192, y:58, w:97, h:112, z:6, rot:0, flipH:false, flipV:false,
+        props:{ mode:'auto', groups:[], items:[] } },
+      { id:'pbmeta', type:'meta', x:192, y:174, w:97, h:26, z:7, rot:0, flipH:false, flipV:false, props:{} }
+    ]}], activeSheet:0
+  };
+}
+async function listPrintLayoutTemplates(){
+  const keys = await idbKeys('printLayoutTemplates');
+  if(!keys.includes(PD_BUILTIN_TEMPLATE_NAME)) await idbPut('printLayoutTemplates', PD_BUILTIN_TEMPLATE_NAME, pdBuiltinQuickTemplate());
+  const allKeys = keys.includes(PD_BUILTIN_TEMPLATE_NAME) ? keys : [...keys, PD_BUILTIN_TEMPLATE_NAME];
+  const out = [];
+  for(const k of allKeys){ const v = await idbGet('printLayoutTemplates', k); if(v) out.push(v); }
+  return out.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+}
+document.getElementById('pdTplNew').addEventListener('click', ()=>{
+  const hasBlocks = printLayout.sheets.some(s=>(s.blocks||[]).length);
+  if(hasBlocks && !confirm('Isso limpa todos os blocos do layout atual. Continuar?')) return;
+  pdApplyLayoutState(pdBlankLayout());
+  status('Novo layout em branco.');
+});
+document.getElementById('pdTplSave').addEventListener('click', async ()=>{
+  const name = prompt('Nome do template de layout:'); if(!name) return;
+  const preset = { name, savedAt:new Date().toISOString(),
+    paperSize: printLayout.paperSize, orientation: printLayout.orientation,
+    sheets: JSON.parse(JSON.stringify(printLayout.sheets)) };
+  await idbPut('printLayoutTemplates', name, preset);
+  status('Template de layout "'+name+'" salvo ✓');
+});
+document.getElementById('pdTplApply').addEventListener('click', async ()=>{
+  const templates = await listPrintLayoutTemplates();
+  const names = templates.map(t=>t.name);
+  const pick = prompt('Escolha o template de layout (digite o nome exato):\n'+names.join('\n'), names[0]);
+  const tpl = templates.find(t=>t.name===pick);
+  if(!tpl) return;
+  const sheets = JSON.parse(JSON.stringify(tpl.sheets));
+  // blocos de mapa de um template salvo não têm vista congelada válida neste projeto —
+  // caem no modo "sincronizado com o mapa principal" (mesmo estado que pdMapSync produz)
+  sheets.forEach(s=>(s.blocks||[]).forEach(b=>{
+    if(b.type==='map' && b.props){ b.props.center = null; b.props.zoom = null; b.props.base = null; }
+  }));
+  pdApplyLayoutState({ paperSize: tpl.paperSize||'A4', orientation: tpl.orientation||'landscape', sheets, activeSheet:0 });
+  status('Template de layout "'+tpl.name+'" aplicado.');
+});
 
 /* minimizar/expandir a barra de ferramentas do editor — dá mais altura à prévia da folha */
 document.getElementById('pdToolbarToggle').addEventListener('click', ()=>{
   document.querySelector('.modal.m-designer').classList.toggle('pd-collapsed');
   pdFitDeferred();
 });
+
+/* Delete/Backspace exclui o bloco selecionado — mesmo caminho do botão Excluir (pdDeleteBlock).
+   Ignorado com foco em campo editável, para não interceptar exclusão de texto sendo digitado. */
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('mPrintDesigner').classList.contains('open')) return;
+  if(!pdSelId) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(['INPUT','TEXTAREA','SELECT'].includes(tag) || (document.activeElement && document.activeElement.isContentEditable)) return;
+  if(e.key==='Delete' || e.key==='Backspace'){
+    e.preventDefault();
+    pdDeleteBlock(pdSelId);
+  }
+});
+
+/* Divisória arrastável entre a prévia da folha (.pd-body) e o painel de propriedades (.pd-side) —
+   mesmo padrão de pointer events do cmpDragEngine (comparador de camadas). O eixo (largura em tela
+   larga, altura em tela estreita) é lido do flex-direction real de .pd-main a cada arraste, para
+   acompanhar a media query de 900px sem duplicar lógica. */
+(function pdResizerEngine(){
+  const resizer = document.getElementById('pdResizer');
+  const main = document.querySelector('#mPrintDesigner .pd-main');
+  const side = document.getElementById('pdSideProps');
+  if(!resizer || !main || !side) return;
+  let dragging = false, pid = null, axis = 'row';
+  resizer.addEventListener('pointerdown', e=>{
+    dragging = true; pid = e.pointerId;
+    axis = getComputedStyle(main).flexDirection === 'column' ? 'column' : 'row';
+    resizer.classList.add('dragging');
+    try{ resizer.setPointerCapture(pid); }catch(err){}
+    e.preventDefault();
+  });
+  resizer.addEventListener('pointermove', e=>{
+    if(!dragging || e.pointerId!==pid) return;
+    const rect = main.getBoundingClientRect();
+    if(axis==='row'){
+      const w = Math.max(200, Math.min(rect.right - e.clientX, rect.width - 200));
+      side.style.width = w+'px';
+    } else {
+      const h = Math.max(120, Math.min(rect.bottom - e.clientY, rect.height - 120));
+      side.style.maxHeight = h+'px';
+      side.style.height = h+'px';
+    }
+    pdFitDeferred();
+  });
+  const end = e=>{
+    if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; resizer.classList.remove('dragging'); }
+  };
+  resizer.addEventListener('pointerup', end);
+  resizer.addEventListener('pointercancel', end);
+})();
 
 /* réguas (mm) e grade de alinhamento (espaçamento fixo em mm) — só no editor, preferência local */
 (function pdRulerGridInit(){
@@ -11959,6 +12181,7 @@ document.getElementById('pdNorthLabelSize').addEventListener('input', e=>{
 });
 document.getElementById('pdAddScale').addEventListener('click', ()=>pdAddBlock('scale'));
 document.getElementById('pdAddLegend').addEventListener('click', ()=>pdAddBlock('legend'));
+document.getElementById('pdAddMeta').addEventListener('click', ()=>pdAddBlock('meta'));
 document.getElementById('pdAddMap').addEventListener('click', ()=>pdAddBlock('map'));
 document.getElementById('pdAddTreeCard').addEventListener('click', ()=>pdAddBlock('treeCard'));
 document.getElementById('pdAddTreeTable').addEventListener('click', ()=>pdAddBlock('treeTable'));
@@ -11991,7 +12214,7 @@ document.getElementById('pdLegendAddItem').addEventListener('click', ()=>{
   const b = pdBlocks().find(x=>x.id===pdSelId);
   if(!b || b.type!=='legend') return;
   const id = 'li'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
-  b.props.items.push({id, label:'Novo item', geomType:'point', color:'#6C5CE7', shape:'circle', iconAsset:null, groupId:null});
+  b.props.items.push({id, label:'Novo item', geomType:'point', color:'#22D3C0', shape:'circle', iconAsset:null, groupId:null});
   pdRenderAll(); pdRenderLegendList(b); pdMarkDirty();
 });
 document.getElementById('pdLegendIconFile').addEventListener('change', async e=>{
@@ -12754,24 +12977,35 @@ function pdDrawTreeTableBlock(ctx, b, w, h, mm, px, pt){
     ctx.fillText('Nenhum indivíduo do inventário para exibir', w/2, h/2);
     ctx.restore(); return;
   }
-  const fontPx = Math.round(pt(7.5));
-  const rowH = fontPx*1.8;
+  const fontPx = Math.round(pt(b.props.fontSize || 7.5));
+  const rowScale = b.props.rowScale || 1;
+  const headerColor = b.props.headerColor || '#000000';
+  const zebra = !!b.props.zebra;
+  const rowH = fontPx*1.8*rowScale;
   const colW = w/cols.length;
   ctx.textBaseline = 'top'; ctx.textAlign = 'left';
-  ctx.font = 'bold '+fontPx+'px Arial, sans-serif'; ctx.fillStyle = '#000';
+  ctx.font = 'bold '+fontPx+'px Arial, sans-serif'; ctx.fillStyle = headerColor;
   cols.forEach((c,i)=>{ ctx.fillText(c.label, i*colW+mm(1), mm(1)); });
   ctx.strokeStyle = '#999'; ctx.lineWidth = Math.max(1, px(1));
   let y = rowH;
   ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   ctx.font = fontPx+'px Arial, sans-serif';
+  let shown = 0;
   for(const f of feats){
     if(y > h-rowH) break;
+    if(zebra && shown%2===1){ ctx.fillStyle = '#f2f2f2'; ctx.fillRect(0, y, w, rowH); }
+    ctx.fillStyle = '#000';
     cols.forEach((c,i)=>{
       const val = f.p[c.key]!=null ? String(f.p[c.key]) : '';
       ctx.fillText(val, i*colW+mm(1), y+mm(0.8));
     });
     y += rowH;
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    shown++;
+  }
+  if(shown < feats.length){
+    ctx.fillStyle = '#c0392b'; ctx.font = 'italic '+Math.max(7, fontPx-1)+'px Arial, sans-serif';
+    ctx.fillText(`+${feats.length-shown} indivíduo(s) não exibido(s) — aumente a altura do bloco`, mm(1), Math.min(y, h-mm(4)));
   }
   ctx.restore();
 }
@@ -12799,6 +13033,8 @@ async function pdDrawBlockToCanvas(ctx, b, mm, px, pt){
       await pdDrawScaleBlock(ctx, b, w, h, mm, px, pt);
     } else if(b.type==='legend'){
       await pdDrawLegendBlock(ctx, b, w, h, mm, px, pt);
+    } else if(b.type==='meta'){
+      pdDrawSimpleHtmlBlock(ctx, w, h, mm, pt, null, metaAutoText());
     } else if(b.type==='view3d' || b.type==='elevProfile'){
       if(b.props.preview) pdDrawContainImage(ctx, await pdLoadImage(b.props.preview), w, h);
       else { ctx.fillStyle = '#e8e8e8'; ctx.fillRect(0, 0, w, h); }
@@ -13060,27 +13296,6 @@ function legendItemsHtml(b){
   });
   return html || '<div class="li" style="color:#999">Sem itens.</div>';
 }
-document.getElementById('pGo').addEventListener('click', async ()=>{
-  close('mPrint');
-  status('Gerando layout…');
-  document.getElementById('psTitle').textContent = document.getElementById('pTitle').value || 'Mapa sem título';
-  document.getElementById('psDesc').textContent = document.getElementById('pDesc').value || '';
-  document.getElementById('psAuthor').textContent = document.getElementById('pAuthor').value ? 'Responsável: '+document.getElementById('pAuthor').value : '';
-  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias — WebGIS para P&D e estudo de UI';
-  const c = map.getCenter();
-  document.getElementById('psMeta').innerHTML =
-    `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
-  document.getElementById('psScaleTxt').textContent = 'Norte geográfico · Escala aproximada 1:' +
-    Math.round(591657550.5 / Math.pow(2, map.getZoom()-1) / 2).toLocaleString('pt-BR');
-
-  // legenda
-  document.getElementById('psLegend').innerHTML = buildLegendHtml();
-
-  try{ document.getElementById('psImg').src = await captureMap(); }
-  catch(e){ console.error(e); }
-  status('');
-  setTimeout(()=>window.print(), 300);
-});
 
 /* =========================================================
    SAÍDAS DO INVENTÁRIO ARBÓREO
@@ -13309,15 +13524,19 @@ const INVENTORY_TABLE_COLUMNS = [
   {key:'dap_cm', label:'DAP (cm)'}, {key:'altura_m', label:'Altura (m)'},
   {key:'volume_m3', label:'Volume (m³)'}, {key:'estado_fito', label:'Estado fitoss.'}
 ];
-function buildInventoryTableHtml(feats, columns){
+function buildInventoryTableHtml(feats, columns, opts){
+  const o = opts || {};
   const cols = (columns && columns.length ? columns : INVENTORY_TABLE_COLUMNS.map(c=>c.key))
     .map(k=>INVENTORY_TABLE_COLUMNS.find(c=>c.key===k)).filter(Boolean);
   const thead = `<tr>${cols.map(c=>`<th>${esc(c.label)}</th>`).join('')}</tr>`;
-  const tbody = feats.map(f=>{
+  const tbody = feats.map((f,i)=>{
     const p = f.p;
-    return `<tr>${cols.map(c=>`<td>${esc(p[c.key]??'')}</td>`).join('')}</tr>`;
+    const zebraStyle = (o.zebra && i%2===1) ? ' style="background:#f2f2f2"' : '';
+    return `<tr${zebraStyle}>${cols.map(c=>`<td>${esc(p[c.key]??'')}</td>`).join('')}</tr>`;
   }).join('');
-  return `<table class="pd-inv-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+  const tableStyle = `font-size:${o.fontSize||7.5}pt; line-height:${1.2*(o.rowScale||1)}`;
+  const headStyle = `color:${o.headerColor||'#000000'}`;
+  return `<table class="pd-inv-table" style="${tableStyle}"><thead style="${headStyle}">${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
 
 /* ---------- CSV (planilha de campo) ---------- */
@@ -14713,10 +14932,10 @@ function msDraw(){
     c.strokeStyle=col; c.lineWidth=2; c.setLineDash([]);
     c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); };
   if(MS.pts[0] && MS.pts[1]) seg(MS.pts[0], MS.pts[1], '#e8c34a');
-  if(MS.pts[2] && MS.pts[3]) seg(MS.pts[2], MS.pts[3], '#8B7DF5');
+  if(MS.pts[2] && MS.pts[3]) seg(MS.pts[2], MS.pts[3], '#22D3C0');
   MS.pts.forEach((p,i)=>{
     const [x,y] = S(p);
-    c.fillStyle = i<2 ? '#e8c34a' : '#8B7DF5';
+    c.fillStyle = i<2 ? '#e8c34a' : '#22D3C0';
     c.strokeStyle = '#fff'; c.lineWidth = 2;
     c.beginPath(); c.arc(x,y,5,0,7); c.fill(); c.stroke();
   });

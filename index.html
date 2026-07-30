@@ -313,25 +313,34 @@ select, option{ color:var(--text); background:var(--field); }
   #drawBar .db-msg, #gpsDrawBar .db-msg, #sketchBar .db-msg{display:none}
 }
 
-/* Painel de perfil de elevação (medição 3D) */
+/* Painel de perfil de elevação (medição 3D). Arrastável pelo #elevHead e
+   redimensionável pelos 8 pontos de attachDragResize (mesmo helper do modo
+   flutuante da vista 3D) — position:absolute com right/bottom por padrão,
+   convertido para left/top explícitos no primeiro drag/resize. */
 #elevPanel{
   position:absolute; right:12px; bottom:100px; z-index:1250;
-  width:min(360px, 92vw); background:var(--panel); border:1px solid var(--line);
+  width:min(360px, 92vw); min-width:240px; max-width:640px;
+  min-height:150px; max-height:70vh;
+  background:var(--panel); border:1px solid var(--line);
   border-radius:10px; box-shadow:0 8px 30px var(--shadow-strong); padding:10px 12px;
+  display:flex; flex-direction:column;
 }
-#elevHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+#elevHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; cursor:move; touch-action:none; flex:none}
 #elevHead #elevTitle{font-size:13px; font-weight:600}
 #elevHead #elevClose{background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px}
-#elevStats{font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:6px}
+#elevStats{font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:6px; flex:none}
 #elevStats b{color:var(--text)}
-#elevCanvas{width:100%; height:140px; display:block; background:var(--panel2); border-radius:6px}
-/* Painel de resultado de corte/aterro (medição 3D) — mesmo padrão visual de #elevPanel */
+#elevCanvas{width:100%; flex:1 1 auto; min-height:60px; display:block; background:var(--panel2); border-radius:6px}
+/* Painel de resultado de corte/aterro (medição 3D) — mesmo padrão visual e mesmo
+   suporte a arraste/resize de #elevPanel */
 #v3dVolPanel{
   position:absolute; right:12px; bottom:100px; z-index:1250;
-  width:min(320px, 92vw); background:var(--panel); border:1px solid var(--line);
+  width:min(320px, 92vw); min-width:220px; max-width:560px;
+  min-height:100px; max-height:70vh;
+  background:var(--panel); border:1px solid var(--line);
   border-radius:10px; box-shadow:0 8px 30px var(--shadow-strong); padding:10px 12px;
 }
-#v3dVolHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+#v3dVolHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; cursor:move; touch-action:none}
 #v3dVolHead span:first-child{font-size:13px; font-weight:600}
 #v3dVolHead #v3dVolClose{background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px}
 #v3dVolStats{font-size:12px; color:var(--muted); line-height:1.6}
@@ -346,15 +355,29 @@ select, option{ color:var(--text); background:var(--field); }
 #view3d.on{ display:block }
 #v3dPanelHead{ display:none }
 /* modo flutuante: janela independente, móvel (alça no topo) e
-   redimensionável (resize:both nativo) — nunca fica sob o #v3dBar,
-   que permanece fixo e central em qualquer layout */
+   redimensionável pelos 8 pontos de .rs-handle (attachDragResize) — nunca
+   fica sob o #v3dBar, que permanece fixo e central em qualquer layout */
 #view3d.mode-panel{
   inset:auto; top:70px; left:12px; right:auto; bottom:auto;
   width:min(560px, 92vw); height:min(420px, 60vh);
   min-width:280px; min-height:180px; max-width:96vw; max-height:86vh;
   border:1px solid var(--line); border-radius:var(--radius, 10px); overflow:hidden;
-  box-shadow:0 8px 30px var(--shadow-strong); resize:both;
+  box-shadow:0 8px 30px var(--shadow-strong);
 }
+/* alças de redimensionamento genéricas (attachDragResize) — 4 bordas + 4 cantos,
+   ocultas por padrão; cada elemento que as usa liga a visibilidade via seletor
+   próprio (só o modo flutuante do 3D precisa disso condicionalmente). */
+.rs-handle{ position:absolute; z-index:5; touch-action:none }
+.rs-handle.rs-n{ top:-5px; left:10px; right:10px; height:10px; cursor:ns-resize }
+.rs-handle.rs-s{ bottom:-5px; left:10px; right:10px; height:10px; cursor:ns-resize }
+.rs-handle.rs-e{ right:-5px; top:10px; bottom:10px; width:10px; cursor:ew-resize }
+.rs-handle.rs-w{ left:-5px; top:10px; bottom:10px; width:10px; cursor:ew-resize }
+.rs-handle.rs-ne{ top:-5px; right:-5px; width:16px; height:16px; cursor:nesw-resize }
+.rs-handle.rs-nw{ top:-5px; left:-5px; width:16px; height:16px; cursor:nwse-resize }
+.rs-handle.rs-se{ bottom:-5px; right:-5px; width:16px; height:16px; cursor:nwse-resize }
+.rs-handle.rs-sw{ bottom:-5px; left:-5px; width:16px; height:16px; cursor:nesw-resize }
+#view3d .rs-handle{ display:none }
+#view3d.mode-panel .rs-handle{ display:block }
 #view3d.mode-panel #v3dPanelHead{
   display:flex; align-items:center; justify-content:space-between;
   height:32px; padding:0 4px 0 12px; background:var(--panel);
@@ -363,18 +386,30 @@ select, option{ color:var(--text); background:var(--field); }
 }
 #view3d.mode-panel #v3dCanvas{ top:32px }
 #view3d.mode-panel #v3dHud{ top:40px }
-body.split3d #map{ position:absolute; inset:0; right:auto; width:50% }
-body.split3d #view3d.mode-split{ left:50%; right:0 }
-/* linha divisória discreta, fixa em 50/50 — não é um arraste de recorte */
+:root{ --v3d-split-x:50% }
+body.split3d #map{ position:absolute; inset:0; right:auto; width:var(--v3d-split-x) }
+body.split3d #view3d.mode-split{ left:var(--v3d-split-x); right:0 }
+/* linha divisória arrastável (v3dSplitDragEngine): a linha e a alça seguem
+   --v3d-split-x, atualizada a cada pointermove; o recorte fica clampado
+   entre 20% e 80% para nenhum dos dois lados sumir. */
 #v3dDivider{
-  position:absolute; top:0; bottom:0; left:50%; width:1px;
-  background:var(--line); z-index:1060; display:none; pointer-events:none;
+  position:absolute; top:0; bottom:0; left:var(--v3d-split-x); width:1px;
+  background:var(--line); z-index:1060; display:none;
 }
 body.split3d #v3dDivider{ display:block }
+#v3dDividerGrip{
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:26px; height:20px; display:flex; align-items:center; justify-content:center;
+  background:var(--panel); border:1px solid var(--line); border-radius:6px;
+  box-shadow:0 2px 8px var(--shadow); color:var(--muted); cursor:ew-resize;
+  pointer-events:auto; touch-action:none;
+}
+#v3dDividerGrip:hover{ color:var(--accent) }
 @media (max-width:760px){
   body.split3d #map{ inset:0; right:0; bottom:50%; width:auto }
   body.split3d #view3d.mode-split{ left:0; top:50%; bottom:0 }
   #v3dDivider{ top:50%; left:0; right:0; bottom:auto; width:auto; height:1px }
+  #v3dDividerGrip{ top:50%; left:12px; transform:translateY(-50%); cursor:ns-resize }
 }
 #v3dCanvas{ position:absolute; inset:0 }
 /* Painel de controle: retângulo com cantos arredondados, mesmo estilo
@@ -389,13 +424,37 @@ body.split3d #v3dDivider{ display:block }
 }
 #v3dBar.on{ display:block }
 #v3dBarHead{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center;
   padding:8px 8px 8px 12px; border-bottom:1px solid var(--line);
-  font-size:13px; font-weight:600;
+  font-size:13px; font-weight:600; gap:4px;
 }
+#v3dBarHead > span{ flex:1 }
+#v3dBarToggle{
+  display:flex; align-items:center; justify-content:center;
+  width:26px; height:26px; background:transparent; border:none;
+  color:var(--muted); cursor:pointer; border-radius:6px; padding:0; flex:none;
+}
+#v3dBarToggle:hover{ color:var(--text); background:var(--panel2) }
+#v3dBarToggle svg{ transition:transform .2s ease }
+#v3dBar.v3d-collapsed #v3dBarBody{ display:none }
+#v3dBar.v3d-collapsed #v3dBarToggle svg{ transform:rotate(180deg) }
 #v3dBarBody{
-  display:flex; flex-direction:column; align-items:stretch; gap:8px;
-  padding:8px 12px; max-height:38vh; overflow-y:auto;
+  display:flex; flex-wrap:wrap; align-items:flex-start; gap:8px;
+  padding:12px 10px 8px; max-height:38vh; overflow-y:auto;
+}
+/* grupos rotulados, mesmo padrão visual de .pd-group/.pd-group::before
+   (Compositor de Impressão) — libera área de tela ao colapsar via
+   #v3dBarToggle, e organiza os controles por assunto em vez de 3 linhas
+   flat crescendo sem limite. Padding/gap enxutos para caber mais grupos
+   por linha sem desperdiçar altura. */
+.v3d-group{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  padding:11px 8px 6px; position:relative;
+  border:1px solid var(--line); border-radius:8px;
+}
+.v3d-group::before{
+  content:attr(data-label); position:absolute; top:-7px; left:7px; padding:0 5px;
+  background:var(--panel); font-size:10.5px; font-weight:600; color:var(--muted); letter-spacing:.02em;
 }
 .v3d-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
 #v3dLayout{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
@@ -405,12 +464,18 @@ body.split3d #v3dDivider{ display:block }
 }
 .v3d-seg.active{ background:var(--accent-soft); color:var(--text) }
 #v3dBarBody label{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; flex:none }
-#v3dExagWrap input, #v3dPitchWrap input{ width:70px; accent-color:var(--accent) }
-#v3dDemWrap{ display:flex; align-items:center; gap:6px; flex:none }
+/* sliders de exagero/pitch com a mesma UI do slider de zoom da barra de
+   status (.gm-scale-decimals: trilho fino de 2px, alça circular de 11px) —
+   antes usavam o range cru do navegador, inconsistente com o resto do app. */
+#v3dExagWrap input, #v3dPitchWrap input{ width:60px }
+#v3dDemWrap{ display:flex; align-items:center; gap:6px; flex:1 1 100% }
 #v3dBarBody select{
   background:var(--field); border:1px solid var(--line); color:var(--text);
   border-radius:999px; padding:4px 8px; font-size:12px; max-width:140px; flex:none;
 }
+/* bloco do DEM/terreno ocupa a linha inteira do grupo Terreno e o select
+   cresce para preencher o espaço — nomes de DEM longos deixam de truncar */
+#v3dDemWrap select{ flex:1; max-width:none; min-width:150px }
 .v3d-info{
   display:inline-flex; align-items:center; justify-content:center;
   width:18px; height:18px; border-radius:50%; color:var(--muted);
@@ -418,14 +483,24 @@ body.split3d #v3dDivider{ display:block }
 }
 .v3d-info:hover, .v3d-info:focus-visible{ color:var(--accent); outline:none }
 .v3d-info .ic{ width:15px; height:15px }
-#v3dMTools{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
+.v3d-info{ position:relative }
+.v3d-info-popover{
+  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  width:220px; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  box-shadow:0 8px 30px var(--shadow-strong); padding:8px 10px; font-size:12px;
+  color:var(--text); line-height:1.5; white-space:normal; cursor:default; z-index:1090;
+  display:none;
+}
+.v3d-info-popover.on{ display:block }
+#v3dMTools, #v3dBuildingTools{ display:flex; gap:2px; background:var(--field); border-radius:999px; padding:2px; flex:none }
 .v3d-mactions{ display:none; align-items:center; gap:6px; flex-wrap:wrap }
 .v3d-mactions.on{ display:flex }
 .v3d-mhint{ font-size:11.5px; color:var(--muted) }
-#v3dVolRef, #v3dVolRefCustom{
+#v3dVolRef, #v3dVolRefCustom, #v3dBuildingFloorH{
   background:var(--field); border:1px solid var(--line); color:var(--text);
   border-radius:999px; padding:4px 8px; font-size:12px; max-width:110px; flex:none;
 }
+#v3dBuildingFloorH{ width:56px }
 #v3dHud{
   position:absolute; left:12px; top:12px; z-index:1070;
   background:var(--panel); border:1px solid var(--line); border-radius:8px;
@@ -532,10 +607,11 @@ body.split3d #v3dDivider{ display:block }
 /* ---------- North arrow ---------- */
 #north{
   position:absolute; right:12px; top:58px; z-index:1100; width:52px; height:64px;
-  display:flex; flex-direction:column; align-items:center; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; cursor:grab;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
 }
-#north span{font-size:13px; font-weight:700; color:#fff; letter-spacing:1px}
+#north.dragging{cursor:grabbing}
+#north span{font-size:13px; font-weight:700; color:#fff; letter-spacing:1px; pointer-events:none}
 
 /* ---------- Hint banner ---------- */
 #hint{
@@ -616,9 +692,29 @@ body.split3d #v3dDivider{ display:block }
 
 /* ---------- Leaflet tweaks ---------- */
 .leaflet-container{font:inherit}
-.leaflet-control-zoom{border:1px solid var(--line)!important; border-radius:10px!important; overflow:hidden; margin-top:64px!important}
-.leaflet-control-zoom a{background:var(--panel)!important; color:var(--text)!important; border-color:var(--line)!important}
-.leaflet-control-zoom a:hover{background:var(--panel2)!important; color:var(--accent)!important}
+
+/* ---------- Controle de zoom (substitui o L.control.zoom nativo do Leaflet) ----------
+   Trocado por botões custom para poder ser arrastado sem brigar com o ciclo de vida
+   interno do Leaflet (que reaplica posição do controle nativo em resize/setPosition).
+   Sem alça dedicada: o arraste é feito pressionando e movendo o próprio contêiner
+   (ver makeDraggableOverlay/JS) — um limiar de deslocamento distingue toque (clique
+   nos botões) de arraste, então nenhum "grip" visual extra é necessário. */
+#zoomCtl{
+  position:absolute; left:12px; top:64px; z-index:1100;
+  display:flex; flex-direction:column; align-items:stretch;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  overflow:hidden; box-shadow:0 8px 30px var(--shadow);
+}
+#zoomCtl.dragging, #toolbar.dragging{cursor:grabbing}
+#zoomCtl.dragging button, #toolbar.dragging button{cursor:grabbing}
+#zoomCtl button{
+  width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:var(--text); cursor:pointer; padding:0;
+}
+#zoomCtl button svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round}
+#zoomCtl button:hover{background:var(--panel2); color:var(--accent)}
+#zoomCtl button:disabled{opacity:.35; cursor:default; background:transparent; color:var(--text)}
+#zoomCtl .zc-sep{height:1px; background:var(--line)}
 /* Escala gráfica customizada (substitui o L.control.scale padrão) */
 /* escala embutida na barra de status (#stScale) — sem painel/sombra próprios,
    herda a aparência da barra que já a hospeda; nada flutua sobre o mapa. */
@@ -1495,32 +1591,35 @@ body.split3d #v3dDivider{ display:block }
 <div id="v3dBar">
   <div id="v3dBarHead">
     <span>Vista 3D</span>
+    <button id="v3dBarToggle" title="Minimizar/expandir os controles" data-icon="chevronDown"></button>
     <button class="tb-btn modal-x" id="v3dClose" title="Fechar" data-icon="close"></button>
   </div>
   <div id="v3dBarBody">
-    <div class="v3d-row">
+    <div class="v3d-group" data-label="Layout">
       <div id="v3dLayout" role="group" aria-label="Layout da vista 3D">
         <button class="v3d-seg active" data-layout="full" title="Tela cheia">Cheia</button>
         <button class="v3d-seg" data-layout="split" title="Lado a lado com o mapa 2D">Dividida</button>
         <button class="v3d-seg" data-layout="panel" title="Painel flutuante">Flutuante</button>
       </div>
+    </div>
+    <div class="v3d-group" data-label="Câmera">
       <label id="v3dExagWrap" title="Exagero vertical do relevo">
         <span data-icon="cube3d"></span>
-        <input type="range" id="v3dExag" min="1" max="5" step="0.1" value="1.5">
+        <input type="range" class="gm-scale-decimals" id="v3dExag" min="1" max="5" step="0.1" value="1.5">
         <span id="v3dExagV">1.5×</span>
       </label>
       <label id="v3dPitchWrap" title="Inclinação da câmera">
-        <input type="range" id="v3dPitch" min="0" max="85" step="1" value="60">
+        <input type="range" class="gm-scale-decimals" id="v3dPitch" min="0" max="85" step="1" value="60">
         <span id="v3dPitchV">60°</span>
       </label>
       <button class="tb-btn" id="v3dNorth" title="Resetar para o norte"><span data-icon="compass"></span> <span id="v3dBearingV">0°</span></button>
+    </div>
+    <div class="v3d-group" data-label="Terreno">
       <span id="v3dDemWrap">
         <select id="v3dDemSel" title="DEM usado como terreno"></select>
         <span class="v3d-info" id="v3dDemInfo" data-icon="info" tabindex="0" role="img"
           title="Se você carregou um DEM depois de abrir a vista 3D, ele não entra sozinho nesta lista — feche a vista 3D (✕) e abra de novo para atualizar."></span>
       </span>
-    </div>
-    <div class="v3d-row">
       <label id="v3dTerrainWrap" title="Ligar/desligar relevo 3D"><input type="checkbox" id="v3dTerrainOn" checked> Terreno</label>
       <label id="v3dHillWrap" title="Sombreamento sobre o relevo"><input type="checkbox" id="v3dHillOn"> Sombreado</label>
       <label id="v3dSkyWrap" title="Céu/atmosfera"><input type="checkbox" id="v3dSkyOn" checked> Céu</label>
@@ -1530,29 +1629,47 @@ body.split3d #v3dDivider{ display:block }
         <button type="button" class="v3d-seg" id="v3dSkyNight" data-sky-mode="night" title="Céu de noite"><span data-icon="moon"></span></button>
       </div>
     </div>
-    <div class="v3d-row">
-      <div id="v3dMTools" role="group" aria-label="Ferramentas de medição 3D">
+    <div class="v3d-group" data-label="Medição">
+      <div id="v3dMTools" role="group" aria-label="Ferramentas interativas 3D">
         <button class="v3d-seg v3d-mtool" data-mtool="dist" title="Distância 3D"><span data-icon="ruler"></span></button>
         <button class="v3d-seg v3d-mtool" data-mtool="volume" title="Corte/aterro"><span data-icon="volume3d"></span></button>
+        <button class="v3d-seg v3d-mtool" data-mtool="draw" title="Desenhar polígono direto na vista 3D"><span data-icon="polygonDraw"></span></button>
       </div>
-      <span id="v3dDistActions" class="v3d-mactions">
-        <span class="v3d-mhint">Clique para marcar pontos · duplo-clique para concluir</span>
-        <button class="tb-btn primary" id="v3dDistFinish">✓ Concluir</button>
-        <button class="tb-btn" id="v3dDistCancel">Cancelar</button>
-      </span>
-      <span id="v3dVolActions" class="v3d-mactions">
-        <span class="v3d-mhint">Clique para marcar o polígono</span>
-        <select id="v3dVolRef" title="Plano de referência">
-          <option value="mean">Média</option>
-          <option value="min">Mínimo</option>
-          <option value="max">Máximo</option>
-          <option value="custom">Valor…</option>
-        </select>
-        <input type="number" id="v3dVolRefCustom" placeholder="cota (m)" style="display:none">
-        <button class="tb-btn primary" id="v3dVolFinish">✓ Concluir</button>
-        <button class="tb-btn" id="v3dVolCancel">Cancelar</button>
-      </span>
     </div>
+    <div class="v3d-group" data-label="Edificação">
+      <div id="v3dBuildingTools" role="group" aria-label="Ferramentas de edificação">
+        <button class="v3d-seg" id="v3dNewBuildingBtn" title="Novo prédio: desenha a pegada na camada 'Edifícios'"><span data-icon="building"></span></button>
+        <button class="v3d-seg v3d-mtool" data-mtool="move-buildings" id="v3dMoveBuildingsBtn" title="Mover edifícios (segurar e arrastar) · clique parado edita os atributos" style="display:none"><span data-icon="moveBuildings"></span></button>
+      </div>
+      <label id="v3dBuildingFloorHWrap" title="Pé-direito por pavimento dos novos prédios (m)">
+        Pé-direito
+        <input type="number" id="v3dBuildingFloorH" step="0.1" min="0.1" value="3">
+        m/pav.
+      </label>
+    </div>
+    <span id="v3dDistActions" class="v3d-mactions">
+      <span class="v3d-mhint">Clique para marcar pontos · duplo-clique para concluir</span>
+      <button class="tb-btn primary" id="v3dDistFinish">✓ Concluir</button>
+      <button class="tb-btn" id="v3dDistCancel">Cancelar</button>
+    </span>
+    <span id="v3dVolActions" class="v3d-mactions">
+      <span class="v3d-mhint">Clique para marcar o polígono</span>
+      <select id="v3dVolRef" title="Plano de referência">
+        <option value="mean">Média</option>
+        <option value="min">Mínimo</option>
+        <option value="max">Máximo</option>
+        <option value="custom">Valor…</option>
+      </select>
+      <input type="number" id="v3dVolRefCustom" placeholder="cota (m)" style="display:none">
+      <button class="tb-btn primary" id="v3dVolFinish">✓ Concluir</button>
+      <button class="tb-btn" id="v3dVolCancel">Cancelar</button>
+    </span>
+    <span id="v3dDrawActions" class="v3d-mactions">
+      <span class="v3d-mhint">Clique para marcar vértices · duplo-clique para concluir</span>
+      <select id="v3dDrawLayerSel" title="Camada de destino"></select>
+      <button class="tb-btn primary" id="v3dDrawFinish">✓ Concluir</button>
+      <button class="tb-btn" id="v3dDrawCancel">Cancelar</button>
+    </span>
   </div>
 </div>
 
@@ -1655,6 +1772,13 @@ body.split3d #v3dDivider{ display:block }
       <button class="tb-btn primary" id="gpsDrawStart">Iniciar</button>
     </div>
   </div>
+</div>
+
+<!-- ===== Zoom control (custom, substitui L.control.zoom) ===== -->
+<div id="zoomCtl">
+  <button type="button" id="zcIn" title="Aumentar zoom" aria-label="Aumentar zoom" data-icon="plus"></button>
+  <div class="zc-sep"></div>
+  <button type="button" id="zcOut" title="Diminuir zoom" aria-label="Diminuir zoom" data-icon="minus"></button>
 </div>
 
 <!-- ===== North arrow ===== -->
@@ -2214,6 +2338,17 @@ body.split3d #v3dDivider{ display:block }
     <p class="sub" id="extSub">Levanta os polígonos da camada na vista 3D, com altura proporcional a um atributo numérico.</p>
     <div class="field"><label><input type="checkbox" id="extOn"> Ativar extrusão nesta camada</label></div>
     <div class="field"><label>Atributo de altura</label><select id="extFieldSel"></select></div>
+    <div class="field">
+      <label>O atributo representa</label>
+      <div id="extModeGroup" role="group" aria-label="Modo de cálculo da altura">
+        <button type="button" class="v3d-seg" data-ext-mode="height">Altura direta (m)</button>
+        <button type="button" class="v3d-seg" data-ext-mode="floors">Nº de pavimentos</button>
+      </div>
+    </div>
+    <div class="field" id="extFloorHWrap" style="display:none">
+      <label>Pé-direito por pavimento (m)</label>
+      <input type="number" id="extFloorH" step="0.1" min="0.1" value="3">
+    </div>
     <div class="actions">
       <button class="tb-btn" data-close>Cancelar</button>
       <button class="tb-btn primary" id="extSave">Salvar</button>
@@ -2707,6 +2842,7 @@ const ICONS = {
   arrowDown:'<path d="M12 4v14M6 13l6 6 6-6"/>',
   chevronDown:'<path d="M6 9l6 6 6-6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  minus:'<path d="M5 12h14"/>',
   copy:'<rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
@@ -2726,6 +2862,9 @@ const ICONS = {
   cube3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
   compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" stroke="none"/>',
   volume3d:'<path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="M4 7l8 4 8-4"/><path d="M6 11.5 12 14.5 18 11.5" stroke-dasharray="2.5 2.5"/>',
+  polygonDraw:'<path d="M12 3 21 9 18 20 6 20 3 9Z"/><circle cx="12" cy="3" r="1.4" fill="currentColor" stroke="none"/><circle cx="21" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="3" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="6" cy="20" r="1.4" fill="currentColor" stroke="none"/>',
+  moveBuildings:'<path d="M12 2v6M12 22v-6M2 12h6M22 12h-6"/><path d="M12 2 9.5 4.5M12 2l2.5 2.5M12 22l-2.5-2.5M12 22l2.5-2.5M2 12l2.5-2.5M2 12l2.5 2.5M22 12l-2.5-2.5M22 12l-2.5 2.5"/><rect x="9" y="9" width="6" height="6" rx="1"/>',
+  building:'<path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
   treeIcon:'<path d="M12 2 6 11h3l-4 6h4v5h6v-5h4l-4-6h3Z"/>',
   elevProfile:'<path d="M3 20h18"/><path d="M3 16l4-6 4 3 5-9 5 8" fill="none"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
@@ -2741,7 +2880,8 @@ const ICONS = {
   lineTool:'<path d="M4 20 20 4"/><circle cx="4" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.6" fill="currentColor" stroke="none"/>',
   rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>',
   printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>',
-  contour:'<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 7.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>'
+  contour:'<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 7.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>',
+  splitDrag:'<path d="M2 12h20"/><path d="M7 7 2 12l5 5"/><path d="M17 7l5 5-5 5"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -2988,7 +3128,7 @@ document.head.appendChild(style);
 
 
 /* ---------- Mapa ---------- */
-const map = L.map('map', { zoomControl:true, attributionControl:true, preferCanvas:false })
+const map = L.map('map', { zoomControl:false, attributionControl:true, preferCanvas:false })
   .setView([-14.2, -51.9], 5);
 /* ---------- Escala gráfica + textual (com edição manual e precisão) ----------
    Embutida na barra de status (#stScale) em vez de um controle Leaflet flutuante,
@@ -4870,22 +5010,38 @@ function fieldOptionsHtml(lyr, sel, numericOnly){
   if(!fs.length) return '<option value="">— sem atributos '+(numericOnly?'numéricos ':'')+'—</option>';
   return fs.map(f=>`<option value="${f.name}" ${f.name===sel?'selected':''}>${f.name}</option>`).join('');
 }
-/* Extrusão 3D (Fase 3): armazena só `lyr.extrudeField` (nome do atributo
-   numérico, ou null) — mirror3D() lê isso direto, sem estado adicional. */
+/* Extrusão 3D (Fase 3, estendida na Fase A do plano de edifícios): guarda
+   `lyr.extrudeField` (nome do atributo numérico, ou null), `lyr.extrudeMode`
+   ('height'|'floors', padrão 'height' — retrocompatível com projetos salvos
+   que só tinham extrudeField) e `lyr.floorHeight` (pé-direito em metros,
+   usado só no modo 'floors'). mirror3D()/bakeVectorGeoJSON() leem isso
+   direto, sem estado adicional. */
 let extLayer = null;
+function extSetMode(mode){
+  document.querySelectorAll('#extModeGroup .v3d-seg').forEach(b=>b.classList.toggle('primary', b.dataset.extMode===mode));
+  document.getElementById('extFloorHWrap').style.display = mode==='floors' ? '' : 'none';
+}
+document.querySelectorAll('#extModeGroup .v3d-seg').forEach(b=>{
+  b.addEventListener('click', ()=>extSetMode(b.dataset.extMode));
+});
 function openExtrudeModal(lyr){
   extLayer = lyr;
   document.getElementById('extSub').textContent =
     'Levanta os polígonos de "'+lyr.name+'" na vista 3D, com altura proporcional a um atributo numérico.';
   document.getElementById('extOn').checked = !!lyr.extrudeField;
   document.getElementById('extFieldSel').innerHTML = fieldOptionsHtml(lyr, lyr.extrudeField||'', true);
+  document.getElementById('extFloorH').value = lyr.floorHeight || 3;
+  extSetMode(lyr.extrudeMode==='floors' ? 'floors' : 'height');
   open('m3dExtrude');
 }
 document.getElementById('extSave').addEventListener('click', ()=>{
   if(!extLayer) return;
   const on = document.getElementById('extOn').checked;
   const field = document.getElementById('extFieldSel').value;
+  const mode = document.querySelector('#extModeGroup .v3d-seg.primary');
   extLayer.extrudeField = (on && field) ? field : null;
+  extLayer.extrudeMode = mode && mode.dataset.extMode==='floors' ? 'floors' : 'height';
+  extLayer.floorHeight = Math.max(0.1, parseFloat(document.getElementById('extFloorH').value)||3);
   close('m3dExtrude');
   if(typeof SCENE3D!=='undefined' && SCENE3D.active) scheduleMirror3D();
   scheduleSave();
@@ -5733,6 +5889,30 @@ function computeTreeMetrics(props){
       {p4_dap:p4.dap_cm, p7_dap:p7.dap_cm, p4_vol:p4.volume_m3, p7_vol:p7.volume_m3});
   }catch(e){ console.warn('auto-teste arbóreo falhou', e); }
 })();
+
+/* Camada "Edifícios" (Fase C do módulo de modelagem 3D): mesmo padrão de
+   auto-criação/reuso de ensureInventoryLayer(). Nasce com extrusão por
+   pavimentos já ativada (extrudeField/extrudeMode/floorHeight da Fase A),
+   para que cada pegada desenhada apareça extrudida assim que salva. */
+let buildingsLayer = null;
+function ensureBuildingsLayer(){
+  if(buildingsLayer && vectorLayers.includes(buildingsLayer)) return buildingsLayer;
+  const existing = vectorLayers.find(l=>l.buildings);
+  if(existing){ buildingsLayer = existing; return existing; }
+  const lyr = newVectorLayer('Edifícios', 'polygon', [
+    { name:'nome', type:'text' },
+    { name:'pavimentos', type:'number' },
+    { name:'uso', type:'select', options:['residencial','comercial','misto','institucional'] }
+  ], '#e8c34a');
+  lyr.buildings = true;
+  lyr.extrudeField = 'pavimentos';
+  lyr.extrudeMode = 'floors';
+  lyr.floorHeight = 3;
+  buildingsLayer = lyr;
+  renderVectorList();
+  status('Camada "Edifícios" criada.');
+  return lyr;
+}
 
 let inventoryLayer = null;
 function ensureInventoryLayer(){
@@ -7755,7 +7935,9 @@ function formatDistReport(stats){
         ? ` <span style="color:var(--warn)">(só ${Math.round(stats.covered*100)}% da linha tem DEM)</span>` : '')
     + `<br>Δh: <b>${stats.deltaH.toFixed(1)} m</b> · Declive médio: <b>${stats.avgSlope.toFixed(1)}%</b> · máx.: <b>${stats.maxSlope.toFixed(1)}%</b>`;
 }
+let _elevProfileLast = null;
 function drawElevProfile(samples, stats){
+  _elevProfileLast = { samples, stats };
   const panel = document.getElementById('elevPanel');
   const canvas = document.getElementById('elevCanvas');
   const statsEl = document.getElementById('elevStats');
@@ -7797,6 +7979,22 @@ function drawElevProfile(samples, stats){
   ctx.stroke();
 }
 document.getElementById('elevClose').addEventListener('click', ()=>{ document.getElementById('elevPanel').style.display='none'; });
+/* arraste pelo cabeçalho + redimensionamento por 8 pontos, mesmo helper
+   genérico usado no modo flutuante da vista 3D (attachDragResize,
+   definido junto com a vista 3D). O canvas do perfil não escala sozinho
+   (é <canvas>, não CSS) — por isso o onResize redesenha a partir da
+   última amostra/estatística cacheada em _elevProfileLast. */
+attachDragResize(document.getElementById('elevPanel'), {
+  dragHandle: document.getElementById('elevHead'),
+  dragGuard: '#elevClose',
+  resizable: true,
+  onResize: ()=>{ if(_elevProfileLast) drawElevProfile(_elevProfileLast.samples, _elevProfileLast.stats); }
+});
+attachDragResize(document.getElementById('v3dVolPanel'), {
+  dragHandle: document.getElementById('v3dVolHead'),
+  dragGuard: '#v3dVolClose',
+  resizable: true
+});
 
 /* Crosshair: passar o mouse sobre o perfil destaca o ponto correspondente
    no mapa 3D (marcador MapLibre — a medição pode não ter layer Leaflet,
@@ -8416,6 +8614,7 @@ const close = id=>document.getElementById(id).classList.remove('open');
   const btn = document.getElementById('tbCollapse');
   if(!tb || !btn) return;
   const KEY = 'geomatias_toolbar_collapsed';
+  const POS_KEY = 'geomatias_pos_toolbar';
   const apply = c=>{
     tb.classList.toggle('collapsed', c);
     btn.setAttribute('aria-expanded', String(!c));
@@ -8427,11 +8626,147 @@ const close = id=>document.getElementById(id).classList.remove('open');
   apply(col);
   btn.addEventListener('click', ()=>{
     col = !col;
+    // #tbCollapse é o último item da coluna e a seta aponta para cima — abrir/fechar
+    // precisa crescer para cima a partir dele, nunca empurrar o botão para baixo. Com
+    // a barra em posição CSS padrão (bottom:40px) isso já é automático; mas depois de
+    // arrastada (top/left inline, ver makeDraggableOverlay), o topo fica fixo e a caixa
+    // cresceria para baixo — por isso a borda inferior é recalculada e preservada aqui.
+    const usesInlineTop = tb.style.top !== '';
+    const bottomBefore = usesInlineTop ? tb.getBoundingClientRect().bottom : null;
     apply(col);
+    if(usesInlineTop){
+      const h = tb.getBoundingClientRect().height;
+      const newTop = Math.max(56, bottomBefore - h);
+      tb.style.top = newTop + 'px';
+      try{
+        const r = tb.getBoundingClientRect();
+        localStorage.setItem(POS_KEY, JSON.stringify({ left:r.left, top:r.top }));
+      }catch(err){}
+    }
     try{ localStorage.setItem(KEY, col?'1':'0'); }catch(e){}
     if(col && typeof deactivate==='function') deactivate();   // recolhida, nenhuma ferramenta fica armada
   });
 })();
+
+/* ---------- Controle de zoom custom (substitui L.control.zoom) ----------
+   Dois botões próprios em vez do controle nativo do Leaflet — evita brigar com o
+   ciclo de vida interno dele (que reaplica posição em resize/setPosition) e permite
+   arrastar o controle pela tela no mesmo padrão dos outros overlays fixos. */
+(function zoomCtlEngine(){
+  const zin = document.getElementById('zcIn');
+  const zout = document.getElementById('zcOut');
+  if(!zin || !zout) return;
+  zin.addEventListener('click', ()=>map.zoomIn());
+  zout.addEventListener('click', ()=>map.zoomOut());
+  const sync = ()=>{
+    zin.disabled = map.getZoom() >= map.getMaxZoom();
+    zout.disabled = map.getZoom() <= map.getMinZoom();
+  };
+  map.on('zoomend zoomlevelschange', sync);
+  sync();
+})();
+
+/* ---------- Arraste livre dos overlays fixos (norte, toolbar, controle de zoom) ----------
+   Mesmo padrão de pointer events já usado em cmpDragEngine (comparador de camadas,
+   ~L.9834) e no painel flutuante 3D (#v3dPanelHead, ~L.10665): pointerdown → pointermove
+   atualiza left/top em px → clamp na viewport. Sem alça dedicada: o próprio contêiner
+   é a superfície de arraste, inclusive #toolbar/#zoomCtl, que têm botões dentro. Um
+   limiar de deslocamento (DRAG_THRESHOLD) distingue toque de arraste — abaixo dele o
+   pointerup vira um clique normal no botão; acima dele o clique resultante é suprimido
+   (capturado no próprio contêiner, antes de chegar ao botão) e o elemento se move.
+   Isso vale também para a barra recolhida (só o botão de recolher/expandir visível,
+   #tbCollapse) — arrastar por ele move a barra inteira sem perder o toque curto que
+   expande/recolhe.
+   Desabilitado em mobile (≤760px): nesse breakpoint #north e #toolbar já têm posição
+   própria via CSS responsivo (viram faixa no rodapé / somem), e arrastar entraria em
+   conflito com esse layout. A posição arrastada é preferência de UI, não dado do
+   projeto — fica em localStorage, fora do .geomatias.json/IndexedDB. */
+function makeDraggableOverlay(el, storageKey){
+  if(!el) return;
+  L.DomEvent.disableScrollPropagation(el);
+  const TOP_MIN = 56, BOTTOM_PAD = 34, EDGE_PAD = 4, DRAG_THRESHOLD = 6;
+  const clamp = (left, top)=>{
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const maxL = Math.max(EDGE_PAD, window.innerWidth - w - EDGE_PAD);
+    const maxT = Math.max(TOP_MIN, window.innerHeight - h - BOTTOM_PAD);
+    return { left: Math.min(Math.max(left, EDGE_PAD), maxL), top: Math.min(Math.max(top, TOP_MIN), maxT) };
+  };
+  const place = (left, top)=>{
+    const p = clamp(left, top);
+    el.style.left = p.left + 'px';
+    el.style.top = p.top + 'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+  };
+  try{
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    if(saved && typeof saved.left==='number' && !isMobileViewport()) place(saved.left, saved.top);
+  }catch(e){}
+  let pid = null, moved = false, dragging = false, downX = 0, downY = 0, offX = 0, offY = 0;
+  const suppressNextClick = ()=>{
+    // O click do próprio arraste pode nunca chegar a disparar — vários navegadores já
+    // suprimem o click nativamente quando mousedown/mouseup se afastam o bastante. Por
+    // isso o guard expira sozinho no próximo tick (setTimeout 0), em vez de "once:true"
+    // esperando indefinidamente: sem isso, um clique legítimo *seguinte* (sem nenhum
+    // arraste) seria engolido por engano.
+    const block = ev=>{ ev.stopPropagation(); ev.preventDefault(); };
+    el.addEventListener('click', block, { capture:true });
+    setTimeout(()=> el.removeEventListener('click', block, true), 0);
+  };
+  el.addEventListener('pointerdown', e=>{
+    if(isMobileViewport()) return;
+    pid = e.pointerId; moved = false; dragging = false;
+    downX = e.clientX; downY = e.clientY;
+    const r = el.getBoundingClientRect();
+    offX = e.clientX - r.left; offY = e.clientY - r.top;
+    // setPointerCapture NÃO é chamado aqui de propósito: capturar o ponteiro cedo demais
+    // (antes de saber se é clique ou arraste) redireciona o alvo do 'click' nativo para
+    // este contêiner, e o clique nunca chega ao listener do botão interno (ex.: o toggle
+    // de #tbCollapse) — um clique comum ficaria sempre "engolido". A captura só é pedida
+    // depois de confirmado que passou do limiar de arraste, no pointermove abaixo.
+  });
+  el.addEventListener('pointermove', e=>{
+    if(pid===null || e.pointerId!==pid) return;
+    if(!moved){
+      if(Math.hypot(e.clientX-downX, e.clientY-downY) < DRAG_THRESHOLD) return;
+      moved = true; dragging = true;
+      el.classList.add('dragging');
+      try{ el.setPointerCapture(pid); }catch(err){}
+    }
+    place(e.clientX - offX, e.clientY - offY);
+    e.preventDefault();
+  });
+  const end = e=>{
+    if(pid===null || e.pointerId!==pid) return;
+    pid = null;
+    if(dragging){
+      suppressNextClick();
+      try{
+        const r = el.getBoundingClientRect();
+        localStorage.setItem(storageKey, JSON.stringify({ left:r.left, top:r.top }));
+      }catch(err){}
+    }
+    dragging = false;
+    el.classList.remove('dragging');
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  window.addEventListener('resize', ()=>{
+    if(isMobileViewport()){
+      // abaixo de 760px os breakpoints responsivos (CSS) assumem a posição — uma
+      // posição arrastada em desktop, se ficasse como inline style, venceria essas
+      // regras (inline sempre tem prioridade sobre a media query) e quebraria o
+      // layout mobile já validado (#north/#toolbar viram faixa/somem nesse breakpoint)
+      el.style.left = el.style.top = el.style.right = el.style.bottom = '';
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    if(r.width) place(r.left, r.top);
+  });
+}
+makeDraggableOverlay(document.getElementById('north'), 'geomatias_pos_north');
+makeDraggableOverlay(document.getElementById('toolbar'), 'geomatias_pos_toolbar');
+makeDraggableOverlay(document.getElementById('zoomCtl'), 'geomatias_pos_zoomctl');
 
 /* ---------- Tema claro / escuro ----------
    Preferência salva em localStorage; se nunca escolhida, segue o sistema.
@@ -10020,11 +10355,14 @@ const SCENE3D = {
   terrainDemName:null,
   mirrored:new Set(),      // ids de source/layer já injetados no style vivo
   camLock:0, splitPct:50,
-  // --- Medição 3D (Fase 2) ---
-  measureMode:null,        // null | 'dist' | 'volume'
-  measurePts:[],           // [{lat,lng}] vértices em progresso
+  // --- Ferramentas interativas 3D (Fase 2: medição; Fase B: desenho de polígono) ---
+  toolMode:null,           // null | 'dist' | 'volume' | 'draw' | 'move-buildings'
+  measurePts:[],           // [{lat,lng}] vértices em progresso (medição e desenho)
   measureResult:null,      // {samples, stats} da última medição de distância concluída
-  volumeResult:null        // {cut,fill,net,ref,areaTotal,nSamples} da última medição de volume concluída
+  volumeResult:null,       // {cut,fill,net,ref,areaTotal,nSamples} da última medição de volume concluída
+  drawTargetLayerId:null,  // id da camada de destino do desenho de polígono em 3D (Fase B)
+  buildingSelection:new Set(), // __lid dos prédios selecionados para arraste em grupo (Fase C)
+  leafletLayerById:new Map()   // __lid -> layer Leaflet, reconstruída a cada mirrorVectorLayers (Fase C)
 };
 
 /* ---------- Protocolos gmdem:// e gmcog:// ---------- */
@@ -10109,6 +10447,7 @@ async function ensureView3DMap(){
   m3.on('mousemove', onView3DMouseMove);
   m3.on('click', v3dOnClick);
   m3.on('dblclick', v3dOnDblClick);
+  m3.on('mousedown', v3dBuildingMouseDown);
   SCENE3D.map3d = m3;
   return m3;
 }
@@ -10245,23 +10584,29 @@ function setMeasureGeoJSON(fc){
   if(src) src.setData(fc);
 }
 function v3dOnClick(e){
-  if(SCENE3D.measureMode==='dist') v3dDistAddVertex(e.lngLat);
-  else if(SCENE3D.measureMode==='volume') v3dVolAddVertex(e.lngLat);
+  if(SCENE3D.toolMode==='dist') v3dDistAddVertex(e.lngLat);
+  else if(SCENE3D.toolMode==='volume') v3dVolAddVertex(e.lngLat);
+  else if(SCENE3D.toolMode==='draw') v3dDrawAddVertex(e.lngLat);
 }
 function v3dOnDblClick(e){
-  if(SCENE3D.measureMode==='dist'){ e.preventDefault(); v3dDistFinish(); }
+  if(SCENE3D.toolMode==='dist'){ e.preventDefault(); v3dDistFinish(); }
+  else if(SCENE3D.toolMode==='draw'){ e.preventDefault(); v3dDrawFinish(); }
 }
-/* só um modo de medição ativo por vez — trocar cancela o anterior */
-function v3dSetMeasureMode(mode){
-  if(SCENE3D.measureMode==='dist' && mode!=='dist') v3dDistCancel();
-  if(SCENE3D.measureMode==='volume' && mode!=='volume') v3dVolCancel();
-  SCENE3D.measureMode = mode;
+/* só um modo de ferramenta ativo por vez — trocar cancela o anterior */
+function v3dSetToolMode(mode){
+  if(SCENE3D.toolMode==='dist' && mode!=='dist') v3dDistCancel();
+  if(SCENE3D.toolMode==='volume' && mode!=='volume') v3dVolCancel();
+  if(SCENE3D.toolMode==='draw' && mode!=='draw') v3dDrawCancel();
+  SCENE3D.toolMode = mode;
   document.querySelectorAll('.v3d-mtool').forEach(b=>b.classList.toggle('active', b.dataset.mtool===mode));
   document.getElementById('v3dDistActions').classList.toggle('on', mode==='dist');
   document.getElementById('v3dVolActions').classList.toggle('on', mode==='volume');
+  const drawActions = document.getElementById('v3dDrawActions');
+  if(drawActions) drawActions.classList.toggle('on', mode==='draw');
+  if(mode==='draw') populateDrawLayerSelect();
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && SCENE3D.active && SCENE3D.measureMode) v3dSetMeasureMode(null);
+  if(e.key==='Escape' && SCENE3D.active && SCENE3D.toolMode) v3dSetToolMode(null);
 });
 
 /* --- Distância 3D: reusa run3DMeasure(null, latlngs) para garantir paridade
@@ -10283,9 +10628,46 @@ async function v3dDistFinish(){
   const res = await run3DMeasure(null, latlngs); // mesmo pipeline do 2D — garante paridade
   SCENE3D.measureResult = res;
   SCENE3D.measurePts = [];
-  v3dSetMeasureMode(null);
+  v3dSetToolMode(null);
 }
 function v3dDistCancel(){
+  SCENE3D.measurePts = [];
+  setMeasureGeoJSON(emptyFC());
+}
+
+/* --- Desenho de polígono direto na vista 3D (Fase B): mesmo template
+   clique-a-clique da medição (empilha vértices em SCENE3D.measurePts,
+   redesenha a source de preview __v3d_measure), mas ao finalizar cria uma
+   feição REAL via commitDrawnLayer() — o mesmo caminho único de criação de
+   feição do 2D (extraído na V12), nunca um segundo caminho de renderização.
+   A camada 2D (Leaflet) continua sendo a fonte da verdade; o resultado
+   aparece no 3D no próximo mirror3D() se a camada tiver extrusão ativa. --- */
+function v3dDrawAddVertex(lngLat){
+  ensureMeasureLayers();
+  SCENE3D.measurePts.push({ lat:lngLat.lat, lng:lngLat.lng });
+  v3dRedrawMeasurePolygon();
+}
+function v3dDrawFinish(){
+  if(SCENE3D.measurePts.length<3){ status('Desenho 3D: marque ao menos 3 pontos para fechar o polígono.'); return; }
+  const ring = SCENE3D.measurePts.map(p=>L.latLng(p.lat, p.lng));
+  const poly = L.polygon(ring);
+  SCENE3D.measurePts = [];
+  setMeasureGeoJSON(emptyFC());
+  // camada-alvo escolhida em #v3dDrawLayerSel: reaproveita targetLayerFor()
+  // via activeLayer temporário — evita duplicar a lógica de resolução de
+  // camada usada pelo desenho 2D (mesma restrição: só aceita se geomType
+  // já for 'polygon'; sem compatibilidade, commitDrawnLayer abre o modal
+  // de nova camada, igual ao fluxo 2D).
+  const wantedId = SCENE3D.drawTargetLayerId;
+  const wanted = wantedId!=null ? vectorLayers.find(l=>l.id===wantedId) : null;
+  const prevActive = activeLayer;
+  if(wanted && wanted.geomType==='polygon') activeLayer = wanted;
+  commitDrawnLayer(poly, 'polygon');
+  if(!(wanted && wanted.geomType==='polygon')) activeLayer = prevActive;
+  v3dSetToolMode(null);
+  if(SCENE3D.active) scheduleMirror3D();
+}
+function v3dDrawCancel(){
   SCENE3D.measurePts = [];
   setMeasureGeoJSON(emptyFC());
 }
@@ -10365,11 +10747,11 @@ async function v3dVolFinish(){
   status('Calculando volume (grade DEM)…');
   const latlngs = SCENE3D.measurePts.map(p=>L.latLng(p.lat,p.lng));
   const res = await computeVolume(latlngs, refMode, refValue);
-  if(!res){ status('Volume 3D: nenhum DEM cobre esta área ou dados insuficientes.'); v3dSetMeasureMode(null); return; }
+  if(!res){ status('Volume 3D: nenhum DEM cobre esta área ou dados insuficientes.'); v3dSetToolMode(null); return; }
   SCENE3D.volumeResult = res;
   showVolumePanel(res);
   SCENE3D.measurePts = [];
-  v3dSetMeasureMode(null);
+  v3dSetToolMode(null);
   status('Volume 3D concluído.');
 }
 function formatVolumeReport(res){
@@ -10384,6 +10766,126 @@ function showVolumePanel(res){
   panel.style.bottom = elevOpen ? '270px' : '100px';
   document.getElementById('v3dVolStats').innerHTML = formatVolumeReport(res);
   panel.style.display = 'block';
+}
+
+/* ---------- Arraste de reposicionamento de edifícios (Fase C) ----------
+   Sem precedente no projeto: o único drag existente (pdWireBlock, compositor
+   de impressão) move blocos de DOM/CSS em mm, não feições geográficas em
+   WebGL. Desenho: hit-test via queryRenderedFeatures + __lid (carimbado por
+   bakeVectorGeoJSON) resolve a(s) layer(s) Leaflet reais; a geometria 2D é a
+   fonte da verdade, translatada vértice a vértice e re-bakeada ao vivo. */
+let v3dDrag = null; // {startLngLat, layers:[{layer,lyr,orig}], group:boolean}
+function v3dBuildingsHit(e){
+  const m3 = SCENE3D.map3d;
+  const ids = [];
+  vectorLayers.forEach(l=>{ if(l.buildings && l.visible) ids.push('vec_'+l.id+'_extrude', 'vec_'+l.id+'_fill'); });
+  const present = ids.filter(id=>m3.getLayer(id));
+  if(!present.length) return null;
+  const feats = m3.queryRenderedFeatures(e.point, { layers:present });
+  return feats.length ? feats[0] : null;
+}
+function v3dBuildingMouseDown(e){
+  if(SCENE3D.toolMode!=='move-buildings') return;
+  const feat = v3dBuildingsHit(e);
+  if(!feat) return;
+  const lid = feat.properties.__lid;
+  const shift = e.originalEvent && e.originalEvent.shiftKey;
+  if(shift){
+    if(SCENE3D.buildingSelection.has(lid)) SCENE3D.buildingSelection.delete(lid);
+    else SCENE3D.buildingSelection.add(lid);
+    v3dRedrawBuildingSelection();
+    return; // shift+clique só alterna seleção, não inicia arraste
+  }
+  if(!SCENE3D.buildingSelection.has(lid)){
+    SCENE3D.buildingSelection.clear();
+    SCENE3D.buildingSelection.add(lid);
+    v3dRedrawBuildingSelection();
+  }
+  const m3 = SCENE3D.map3d;
+  m3.dragPan.disable(); m3.dragRotate.disable();
+  const layers = [...SCENE3D.buildingSelection].map(id=>SCENE3D.leafletLayerById.get(id)).filter(Boolean)
+    .map(rec=>({ layer:rec.layer, lyr:rec.lyr, orig:cloneLatLngs(rec.layer.getLatLngs ? rec.layer.getLatLngs() : rec.layer.getLatLng()) }));
+  if(!layers.length){ m3.dragPan.enable(); m3.dragRotate.enable(); return; }
+  v3dDrag = { startLngLat:e.lngLat, layers };
+  const startPoint = e.point;
+  let moved = false, raf = null;
+  const onMove = ev=>{
+    // limiar de ~4px: abaixo disso é "clique parado" (edita atributos ao
+    // soltar), não arraste — evita que um simples clique mova o prédio 1px
+    // e dispare uma ação de desfazer/refazer sem sentido.
+    if(!moved){
+      if(Math.hypot(ev.point.x-startPoint.x, ev.point.y-startPoint.y) < 4) return;
+      moved = true;
+    }
+    const dLng = ev.lngLat.lng - v3dDrag.startLngLat.lng;
+    const dLat = ev.lngLat.lat - v3dDrag.startLngLat.lat;
+    v3dDrag.layers.forEach(({layer, orig})=>{
+      if(layer.getLatLngs){ layer.setLatLngs(translateLatLngs(orig, dLat, dLng)); }
+      else { layer.setLatLng(L.latLng(orig.lat+dLat, orig.lng+dLng)); }
+    });
+    if(raf) return;
+    raf = requestAnimationFrame(async ()=>{
+      raf = null;
+      const touched = new Set(v3dDrag.layers.map(d=>d.lyr));
+      for(const lyr of touched){
+        const fc = bakeVectorGeoJSON(lyr);
+        if(lyr.extrudeField && lyr.geomType==='polygon') await stampExtrusionBases(fc);
+        const src = m3.getSource('vec_'+lyr.id);
+        if(src) src.setData(fc);
+      }
+    });
+  };
+  const onUp = ()=>{
+    m3.off('mousemove', onMove);
+    m3.off('mouseup', onUp);
+    m3.dragPan.enable(); m3.dragRotate.enable();
+    if(!moved){
+      // clique parado, sem arraste real: abre a edição de atributos do
+      // prédio clicado — mesma tela (#mAttr/openAttrForm) usada em todo o
+      // resto do app, nenhum formulário paralelo criado para o 3D.
+      const rec = SCENE3D.leafletLayerById.get(lid);
+      if(rec && rec.layer._gaid) openAttrForm(rec.layer._gaid);
+      v3dDrag = null;
+      return;
+    }
+    const touched = new Set();
+    v3dDrag.layers.forEach(({layer, lyr, orig})=>{
+      const newLatLngs = cloneLatLngs(layer.getLatLngs ? layer.getLatLngs() : layer.getLatLng());
+      pushAction({ type:'geomedit', target:lyr, layer, oldLatLngs:orig, newLatLngs, kind:'move-building' });
+      touched.add(lyr);
+    });
+    touched.forEach(lyr=>recomputeLayerDerived(lyr));
+    scheduleSave();
+    if(SCENE3D.active) scheduleMirror3D();
+    v3dDrag = null;
+  };
+  m3.on('mousemove', onMove);
+  m3.on('mouseup', onUp);
+}
+function translateLatLngs(ll, dLat, dLng){
+  if(Array.isArray(ll)) return ll.map(x=>translateLatLngs(x, dLat, dLng));
+  return L.latLng(ll.lat+dLat, ll.lng+dLng);
+}
+function v3dRedrawBuildingSelection(){
+  const m3 = SCENE3D.map3d;
+  if(!m3) return;
+  const ids = [...SCENE3D.buildingSelection];
+  vectorLayers.filter(l=>l.buildings).forEach(l=>{
+    const lineId = 'vec_'+l.id+'_line';
+    if(m3.getLayer(lineId)){
+      m3.setPaintProperty(lineId, 'line-color', ids.length ? ['case', ['in', ['get','__lid'], ['literal', ids]], '#ffffff', ['get','__c']] : ['get','__c']);
+      m3.setPaintProperty(lineId, 'line-width', ids.length ? ['case', ['in', ['get','__lid'], ['literal', ids]], 3.5, ['get','__w']] : ['get','__w']);
+    }
+  });
+}
+/* botão "mover edifícios" só aparece quando existe uma camada de Edifícios
+   com feições visíveis — evita oferecer uma ferramenta sem alvo possível. */
+function updateMoveBuildingsButton(){
+  const btn = document.getElementById('v3dMoveBuildingsBtn');
+  if(!btn) return;
+  const has = vectorLayers.some(l=>l.buildings && l.visible && l.group.getLayers().length);
+  btn.style.display = has ? '' : 'none';
+  if(!has && SCENE3D.toolMode==='move-buildings') v3dSetToolMode(null);
 }
 
 /* Espelha bases/rasters do Leaflet no style do MapLibre por DIFF —
@@ -10409,17 +10911,44 @@ function bakeVectorGeoJSON(lyr){
     if(!st.opacity && !st.fillOpacity) return; // regra oculta — some do 3D também
     const gj = l.toGeoJSON();
     const p = gj.properties = gj.properties || {};
+    p.__lid = L.stamp(l); // id estável feature MapLibre -> layer Leaflet (usado por seleção/arraste 3D)
+    SCENE3D.leafletLayerById.set(p.__lid, { layer:l, lyr });
     p.__c = st.color; p.__fc = st._fillPlain || st.fillColor;
     p.__w = st.weight!=null ? st.weight : 2;
     p.__fo = st.fillOpacity!=null ? st.fillOpacity : 0.25;
     p.__r = st.radius!=null ? st.radius : 7;
     if(lyr.extrudeField){
       const v = parseFloat(p[lyr.extrudeField]);
-      p.__h = isFinite(v) ? Math.max(0, v) : 0;
+      const raw = isFinite(v) ? Math.max(0, v) : 0;
+      p.__h = lyr.extrudeMode==='floors' ? raw*(lyr.floorHeight||3) : raw;
     }
     feats.push(gj);
   });
   return { type:'FeatureCollection', features:feats };
+}
+/* Base da extrusão drapejada no terreno: amostra o DEM selecionado como
+   terreno (mesma fonte que applyTerrain()/buildTreeHasteGeoJSON usam) no
+   centroide de cada polígono, em UMA chamada em lote por camada — evita que
+   prédios "flutuem" ou afundem em relevo acidentado. Sem DEM de terreno
+   selecionado, base=0 em todas (degradação aceitável, mesmo espírito do
+   resto da vista 3D). Carimba p.__base diretamente na FeatureCollection já
+   baked, não recalcula o resto. */
+async function stampExtrusionBases(fc){
+  const feats = fc.features.filter(f=>f.geometry && f.geometry.type==='Polygon' && f.properties.__h!=null);
+  if(!feats.length) return fc;
+  const rec = demLayers().find(r=>r.name===SCENE3D.terrainDemName);
+  if(!rec){ feats.forEach(f=>f.properties.__base=0); return fc; }
+  const centers = feats.map(f=>{
+    const ring = f.geometry.coordinates[0];
+    let sx=0, sy=0;
+    ring.forEach(c=>{ sx+=c[0]; sy+=c[1]; });
+    return { lng: sx/ring.length, lat: sy/ring.length };
+  });
+  try{
+    const { samples } = await rec.layer.sampleElevationsAt(centers);
+    feats.forEach((f,i)=>{ f.properties.__base = samples[i] && samples[i].elev!=null ? samples[i].elev : 0; });
+  }catch(err){ feats.forEach(f=>f.properties.__base=0); }
+  return fc;
 }
 /* Hastes sintéticas do inventário arbóreo: MapLibre não tem cilindro, então
    cada árvore vira uma LineString vertical do solo até solo+altura_m
@@ -10458,6 +10987,7 @@ async function buildTreeHasteGeoJSON(lyr){
    raster, e mirror3D já roda debounced (150 ms via scheduleMirror3D). */
 async function mirrorVectorLayers(wanted){
   const m3 = SCENE3D.map3d;
+  SCENE3D.leafletLayerById.clear();
   for(const l of vectorLayers){
     const srcId = 'vec_'+l.id;
     if(!l.visible){
@@ -10482,6 +11012,7 @@ async function mirrorVectorLayers(wanted){
     }
     wanted.add(srcId); wanted.add(srcId+'_fill'); wanted.add(srcId+'_line'); wanted.add(srcId+'_pts');
     const fc = bakeVectorGeoJSON(l);
+    if(l.extrudeField && l.geomType==='polygon') await stampExtrusionBases(fc);
     if(!m3.getSource(srcId)){
       m3.addSource(srcId, { type:'geojson', data:fc });
       m3.addLayer({ id:srcId+'_fill', type:'fill', source:srcId, filter:['==','$type','Polygon'],
@@ -10499,7 +11030,10 @@ async function mirrorVectorLayers(wanted){
       wanted.add(srcId+'_extrude');
       if(!m3.getLayer(srcId+'_extrude')){
         m3.addLayer({ id:srcId+'_extrude', type:'fill-extrusion', source:srcId, filter:['==','$type','Polygon'],
-          paint:{ 'fill-extrusion-color':['get','__fc'], 'fill-extrusion-height':['get','__h'], 'fill-extrusion-base':0, 'fill-extrusion-opacity':0.85 } });
+          paint:{ 'fill-extrusion-color':['get','__fc'],
+            'fill-extrusion-base':['coalesce',['get','__base'],0],
+            'fill-extrusion-height':['+',['coalesce',['get','__base'],0],['get','__h']],
+            'fill-extrusion-opacity':0.85 } });
       }
       if(m3.getLayer(srcId+'_fill')) m3.setLayoutProperty(srcId+'_fill','visibility','none');
     } else if(m3.getLayer(srcId+'_extrude')){
@@ -10574,6 +11108,8 @@ async function mirror3D(){
     }
   });
   SCENE3D.mirrored = wanted;
+  updateMoveBuildingsButton();
+  v3dRedrawBuildingSelection();
 }
 let _mirrorTO = null;
 function scheduleMirror3D(){
@@ -10588,6 +11124,14 @@ function set3DLayout(mode){
   view3dEl.classList.remove('mode-full','mode-split','mode-panel');
   view3dEl.classList.add('mode-'+mode);
   document.body.classList.toggle('split3d', mode==='split');
+  if(mode!=='panel'){
+    /* sai do flutuante: descarta posição/tamanho customizados por
+       drag/resize (attachDragResize/v3dPanelDragEngine), senão o estilo
+       inline sobrescreveria o inset:0 de full/split na próxima vez */
+    view3dEl.style.left = view3dEl.style.top = view3dEl.style.width = view3dEl.style.height = '';
+    view3dEl.style.right = view3dEl.style.bottom = '';
+    view3dEl._rsFrozen = false;
+  }
   document.querySelectorAll('.v3d-seg').forEach(b=>b.classList.toggle('active', b.dataset.layout===mode));
   map.invalidateSize();
   if(SCENE3D.map3d) setTimeout(()=>SCENE3D.map3d.resize(), 60);
@@ -10619,6 +11163,7 @@ async function open3D(){
   }
   SCENE3D.active = true;
   populateDemSelect();
+  syncBuildingFloorHInput();
   const m3 = SCENE3D.map3d;
   const afterLoad = async ()=>{
     await mirror3D();
@@ -10632,7 +11177,7 @@ async function open3D(){
 }
 function close3D(){
   SCENE3D.active = false;
-  v3dSetMeasureMode(null); // cancela vértices em progresso e esconde ações
+  v3dSetToolMode(null); // cancela vértices em progresso e esconde ações
   SCENE3D.measureResult = null;
   SCENE3D.volumeResult = null;
   document.getElementById('v3dVolPanel').style.display = 'none';
@@ -10652,6 +11197,29 @@ if(!has3D()){
   const tip = b.querySelector('.tip'); if(tip) tip.textContent = 'Vista 3D indisponível — este navegador/dispositivo não suporta WebGL.';
 }
 document.getElementById('v3dClose').addEventListener('click', close3D);
+document.getElementById('v3dBarToggle').addEventListener('click', ()=>{
+  document.getElementById('v3dBar').classList.toggle('v3d-collapsed');
+});
+/* popover clicável do "i" do DEM — antes só tinha o title nativo (hover),
+   sem nenhum efeito ao clicar/tocar. Texto único (lido do próprio title,
+   já existente) para não divergir entre tooltip e popover. */
+(function v3dDemInfoPopover(){
+  const btn = document.getElementById('v3dDemInfo');
+  const pop = document.createElement('div');
+  pop.className = 'v3d-info-popover';
+  pop.textContent = btn.getAttribute('title') || '';
+  btn.appendChild(pop);
+  const close = ()=> pop.classList.remove('on');
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    pop.classList.toggle('on');
+  });
+  btn.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); pop.classList.toggle('on'); }
+    else if(e.key==='Escape') close();
+  });
+  document.addEventListener('click', e=>{ if(!btn.contains(e.target)) close(); });
+})();
 document.getElementById('v3dPanelClose').addEventListener('click', close3D);
 /* mantém o WebGL sincronizado com o tamanho real do contêiner sempre que
    ele mudar — troca de layout, redimensionamento nativo (resize:both) da
@@ -10660,12 +11228,112 @@ document.getElementById('v3dPanelClose').addEventListener('click', close3D);
 if(window.ResizeObserver){
   new ResizeObserver(()=>{ if(SCENE3D.map3d) SCENE3D.map3d.resize(); }).observe(view3dEl);
 }
-/* arraste da alça do modo flutuante (só ativa nesse layout) */
+/* Helper genérico de redimensionamento por 8 pontos (4 bordas + 4 cantos),
+   pointer events — mesmo padrão de cmpDragEngine/pdResizerEngine. Reusado
+   pela vista 3D flutuante e pelos painéis de medição (#elevPanel,
+   #v3dVolPanel). `opts.dragHandle` é opcional: quando informado, também liga
+   arraste pelo elemento indicado (equivalente ao antigo v3dPanelDragEngine,
+   generalizado). Congela a posição em left/top explícitos no primeiro
+   pointerdown — necessário para elementos ainda ancorados por right/bottom. */
+function attachDragResize(el, opts){
+  opts = opts || {};
+  /* todo valor de posição/tamanho é arredondado para pixel inteiro (painel
+     "pixel perfect") — getBoundingClientRect devolve float e, sem o round,
+     o navegador rasteriza a caixa em posição subpixel, borrando bordas e
+     o conteúdo do canvas MapLibre por dentro. */
+  const freeze = ()=>{
+    if(el._rsFrozen) return;
+    el._rsFrozen = true;
+    const r = el.getBoundingClientRect();
+    const op = el.offsetParent ? el.offsetParent.getBoundingClientRect() : {left:0, top:0};
+    el.style.left = Math.round(r.left-op.left)+'px';
+    el.style.top = Math.round(r.top-op.top)+'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    el.style.width = Math.round(r.width)+'px';
+    el.style.height = Math.round(r.height)+'px';
+  };
+  if(opts.dragHandle){
+    const handle = opts.dragHandle;
+    let dragging=false, pid=null, sx=0, sy=0, sl=0, st=0;
+    handle.addEventListener('pointerdown', e=>{
+      if(opts.dragGuard && e.target.closest(opts.dragGuard)) return;
+      if(opts.canDrag && !opts.canDrag()) return;
+      freeze();
+      dragging=true; pid=e.pointerId;
+      try{ handle.setPointerCapture(pid); }catch(err){}
+      const r = el.getBoundingClientRect();
+      sx=e.clientX; sy=e.clientY; sl=r.left; st=r.top;
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', e=>{
+      if(!dragging || e.pointerId!==pid) return;
+      const w = el.offsetWidth, h = el.offsetHeight;
+      let nx = sl + (e.clientX-sx), ny = st + (e.clientY-sy);
+      nx = Math.round(Math.max(4, Math.min(window.innerWidth-w-4, nx)));
+      ny = Math.round(Math.max(4, Math.min(window.innerHeight-h-4, ny)));
+      el.style.left = nx+'px'; el.style.top = ny+'px';
+    });
+    const dragEnd = e=>{ if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; if(opts.onEnd) opts.onEnd(); } };
+    handle.addEventListener('pointerup', dragEnd);
+    handle.addEventListener('pointercancel', dragEnd);
+  }
+  if(opts.resizable!==false){
+    ['n','s','e','w','ne','nw','se','sw'].forEach(dir=>{
+      const h = document.createElement('div');
+      h.className = 'rs-handle rs-'+dir;
+      el.appendChild(h);
+      let dragging=false, pid=null, sx=0, sy=0, sw=0, sh=0, sl=0, st=0;
+      h.addEventListener('pointerdown', e=>{
+        if(opts.canDrag && !opts.canDrag()) return;
+        freeze();
+        dragging=true; pid=e.pointerId;
+        try{ h.setPointerCapture(pid); }catch(err){}
+        const r = el.getBoundingClientRect();
+        sx=e.clientX; sy=e.clientY; sw=r.width; sh=r.height; sl=r.left; st=r.top;
+        e.preventDefault(); e.stopPropagation();
+      });
+      h.addEventListener('pointermove', e=>{
+        if(!dragging || e.pointerId!==pid) return;
+        const cs = getComputedStyle(el);
+        const minW = parseFloat(cs.minWidth)||100, minH = parseFloat(cs.minHeight)||80;
+        const maxW = Math.min(parseFloat(cs.maxWidth)||Infinity, window.innerWidth-8);
+        const maxH = Math.min(parseFloat(cs.maxHeight)||Infinity, window.innerHeight-8);
+        const dx = e.clientX-sx, dy = e.clientY-sy;
+        let nw=sw, nh=sh, nl=sl, nt=st;
+        if(dir.includes('e')) nw = Math.max(minW, Math.min(maxW, sw+dx));
+        if(dir.includes('s')) nh = Math.max(minH, Math.min(maxH, sh+dy));
+        if(dir.includes('w')){ nw = Math.max(minW, Math.min(maxW, sw-dx)); nl = sl+(sw-nw); }
+        if(dir.includes('n')){ nh = Math.max(minH, Math.min(maxH, sh-dy)); nt = st+(sh-nh); }
+        el.style.width = Math.round(nw)+'px'; el.style.height = Math.round(nh)+'px';
+        if(dir.includes('w')) el.style.left = Math.round(nl)+'px';
+        if(dir.includes('n')) el.style.top = Math.round(nt)+'px';
+        if(opts.onResize) opts.onResize();
+      });
+      const end = e=>{ if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; if(opts.onEnd) opts.onEnd(); } };
+      h.addEventListener('pointerup', end);
+      h.addEventListener('pointercancel', end);
+    });
+  }
+}
+/* redimensionamento por 8 pontos do modo flutuante — o arraste pelo header
+   continua no engine dedicado abaixo (v3dPanelDragEngine), só o resize é
+   genérico aqui. */
+attachDragResize(view3dEl, {
+  resizable: true,
+  canDrag: ()=> SCENE3D.layout==='panel',
+  onEnd: ()=>{ if(SCENE3D.map3d) SCENE3D.map3d.resize(); }
+});
+/* arraste da alça do modo flutuante (só ativa nesse layout).
+   Bug corrigido: o botão fechar (#v3dPanelClose) é filho de #v3dPanelHead —
+   sem a guarda abaixo, o pointerdown do arraste capturava o ponteiro antes
+   do clique no X terminar de disparar, e o botão nunca fechava a vista 3D. */
 (function v3dPanelDragEngine(){
   const head = document.getElementById('v3dPanelHead');
   let dragging=false, pid=null, sx=0, sy=0, ox=0, oy=0;
   head.addEventListener('pointerdown', e=>{
     if(SCENE3D.layout!=='panel') return;
+    if(e.target.closest('#v3dPanelClose')) return;
     dragging=true; pid=e.pointerId;
     try{ head.setPointerCapture(pid); }catch(err){}
     const r = view3dEl.getBoundingClientRect();
@@ -10676,8 +11344,8 @@ if(window.ResizeObserver){
     if(!dragging || e.pointerId!==pid) return;
     const w = view3dEl.offsetWidth, h = view3dEl.offsetHeight;
     let nx = ox + (e.clientX-sx), ny = oy + (e.clientY-sy);
-    nx = Math.max(4, Math.min(window.innerWidth - w - 4, nx));
-    ny = Math.max(4, Math.min(window.innerHeight - h - 4, ny));
+    nx = Math.round(Math.max(4, Math.min(window.innerWidth - w - 4, nx)));
+    ny = Math.round(Math.max(4, Math.min(window.innerHeight - h - 4, ny)));
     view3dEl.style.left = nx+'px'; view3dEl.style.top = ny+'px';
   });
   const end = e=>{ if(pid!==null && e.pointerId===pid){ dragging=false; pid=null; } };
@@ -10717,27 +11385,98 @@ document.getElementById('v3dDemSel').addEventListener('change', e=>{ SCENE3D.ter
 document.querySelectorAll('.v3d-mtool').forEach(b=>{
   b.addEventListener('click', ()=>{
     const mode = b.dataset.mtool;
-    v3dSetMeasureMode(SCENE3D.measureMode===mode ? null : mode);
+    v3dSetToolMode(SCENE3D.toolMode===mode ? null : mode);
   });
 });
 document.getElementById('v3dDistFinish').addEventListener('click', v3dDistFinish);
-document.getElementById('v3dDistCancel').addEventListener('click', ()=>v3dSetMeasureMode(null));
+document.getElementById('v3dDistCancel').addEventListener('click', ()=>v3dSetToolMode(null));
 document.getElementById('v3dVolFinish').addEventListener('click', v3dVolFinish);
-document.getElementById('v3dVolCancel').addEventListener('click', ()=>v3dSetMeasureMode(null));
+document.getElementById('v3dVolCancel').addEventListener('click', ()=>v3dSetToolMode(null));
 document.getElementById('v3dVolRef').addEventListener('change', e=>{
   document.getElementById('v3dVolRefCustom').style.display = e.target.value==='custom' ? 'inline-block' : 'none';
 });
 document.getElementById('v3dVolClose').addEventListener('click', ()=>{ document.getElementById('v3dVolPanel').style.display='none'; });
+document.getElementById('v3dDrawFinish').addEventListener('click', v3dDrawFinish);
+document.getElementById('v3dDrawCancel').addEventListener('click', ()=>v3dSetToolMode(null));
+document.getElementById('v3dDrawLayerSel').addEventListener('change', e=>{
+  SCENE3D.drawTargetLayerId = e.target.value ? +e.target.value : null;
+});
+/* Traçado rápido de pegada (Fase C, C2): aponta o modo de desenho direto
+   para a camada "Edifícios" (criando-a se necessário) em vez de exigir que
+   o usuário selecione manualmente no seletor de camada — atalho para o caso
+   de uso "vários prédios em sequência". */
+document.getElementById('v3dNewBuildingBtn').addEventListener('click', ()=>{
+  const lyr = ensureBuildingsLayer();
+  // pé-direito é lido do campo ao lado do botão a cada novo prédio — assim
+  // o usuário pode ajustar antes de cada traçado sem abrir #m3dExtrude.
+  lyr.floorHeight = Math.max(0.1, parseFloat(document.getElementById('v3dBuildingFloorH').value)||3);
+  SCENE3D.drawTargetLayerId = lyr.id;
+  v3dSetToolMode('draw');
+});
+/* mantém o campo de pé-direito refletindo a camada "Edifícios" já existente
+   (se houver) toda vez que a barra 3D é exibida — evita mostrar 3 (padrão)
+   quando a camada já foi configurada com outro valor via #m3dExtrude. */
+function syncBuildingFloorHInput(){
+  const lyr = vectorLayers.find(l=>l.buildings);
+  if(lyr) document.getElementById('v3dBuildingFloorH').value = lyr.floorHeight || 3;
+}
+/* lista de camadas de polígono compatíveis com o desenho em 3D — recalculada
+   sempre que o modo de desenho é ativado, para refletir camadas criadas
+   depois que a vista 3D foi aberta. */
+function populateDrawLayerSelect(){
+  const sel = document.getElementById('v3dDrawLayerSel');
+  const polys = vectorLayers.filter(l=>l.geomType==='polygon');
+  sel.innerHTML = '<option value="">Nova camada…</option>' +
+    polys.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+  if(SCENE3D.drawTargetLayerId!=null && polys.some(l=>l.id===SCENE3D.drawTargetLayerId)){
+    sel.value = String(SCENE3D.drawTargetLayerId);
+  } else {
+    SCENE3D.drawTargetLayerId = null;
+  }
+}
 
 map.on('moveend', syncCam23);
 map.on('layeradd layerremove', scheduleMirror3D);
 
-/* divisória do modo "dividido": só uma linha discreta e fixa em 50/50 —
-   não é a ferramenta de recorte (cmpDragEngine); sem alça, sem arraste. */
+/* divisória do modo "dividido": linha + alça (grip) arrastável, controlando
+   a variável CSS --v3d-split-x que #map/#view3d.mode-split/#v3dDivider leem.
+   Mesmo padrão de pointer events do cmpDragEngine/pdResizerEngine. */
 (function v3dDividerInit(){
   const dv = document.createElement('div');
   dv.id = 'v3dDivider';
+  const grip = document.createElement('div');
+  grip.id = 'v3dDividerGrip';
+  grip.title = 'Arraste para ajustar o recorte';
+  grip.innerHTML = icon('splitDrag', 15);
+  dv.appendChild(grip);
   view3dEl.parentNode.insertBefore(dv, view3dEl);
+
+  let dragging=false, pid=null;
+  const root = document.documentElement;
+  const vertical = ()=> window.innerWidth<=760;
+  grip.addEventListener('pointerdown', e=>{
+    dragging=true; pid=e.pointerId;
+    try{ grip.setPointerCapture(pid); }catch(err){}
+    e.preventDefault();
+  });
+  grip.addEventListener('pointermove', e=>{
+    if(!dragging || e.pointerId!==pid) return;
+    const parent = dv.parentNode.getBoundingClientRect();
+    let pct = vertical()
+      ? ((e.clientY-parent.top)/parent.height)*100
+      : ((e.clientX-parent.left)/parent.width)*100;
+    pct = Math.max(20, Math.min(80, pct));
+    root.style.setProperty('--v3d-split-x', pct+'%');
+  });
+  const end = e=>{
+    if(pid!==null && e.pointerId===pid){
+      dragging=false; pid=null;
+      map.invalidateSize();
+      if(SCENE3D.map3d) SCENE3D.map3d.resize();
+    }
+  };
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('pointercancel', end);
 })();
 
 /* ---------- IMPRESSÃO ---------- */
@@ -13831,6 +14570,7 @@ function serializeProject(){
       name:l.name, geomType:l.geomType, color:l.color, visible:l.visible, fields:l.fields, groupId:l.groupId||null, meta:l.meta||null, inventory:!!l.inventory,
       styleMode:l.styleMode||'single', rules:l.rules||[], rulesElse:l.rulesElse||null, opacity:layerAlpha(l),
       symb:l.symb||null, single:l.single||null, extrudeField:l.extrudeField||null,
+      extrudeMode:l.extrudeMode||'height', floorHeight:l.floorHeight||3, buildings:!!l.buildings,
       features:{ type:'FeatureCollection',
         features: l.group.getLayers().map(x=>{
           let g = x.toGeoJSON();
@@ -13934,12 +14674,15 @@ async function applyProject(p){
     lyr.groupId = ld.groupId || null;
     lyr.meta = ld.meta || null;
     if(ld.inventory){ lyr.inventory = true; inventoryLayer = lyr; }
+    if(ld.buildings){ lyr.buildings = true; buildingsLayer = lyr; }
     lyr.opacity = (ld.opacity==null || isNaN(ld.opacity)) ? 1 : +ld.opacity;
     lyr.styleMode = ld.styleMode || 'single';
     lyr.rules = ld.rules || [];
     lyr.rulesElse = ld.rulesElse || null;
     lyr.single = ld.single || null;
     lyr.extrudeField = ld.extrudeField || null;
+    lyr.extrudeMode = ld.extrudeMode || 'height';
+    lyr.floorHeight = ld.floorHeight || 3;
     // projetos anteriores à simbologia em abas não têm symb — deduz do styleMode
     lyr.symb = ld.symb || { kind: lyr.styleMode==='rules' ? 'rules' : 'single' };
     const gl = L.geoJSON(ld.features, {

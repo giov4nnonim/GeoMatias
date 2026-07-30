@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GeoMatias — WebGIS para P&D e estudo de UI</title>
+<title>GeoM — WebGIS para P&D e estudo de UI</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
@@ -203,13 +203,13 @@ select, option{ color:var(--text); background:var(--field); }
 /* Grupos (pastas de camadas) */
 .grp-head{
   display:flex; align-items:center; gap:8px; margin:12px 0 6px; padding:6px 8px 6px 10px;
-  border-top:2px solid var(--line); cursor:pointer; user-select:none;
+  border-top:2px solid var(--line); border-radius:0 6px 6px 0; cursor:pointer; user-select:none;
 }
 .grp-head .arrow{font-size:10px; color:var(--muted); transition:transform .15s}
 .grp-head.closed .arrow{transform:rotate(-90deg)}
 .grp-head .gname{flex:1; font-size:12px; letter-spacing:.8px; text-transform:uppercase; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .grp-head .gcount{font-size:11px; color:var(--muted)}
-.grp-body{margin-left:6px}
+.grp-body{margin-left:6px; border-radius:0 0 6px 0}
 
 /* Detalhes / metadados / legenda da camada */
 .layer-detail{
@@ -513,13 +513,29 @@ body.split3d #v3dDivider{ display:block }
   #v3dBarBody{ justify-content:center }
 }
 /* MapLibre embute cores fixas claras nos popups/controles — sem isto ficam
-   brancos sobre o painel escuro do tema. */
-.maplibregl-popup-content{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 30px var(--shadow-strong) }
-.maplibregl-popup-tip{ border-top-color:var(--panel); border-bottom-color:var(--panel) }
+   brancos sobre o painel escuro do tema. Escopado a #v3dCanvas (o container
+   do mapa MapLibre) para ganhar especificidade sobre o CSS da própria lib:
+   maplibre-gl.css é injetado dinamicamente via ensureCss() bem depois deste
+   <style>, então com a mesma especificidade (0-1-0 em ambos) o dele vencia
+   por ordem de aparição no DOM — causa raiz do popup aparecer branco/ilegível. */
+#v3dCanvas .maplibregl-popup-content{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 30px var(--shadow-strong) }
+#v3dCanvas .maplibregl-popup-tip{ border-top-color:var(--panel); border-bottom-color:var(--panel) }
+#v3dCanvas .maplibregl-popup-close-button{ color:var(--muted); font-size:16px }
+#v3dCanvas .maplibregl-popup-close-button:hover{ color:var(--text); background:var(--panel2) }
 .maplibregl-ctrl-group{ background:var(--panel2); box-shadow:0 2px 8px var(--shadow) }
 .maplibregl-ctrl-group button{ background:transparent }
 .maplibregl-ctrl-group button:not(:disabled):hover{ background:var(--field) }
 .maplibregl-ctrl-icon{ filter:invert(1) }
+/* conteúdo do popup "Consultar pavimento" — mesma hierarquia tipográfica de
+   #elevPanel/#elevStats (título 13px/600, corpo 12px muted, valores em
+   var(--text)), para não inventar uma linguagem visual nova. */
+.v3d-floorpop{ font-size:12px; color:var(--muted); min-width:170px }
+.v3d-floorpop-title{ font-size:13px; font-weight:600; color:var(--text); margin-bottom:2px }
+.v3d-floorpop-sub{ margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--line) }
+.v3d-floorpop-rows{ display:flex; flex-direction:column; gap:3px; max-height:180px; overflow-y:auto }
+.v3d-floorpop-row{ display:flex; justify-content:space-between; gap:14px }
+.v3d-floorpop-row b{ color:var(--text); font-weight:600; font-variant-numeric:tabular-nums }
+.v3d-floorpop-empty{ font-style:italic }
 
 @media (max-width:760px){
   #elevPanel{ left:8px; right:8px; width:auto; bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)) }
@@ -1421,8 +1437,8 @@ body.split3d #v3dDivider{ display:block }
     <span class="lbl">Camadas</span>
   </button>
   <div id="brand">
-    <img src="icon.png" width="44" height="44" alt="GeoMatias" style="border-radius:50%; object-fit:cover">
-    <div><b>GeoMatias</b><small>WEBGIS PARA P&D E ESTUDO DE UI</small></div>
+    <img src="icon.png" width="44" height="44" alt="GeoM" style="border-radius:50%; object-fit:cover">
+    <div><b>GeoM</b><small>WEBGIS PARA P&D E ESTUDO DE UI</small></div>
   </div>
   <div class="spacer"></div>
   <div id="tbActions">
@@ -1633,13 +1649,18 @@ body.split3d #v3dDivider{ display:block }
       <div id="v3dMTools" role="group" aria-label="Ferramentas interativas 3D">
         <button class="v3d-seg v3d-mtool" data-mtool="dist" title="Distância 3D"><span data-icon="ruler"></span></button>
         <button class="v3d-seg v3d-mtool" data-mtool="volume" title="Corte/aterro"><span data-icon="volume3d"></span></button>
-        <button class="v3d-seg v3d-mtool" data-mtool="draw" title="Desenhar polígono direto na vista 3D"><span data-icon="polygonDraw"></span></button>
       </div>
     </div>
     <div class="v3d-group" data-label="Edificação">
       <div id="v3dBuildingTools" role="group" aria-label="Ferramentas de edificação">
+        <button class="v3d-seg v3d-mtool" data-mtool="floor-query" id="v3dFloorQueryBtn" title="Consultar atributos por pavimento: clique num prédio" style="display:none"><span data-icon="floors"></span></button>
+        <button class="v3d-seg v3d-mtool" data-mtool="draw" title="Desenhar polígono direto na vista 3D"><span data-icon="polygonDraw"></span></button>
         <button class="v3d-seg" id="v3dNewBuildingBtn" title="Novo prédio: desenha a pegada na camada 'Edifícios'"><span data-icon="building"></span></button>
         <button class="v3d-seg v3d-mtool" data-mtool="move-buildings" id="v3dMoveBuildingsBtn" title="Mover edifícios (segurar e arrastar) · clique parado edita os atributos" style="display:none"><span data-icon="moveBuildings"></span></button>
+        <button class="v3d-seg" id="v3dRotateBuildingBtn" title="Girar prédio(s) selecionado(s) — selecione com a ferramenta Mover" style="display:none"><span data-icon="rotate"></span></button>
+        <button class="v3d-seg" id="v3dBuildingColorBtn" title="Cor/simbologia da camada 'Edifícios'" style="display:none"><span data-icon="palette"></span></button>
+        <button class="v3d-seg" id="v3dBuildingAttrBtn" title="Atributos do prédio selecionado — selecione com a ferramenta Mover" style="display:none"><span data-icon="table"></span></button>
+        <button class="v3d-seg" id="v3dDeleteBuildingBtn" title="Excluir prédio(s) selecionado(s) — selecione com a ferramenta Mover" style="display:none"><span data-icon="trash"></span></button>
       </div>
       <label id="v3dBuildingFloorHWrap" title="Pé-direito por pavimento dos novos prédios (m)">
         Pé-direito
@@ -2729,7 +2750,7 @@ body.split3d #v3dDivider{ display:block }
   <div class="modal">
     <button class="tb-btn modal-x" data-close title="Fechar" data-icon="close"></button>
     <h3>Gravar vídeo da tela</h3>
-    <p class="sub">Grava a tela (ou aba) do navegador enquanto você navega o mapa — nenhum dado sai do seu dispositivo. Quando o navegador pedir o que compartilhar, escolha <b>"Esta aba"</b> (quando disponível) para gravar só o GeoMatias.</p>
+    <p class="sub">Grava a tela (ou aba) do navegador enquanto você navega o mapa — nenhum dado sai do seu dispositivo. Quando o navegador pedir o que compartilhar, escolha <b>"Esta aba"</b> (quando disponível) para gravar só o GeoM.</p>
     <div class="empty-hint" id="recInfo" style="margin-top:6px"></div>
     <div class="actions">
       <button class="tb-btn primary" id="recStart">Iniciar gravação</button>
@@ -2795,7 +2816,7 @@ body.split3d #v3dDivider{ display:block }
   </div>
   <div class="p-foot">
     <span id="psAuthor"></span>
-    <span id="psSRC">Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoMatias — WebGIS para P&D e estudo de UI</span>
+    <span id="psSRC">Sistema de referência: WGS 84 (EPSG:4326) · Gerado com GeoM — WebGIS para P&D e estudo de UI</span>
   </div>
 </div>
 
@@ -2804,7 +2825,7 @@ body.split3d #v3dDivider{ display:block }
 
 <script>
 /* =========================================================
-   GeoMatias — WebGIS para P&D e estudo de UI — arquivo único
+   GeoM — WebGIS para P&D e estudo de UI — arquivo único
    ========================================================= */
 'use strict';
 
@@ -2881,7 +2902,8 @@ const ICONS = {
   rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>',
   printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>',
   contour:'<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 7.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>',
-  splitDrag:'<path d="M2 12h20"/><path d="M7 7 2 12l5 5"/><path d="M17 7l5 5-5 5"/>'
+  splitDrag:'<path d="M2 12h20"/><path d="M7 7 2 12l5 5"/><path d="M17 7l5 5-5 5"/>',
+  floors:'<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -3971,7 +3993,7 @@ function renderGrouped(el, items, buildRow, kind, emptyHtml, preHtml){
       inp.addEventListener('click', e=>e.stopPropagation());
     } else {
       head.innerHTML = `<span class="arrow">▼</span>
-        <span class="gname" style="color:${g.color}" title="Clique para renomear">${icon('folder')} ${g.name}</span>
+        <span class="gname" title="Clique para renomear">${icon('folder')} ${g.name}</span>
         <input type="color" class="gcolor" value="${g.color}" title="Cor do grupo">
         <span class="gcount">${inG.length}</span>
         <button class="icon-btn" title="Excluir grupo">${icon('close')}</button>`;
@@ -3996,7 +4018,7 @@ function renderGrouped(el, items, buildRow, kind, emptyHtml, preHtml){
     if(!g.collapsed){
       const body = document.createElement('div');
       body.className = 'grp-body';
-      body.style.borderLeft = '2px solid ' + g.color;
+      body.style.borderLeft = '2px solid var(--line)';
       body.style.paddingLeft = '6px';
       if(!inG.length) body.innerHTML = '<div class="empty-hint">Grupo vazio — arraste camadas para cá.</div>';
       renderSet(inG, body);
@@ -10587,6 +10609,39 @@ function v3dOnClick(e){
   if(SCENE3D.toolMode==='dist') v3dDistAddVertex(e.lngLat);
   else if(SCENE3D.toolMode==='volume') v3dVolAddVertex(e.lngLat);
   else if(SCENE3D.toolMode==='draw') v3dDrawAddVertex(e.lngLat);
+  else if(SCENE3D.toolMode==='floor-query') v3dFloorQueryClick(e);
+}
+/* "Consultar atributos por pavimento": clique num prédio abre um popup
+   MapLibre (mesmo padrão temático já preparado em .maplibregl-popup-content
+   desde a V13, até agora sem uso) listando a faixa de cota de cada piso —
+   base (__base, amostrada do DEM por stampExtrusionBases) + i×floorHeight —
+   junto com os atributos já existentes do prédio (nome/uso/pavimentos). Não
+   depende de raycasting 3D (MapLibre não expõe isso para fill-extrusion);
+   a contagem de pavimentos vem do atributo, não do ponto exato clicado na
+   parede — degradação aceita, mesmo espírito do resto da vista 3D. */
+let v3dFloorPopup = null;
+function v3dFloorQueryClick(e){
+  const feat = v3dBuildingsHit(e);
+  if(!feat){ status('Clique sobre um prédio para consultar os pavimentos.'); return; }
+  const p = feat.properties;
+  const rec = SCENE3D.leafletLayerById.get(p.__lid);
+  const lyr = rec ? rec.lyr : null;
+  const floorH = (lyr && lyr.floorHeight) || 3;
+  const field = (lyr && lyr.extrudeField) || 'pavimentos';
+  const pav = Math.max(0, Math.round(parseFloat(p[field]) || 0));
+  const base = p.__base || 0;
+  const rows = [];
+  for(let i=0; i<pav; i++){
+    rows.push(`<div class="v3d-floorpop-row"><span>Piso ${i+1}</span><b>${(base+i*floorH).toFixed(1)}–${(base+(i+1)*floorH).toFixed(1)} m</b></div>`);
+  }
+  const html = `<div class="v3d-floorpop">`
+    + `<div class="v3d-floorpop-title">${p.nome || 'Prédio sem nome'}</div>`
+    + `<div class="v3d-floorpop-sub">Uso: ${p.uso || '—'} · Pavimentos: ${pav}</div>`
+    + `<div class="v3d-floorpop-rows">${rows.join('') || '<div class="v3d-floorpop-empty">Nenhum pavimento definido (atributo "'+field+'" vazio).</div>'}</div>`
+    + `</div>`;
+  if(v3dFloorPopup) v3dFloorPopup.remove();
+  v3dFloorPopup = new window.maplibregl.Popup({ closeOnClick:true })
+    .setLngLat(e.lngLat).setHTML(html).addTo(SCENE3D.map3d);
 }
 function v3dOnDblClick(e){
   if(SCENE3D.toolMode==='dist'){ e.preventDefault(); v3dDistFinish(); }
@@ -10886,6 +10941,13 @@ function updateMoveBuildingsButton(){
   const has = vectorLayers.some(l=>l.buildings && l.visible && l.group.getLayers().length);
   btn.style.display = has ? '' : 'none';
   if(!has && SCENE3D.toolMode==='move-buildings') v3dSetToolMode(null);
+  if(!has && SCENE3D.toolMode==='floor-query') v3dSetToolMode(null);
+  // girar/excluir/atributos exigem seleção via "Mover"; cor e consulta de
+  // pavimento só exigem a camada existir.
+  ['v3dFloorQueryBtn','v3dRotateBuildingBtn','v3dDeleteBuildingBtn','v3dBuildingColorBtn','v3dBuildingAttrBtn'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.style.display = has ? '' : 'none';
+  });
 }
 
 /* Espelha bases/rasters do Leaflet no style do MapLibre por DIFF —
@@ -11181,6 +11243,7 @@ function close3D(){
   SCENE3D.measureResult = null;
   SCENE3D.volumeResult = null;
   document.getElementById('v3dVolPanel').style.display = 'none';
+  if(v3dFloorPopup){ v3dFloorPopup.remove(); v3dFloorPopup = null; }
   // #elevPanel É INTENCIONALMENTE deixado aberto — mesmo comportamento já
   // existente para medições 2D (o perfil persiste após fechar o 3D).
   view3dEl.classList.remove('on');
@@ -11412,6 +11475,60 @@ document.getElementById('v3dNewBuildingBtn').addEventListener('click', ()=>{
   lyr.floorHeight = Math.max(0.1, parseFloat(document.getElementById('v3dBuildingFloorH').value)||3);
   SCENE3D.drawTargetLayerId = lyr.id;
   v3dSetToolMode('draw');
+});
+/* Girar/Excluir/Atributos operam sobre SCENE3D.buildingSelection — a mesma
+   seleção (clique/shift+clique) já usada pela ferramenta "Mover edifícios",
+   sem introduzir um segundo mecanismo de seleção paralelo. */
+document.getElementById('v3dRotateBuildingBtn').addEventListener('click', async ()=>{
+  const ids = [...SCENE3D.buildingSelection];
+  if(!ids.length){ status('Selecione ao menos um prédio com a ferramenta "Mover edifícios" antes de girar.'); return; }
+  const raw = prompt('Girar quantos graus (sentido horário)?', '15');
+  if(raw==null) return;
+  const angle = parseFloat(raw.replace(',', '.'));
+  if(!isFinite(angle) || !angle) return;
+  const turf = await loadTurf();
+  const touched = new Set();
+  ids.forEach(lid=>{
+    const rec = SCENE3D.leafletLayerById.get(lid);
+    if(!rec || !rec.layer.getLatLngs) return;
+    const { layer, lyr } = rec;
+    const oldLatLngs = cloneLatLngs(layer.getLatLngs());
+    const gj = layer.toGeoJSON();
+    const rotated = turf.transformRotate(gj, angle);
+    const depth = rotated.geometry.type==='MultiPolygon' ? 2 : 1;
+    layer.setLatLngs(L.GeoJSON.coordsToLatLngs(rotated.geometry.coordinates, depth));
+    if(layer.redraw) layer.redraw();
+    pushAction({ type:'geomedit', target:lyr, layer, oldLatLngs, newLatLngs:cloneLatLngs(layer.getLatLngs()), kind:'rotate-building' });
+    touched.add(lyr);
+  });
+  touched.forEach(lyr=>recomputeLayerDerived(lyr));
+  scheduleSave();
+  if(SCENE3D.active) scheduleMirror3D();
+  status('Prédio(s) girado(s) em '+angle+'°.');
+});
+document.getElementById('v3dDeleteBuildingBtn').addEventListener('click', ()=>{
+  const ids = [...SCENE3D.buildingSelection];
+  if(!ids.length){ status('Selecione ao menos um prédio com a ferramenta "Mover edifícios" antes de excluir.'); return; }
+  if(!confirm(ids.length>1 ? `Excluir os ${ids.length} prédios selecionados?` : 'Excluir este prédio?')) return;
+  ids.forEach(lid=>{
+    const rec = SCENE3D.leafletLayerById.get(lid);
+    if(!rec) return;
+    rec.lyr.group.removeLayer(rec.layer);
+    pushAction({ type:'del', layer:rec.layer, target:rec.lyr });
+  });
+  SCENE3D.buildingSelection.clear();
+  renderVectorList(); updHistory(); scheduleSave();
+  if(SCENE3D.active) scheduleMirror3D();
+  status('Prédio(s) excluído(s).');
+});
+document.getElementById('v3dBuildingColorBtn').addEventListener('click', ()=>{
+  openStyleEditor(ensureBuildingsLayer());
+});
+document.getElementById('v3dBuildingAttrBtn').addEventListener('click', ()=>{
+  const lid = [...SCENE3D.buildingSelection][0];
+  if(!lid){ status('Selecione um prédio com a ferramenta "Mover edifícios" antes de editar os atributos.'); return; }
+  const rec = SCENE3D.leafletLayerById.get(lid);
+  if(rec && rec.layer._gaid) openAttrForm(rec.layer._gaid);
 });
 /* mantém o campo de pé-direito refletindo a camada "Edifícios" já existente
    (se houver) toda vez que a barra 3D é exibida — evita mostrar 3 (padrão)
@@ -12165,7 +12282,7 @@ function metaAutoText(){
     'Centro: '+fmt(c.lat)+', '+fmt(c.lng)+' · Zoom '+map.getZoom(),
     'Base: '+currentBaseName,
     'Escala aproximada 1:'+Math.round(pdScaleDenom()).toLocaleString('pt-BR'),
-    'Gerado com GeoMatias — WebGIS para P&D e estudo de UI'
+    'Gerado com GeoM — WebGIS para P&D e estudo de UI'
   ].join('<br>');
 }
 /* arredonda para 1/2/5 x 10^n — números "redondos" de escala gráfica */
@@ -14099,7 +14216,7 @@ document.getElementById('invGenMap').addEventListener('click', async ()=>{
   document.getElementById('psTitle').textContent = document.getElementById('invTitle').value || 'Exemplares arbóreos georreferenciados';
   const author = document.getElementById('invAuthor').value;
   document.getElementById('psAuthor').textContent = author ? 'Responsável: '+author : '';
-  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoMatias — WebGIS para P&D e estudo de UI';
+  document.getElementById('psSRC').textContent = 'Sistema de referência: '+currentCRS.name+' (EPSG:'+currentCRS.epsg+') · Gerado com GeoM — WebGIS para P&D e estudo de UI';
   const c = map.getCenter();
   document.getElementById('psMeta').innerHTML =
     `Data: ${new Date().toLocaleDateString('pt-BR')}<br>Centro: ${fmt(c.lat)}, ${fmt(c.lng)} · Zoom ${map.getZoom()}<br>Base: ${currentBaseName}`;
@@ -14251,10 +14368,10 @@ function buildTreeCardHtml(f){
 function buildInventoryCards(feats, title, author){
   const sheet = document.getElementById('inventorySheet');
   const head = `<div class="iv-head"><h1>${esc(title)}</h1>`+
-    `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoMatias — WebGIS para P&D e estudo de UI</div></div>`;
+    `<div class="iv-sub">${feats.length} exemplar(es) · ${author?esc(author)+' · ':''}Gerado em ${new Date().toLocaleDateString('pt-BR')} · GeoM — WebGIS para P&D e estudo de UI</div></div>`;
   const cards = feats.map(buildTreeCardHtml).join('');
   const foot = `<div class="iv-foot"><span>${author?'Responsável: '+esc(author):''}</span>`+
-    `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoMatias — WebGIS para P&D e estudo de UI</span></div>`;
+    `<span>Sistema de referência: ${currentCRS.name} (EPSG:${currentCRS.epsg}) · GeoM — WebGIS para P&D e estudo de UI</span></div>`;
   sheet.innerHTML = head + cards + foot;
 }
 const INVENTORY_TABLE_COLUMNS = [

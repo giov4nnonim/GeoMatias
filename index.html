@@ -513,29 +513,13 @@ body.split3d #v3dDivider{ display:block }
   #v3dBarBody{ justify-content:center }
 }
 /* MapLibre embute cores fixas claras nos popups/controles — sem isto ficam
-   brancos sobre o painel escuro do tema. Escopado a #v3dCanvas (o container
-   do mapa MapLibre) para ganhar especificidade sobre o CSS da própria lib:
-   maplibre-gl.css é injetado dinamicamente via ensureCss() bem depois deste
-   <style>, então com a mesma especificidade (0-1-0 em ambos) o dele vencia
-   por ordem de aparição no DOM — causa raiz do popup aparecer branco/ilegível. */
-#v3dCanvas .maplibregl-popup-content{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 30px var(--shadow-strong) }
-#v3dCanvas .maplibregl-popup-tip{ border-top-color:var(--panel); border-bottom-color:var(--panel) }
-#v3dCanvas .maplibregl-popup-close-button{ color:var(--muted); font-size:16px }
-#v3dCanvas .maplibregl-popup-close-button:hover{ color:var(--text); background:var(--panel2) }
+   brancos sobre o painel escuro do tema. */
+.maplibregl-popup-content{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 30px var(--shadow-strong) }
+.maplibregl-popup-tip{ border-top-color:var(--panel); border-bottom-color:var(--panel) }
 .maplibregl-ctrl-group{ background:var(--panel2); box-shadow:0 2px 8px var(--shadow) }
 .maplibregl-ctrl-group button{ background:transparent }
 .maplibregl-ctrl-group button:not(:disabled):hover{ background:var(--field) }
 .maplibregl-ctrl-icon{ filter:invert(1) }
-/* conteúdo do popup "Consultar pavimento" — mesma hierarquia tipográfica de
-   #elevPanel/#elevStats (título 13px/600, corpo 12px muted, valores em
-   var(--text)), para não inventar uma linguagem visual nova. */
-.v3d-floorpop{ font-size:12px; color:var(--muted); min-width:170px }
-.v3d-floorpop-title{ font-size:13px; font-weight:600; color:var(--text); margin-bottom:2px }
-.v3d-floorpop-sub{ margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--line) }
-.v3d-floorpop-rows{ display:flex; flex-direction:column; gap:3px; max-height:180px; overflow-y:auto }
-.v3d-floorpop-row{ display:flex; justify-content:space-between; gap:14px }
-.v3d-floorpop-row b{ color:var(--text); font-weight:600; font-variant-numeric:tabular-nums }
-.v3d-floorpop-empty{ font-style:italic }
 
 @media (max-width:760px){
   #elevPanel{ left:8px; right:8px; width:auto; bottom:calc(var(--tbH, 100px) + 48px + env(safe-area-inset-bottom)) }
@@ -1653,14 +1637,13 @@ body.split3d #v3dDivider{ display:block }
     </div>
     <div class="v3d-group" data-label="Edificação">
       <div id="v3dBuildingTools" role="group" aria-label="Ferramentas de edificação">
-        <button class="v3d-seg v3d-mtool" data-mtool="floor-query" id="v3dFloorQueryBtn" title="Consultar atributos por pavimento: clique num prédio" style="display:none"><span data-icon="floors"></span></button>
-        <button class="v3d-seg v3d-mtool" data-mtool="draw" title="Desenhar polígono direto na vista 3D"><span data-icon="polygonDraw"></span></button>
         <button class="v3d-seg" id="v3dNewBuildingBtn" title="Novo prédio: desenha a pegada na camada 'Edifícios'"><span data-icon="building"></span></button>
         <button class="v3d-seg v3d-mtool" data-mtool="move-buildings" id="v3dMoveBuildingsBtn" title="Mover edifícios (segurar e arrastar) · clique parado edita os atributos" style="display:none"><span data-icon="moveBuildings"></span></button>
+        <button class="v3d-seg v3d-mtool" data-mtool="draw" title="Desenhar polígono direto na vista 3D"><span data-icon="polygonDraw"></span></button>
         <button class="v3d-seg" id="v3dRotateBuildingBtn" title="Girar prédio(s) selecionado(s) — selecione com a ferramenta Mover" style="display:none"><span data-icon="rotate"></span></button>
+        <button class="v3d-seg" id="v3dDeleteBuildingBtn" title="Excluir prédio(s) selecionado(s) — selecione com a ferramenta Mover" style="display:none"><span data-icon="trash"></span></button>
         <button class="v3d-seg" id="v3dBuildingColorBtn" title="Cor/simbologia da camada 'Edifícios'" style="display:none"><span data-icon="palette"></span></button>
         <button class="v3d-seg" id="v3dBuildingAttrBtn" title="Atributos do prédio selecionado — selecione com a ferramenta Mover" style="display:none"><span data-icon="table"></span></button>
-        <button class="v3d-seg" id="v3dDeleteBuildingBtn" title="Excluir prédio(s) selecionado(s) — selecione com a ferramenta Mover" style="display:none"><span data-icon="trash"></span></button>
       </div>
       <label id="v3dBuildingFloorHWrap" title="Pé-direito por pavimento dos novos prédios (m)">
         Pé-direito
@@ -2902,8 +2885,7 @@ const ICONS = {
   rectTool:'<rect x="4" y="6" width="16" height="12" rx="1.5"/>',
   printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 21h10v-6H7v6Z"/>',
   contour:'<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 7.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>',
-  splitDrag:'<path d="M2 12h20"/><path d="M7 7 2 12l5 5"/><path d="M17 7l5 5-5 5"/>',
-  floors:'<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/>'
+  splitDrag:'<path d="M2 12h20"/><path d="M7 7 2 12l5 5"/><path d="M17 7l5 5-5 5"/>'
 };
 function icon(name, size=15){
   const p = ICONS[name] || '';
@@ -10609,39 +10591,6 @@ function v3dOnClick(e){
   if(SCENE3D.toolMode==='dist') v3dDistAddVertex(e.lngLat);
   else if(SCENE3D.toolMode==='volume') v3dVolAddVertex(e.lngLat);
   else if(SCENE3D.toolMode==='draw') v3dDrawAddVertex(e.lngLat);
-  else if(SCENE3D.toolMode==='floor-query') v3dFloorQueryClick(e);
-}
-/* "Consultar atributos por pavimento": clique num prédio abre um popup
-   MapLibre (mesmo padrão temático já preparado em .maplibregl-popup-content
-   desde a V13, até agora sem uso) listando a faixa de cota de cada piso —
-   base (__base, amostrada do DEM por stampExtrusionBases) + i×floorHeight —
-   junto com os atributos já existentes do prédio (nome/uso/pavimentos). Não
-   depende de raycasting 3D (MapLibre não expõe isso para fill-extrusion);
-   a contagem de pavimentos vem do atributo, não do ponto exato clicado na
-   parede — degradação aceita, mesmo espírito do resto da vista 3D. */
-let v3dFloorPopup = null;
-function v3dFloorQueryClick(e){
-  const feat = v3dBuildingsHit(e);
-  if(!feat){ status('Clique sobre um prédio para consultar os pavimentos.'); return; }
-  const p = feat.properties;
-  const rec = SCENE3D.leafletLayerById.get(p.__lid);
-  const lyr = rec ? rec.lyr : null;
-  const floorH = (lyr && lyr.floorHeight) || 3;
-  const field = (lyr && lyr.extrudeField) || 'pavimentos';
-  const pav = Math.max(0, Math.round(parseFloat(p[field]) || 0));
-  const base = p.__base || 0;
-  const rows = [];
-  for(let i=0; i<pav; i++){
-    rows.push(`<div class="v3d-floorpop-row"><span>Piso ${i+1}</span><b>${(base+i*floorH).toFixed(1)}–${(base+(i+1)*floorH).toFixed(1)} m</b></div>`);
-  }
-  const html = `<div class="v3d-floorpop">`
-    + `<div class="v3d-floorpop-title">${p.nome || 'Prédio sem nome'}</div>`
-    + `<div class="v3d-floorpop-sub">Uso: ${p.uso || '—'} · Pavimentos: ${pav}</div>`
-    + `<div class="v3d-floorpop-rows">${rows.join('') || '<div class="v3d-floorpop-empty">Nenhum pavimento definido (atributo "'+field+'" vazio).</div>'}</div>`
-    + `</div>`;
-  if(v3dFloorPopup) v3dFloorPopup.remove();
-  v3dFloorPopup = new window.maplibregl.Popup({ closeOnClick:true })
-    .setLngLat(e.lngLat).setHTML(html).addTo(SCENE3D.map3d);
 }
 function v3dOnDblClick(e){
   if(SCENE3D.toolMode==='dist'){ e.preventDefault(); v3dDistFinish(); }
@@ -10941,10 +10890,8 @@ function updateMoveBuildingsButton(){
   const has = vectorLayers.some(l=>l.buildings && l.visible && l.group.getLayers().length);
   btn.style.display = has ? '' : 'none';
   if(!has && SCENE3D.toolMode==='move-buildings') v3dSetToolMode(null);
-  if(!has && SCENE3D.toolMode==='floor-query') v3dSetToolMode(null);
-  // girar/excluir/atributos exigem seleção via "Mover"; cor e consulta de
-  // pavimento só exigem a camada existir.
-  ['v3dFloorQueryBtn','v3dRotateBuildingBtn','v3dDeleteBuildingBtn','v3dBuildingColorBtn','v3dBuildingAttrBtn'].forEach(id=>{
+  // girar/excluir/atributos exigem seleção via "Mover"; cor só exige a camada.
+  ['v3dRotateBuildingBtn','v3dDeleteBuildingBtn','v3dBuildingColorBtn','v3dBuildingAttrBtn'].forEach(id=>{
     const b = document.getElementById(id);
     if(b) b.style.display = has ? '' : 'none';
   });
@@ -11243,7 +11190,6 @@ function close3D(){
   SCENE3D.measureResult = null;
   SCENE3D.volumeResult = null;
   document.getElementById('v3dVolPanel').style.display = 'none';
-  if(v3dFloorPopup){ v3dFloorPopup.remove(); v3dFloorPopup = null; }
   // #elevPanel É INTENCIONALMENTE deixado aberto — mesmo comportamento já
   // existente para medições 2D (o perfil persiste após fechar o 3D).
   view3dEl.classList.remove('on');
